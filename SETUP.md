@@ -87,10 +87,12 @@ This boilerplate includes:
 - ✅ Email/Password Sign Up
 - ✅ Email/Password Sign In
 - ✅ Google OAuth Sign In
-- ✅ Protected Routes
+- ✅ Protected Routes with Tab Navigation
 - ✅ Persistent Authentication
 - ✅ Secure Token Storage
 - ✅ Sign Out Functionality
+- ✅ Pull-to-Refresh User Data
+- ✅ User Profile View
 
 ## Project Structure
 
@@ -100,9 +102,10 @@ app/
 │   ├── sign-in.tsx     # Sign in page
 │   ├── sign-up.tsx     # Sign up page
 │   └── _layout.tsx     # Auth layout with redirect logic
-├── (protected)/         # Protected routes
-│   ├── dashboard.tsx   # Main dashboard
-│   └── _layout.tsx     # Protected layout with auth check
+├── (protected)/         # Protected routes with tab navigation
+│   ├── dashboard.tsx   # Main dashboard (default tab)
+│   ├── profile.tsx     # User profile view
+│   └── _layout.tsx     # Protected layout with auth check and tabs
 ├── _layout.tsx         # Root layout with AuthProvider
 └── index.tsx           # Entry point with redirects
 
@@ -113,6 +116,59 @@ lib/
 └── supabase.ts         # Supabase client configuration
 ```
 
+## Protected Layout Features
+
+After authentication, users are redirected to a protected layout with tab navigation:
+
+### Tab Navigation
+
+- **Dashboard Tab**: Welcome screen with user stats and quick information
+- **Profile Tab**: User profile details and sign-out functionality
+
+Both tabs include:
+
+- Bottom tab bar with icons
+- Haptic feedback on tab press (iOS)
+- Theme-aware colors
+- Pull-to-refresh functionality
+
+### Pull to Refresh
+
+Both Dashboard and Profile screens support pull-to-refresh:
+
+```typescript
+import { useAuth } from "@/contexts/auth-context";
+import { useCallback, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
+
+export default function MyScreen() {
+  const { refreshUser } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setRefreshing(false);
+  }, [refreshUser]);
+
+  return (
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#3b82f6"
+          colors={["#3b82f6"]}
+          progressViewOffset={175}
+        />
+      }
+    >
+      {/* Your content */}
+    </ScrollView>
+  );
+}
+```
+
 ## Usage
 
 ### Using Authentication in Components
@@ -121,7 +177,7 @@ lib/
 import { useAuth } from "@/contexts/auth-context";
 
 export default function MyComponent() {
-  const { user, signOut, isLoading } = useAuth();
+  const { user, signOut, isLoading, refreshUser } = useAuth();
 
   if (isLoading) {
     return <ActivityIndicator />;
@@ -131,14 +187,30 @@ export default function MyComponent() {
     <View>
       <Text>Welcome {user?.email}</Text>
       <Button onPress={signOut} title="Sign Out" />
+      <Button onPress={refreshUser} title="Refresh User Data" />
     </View>
   );
 }
 ```
 
-### Adding More Protected Routes
+### Adding More Protected Routes as Tabs
 
-Add new screens in the `app/(protected)/` directory, and they'll automatically be protected by the auth layout.
+To add a new tab to the protected layout:
+
+1. Create a new file in `app/(protected)/` (e.g., `settings.tsx`)
+2. Update `app/(protected)/_layout.tsx` to add the new tab:
+
+```typescript
+<Tabs.Screen
+  name="settings"
+  options={{
+    title: "Settings",
+    tabBarIcon: ({ color }) => (
+      <IconSymbol size={28} name="gear" color={color} />
+    ),
+  }}
+/>
+```
 
 ## Troubleshooting
 

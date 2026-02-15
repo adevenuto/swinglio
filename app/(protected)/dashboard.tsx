@@ -1,28 +1,10 @@
 import { useAuth } from "@/contexts/auth-context";
-import { router } from "expo-router";
 import React from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import "../../global.css";
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/sign-in");
-        },
-      },
-    ]);
-  };
+  const { user } = useAuth();
 
   return (
     <View className="flex-1 bg-white">
@@ -30,42 +12,35 @@ export default function Dashboard() {
         <View className="w-full max-w-md">
           <Text className="text-3xl font-bold text-center mb-4">Dashboard</Text>
           <Text className="text-lg text-center text-gray-600 mb-8">
-            Welcome back!
+            Welcome back, {user?.email?.split("@")[0]}!
           </Text>
 
-          <View className="bg-gray-100 rounded-lg p-6 mb-8">
-            <Text className="text-sm font-medium text-gray-500 mb-2">
-              Email
+          <View className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4">
+            <Text className="text-xl font-semibold text-blue-900 mb-2">
+              🎉 You're all set!
             </Text>
-            <Text className="text-base font-semibold text-gray-900">
-              {user?.email}
-            </Text>
-
-            <Text className="text-sm font-medium text-gray-500 mt-4 mb-2">
-              User ID
-            </Text>
-            <Text className="text-base font-mono text-gray-900">
-              {user?.id}
-            </Text>
-
-            <Text className="text-sm font-medium text-gray-500 mt-4 mb-2">
-              Account Created
-            </Text>
-            <Text className="text-base text-gray-900">
-              {user?.created_at
-                ? new Date(user.created_at).toLocaleDateString()
-                : "N/A"}
+            <Text className="text-base text-blue-700">
+              Your account is active and ready to use.
             </Text>
           </View>
 
-          <Pressable
-            className="bg-red-600 rounded-lg py-3"
-            onPress={handleSignOut}
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Sign Out
+          <View className="bg-gray-50 rounded-lg p-6">
+            <Text className="text-sm font-medium text-gray-500 mb-4">
+              Quick Stats
             </Text>
-          </Pressable>
+            <View className="flex-row justify-between mb-3">
+              <Text className="text-gray-600">Account Status</Text>
+              <Text className="font-semibold text-green-600">Active</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-gray-600">Member Since</Text>
+              <Text className="font-semibold text-gray-900">
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleDateString()
+                  : "N/A"}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>

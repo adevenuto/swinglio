@@ -14,6 +14,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -181,6 +182,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const refreshUser = async () => {
+    console.log("🔄 Refreshing user session...");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    console.log("✅ Session refreshed:", {
+      user: session?.user?.email,
+      userId: session?.user?.id,
+    });
+    setSession(session);
+    setUser(session?.user ?? null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signInWithGoogle,
         signOut,
+        refreshUser,
       }}
     >
       {children}

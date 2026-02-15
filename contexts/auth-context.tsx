@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import React, { createContext, useContext, useEffect, useState } from "react";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type AuthContextType = {
   user: User | null;
@@ -13,6 +17,9 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Create a promise to track auth completion
+let authPromise: ((value: any) => void) | null = null;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -31,11 +38,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+
+      // Resolve the auth promise when sign in is complete
+      if (_event === "SIGNED_IN" && authPromise) {
+        authPromise({ error: null });
+        authPromise = null;
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Handle incoming deep links
+    const handleUrl = async ({ url }: { url: string }) => {
+      console.log("Deep link received:", url);
+
+      try {
+        // Extract session from URL
+        const urlObj = new URL(url);
+        const hash = urlObj.hash.substring(1);
+
+        console.log("Hash from URL:", hash);
+
+        const params = new URLSearchParams(hash);
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        console.log("Tokens found:", {
+          access_token: !!access_token,
+          refresh_token: !!refresh_token,
+        });
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          console.log("Session set result:", error);
+
+          if (error) {
+            console.error("Error setting session:", error);
+          }
+        }
+      } catch (err) {
+        console.error("Error handling deep link:", err);
+      }
+    };
+
+    // Listen for URL changes
+    const urlSubscription = Linking.addEventListener("url", handleUrl);
+
+    return () => {
+      subscription.unsubscribe();
+      urlSubscription.remove();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
@@ -55,13 +112,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "exp://localhost:8081",
-      },
-    });
-    return { error };
+    try {
+      const redirectUrl = "testappcline://";
+      console.log("Redirect URL:", redirectUrl);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      if (!data?.url) {
+        return { error: new Error("No OAuth URL returned") };
+      }
+
+      console.log("Opening OAuth URL:", data.url);
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUrl,
+      );
+
+      console.log("WebBrowser result:", result);
+
+      if (result.type === "success") {
+        // Parse the URL directly from the result
+        const url = result.url;
+        const params = new URLSearchParams(url.split("#")[1]);
+
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        console.log("Tokens found:", {
+          access_token: !!access_token,
+          refresh_token: !!refresh_token,
+        });
+
+        if (access_token && refresh_token) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            console.error("Error setting session:", sessionError);
+            return { error: sessionError };
+          }
+
+          console.log("Session set successfully!");
+          return { error: null };
+        }
+      }
+
+      return { error: new Error("OAuth flow was cancelled") };
+    } catch (error) {
+      console.error("OAuth error:", error);
+      return { error };
+    }
   };
 
   const signOut = async () => {

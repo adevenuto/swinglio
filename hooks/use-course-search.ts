@@ -1,0 +1,79 @@
+import { supabase } from "@/lib/supabase";
+import { useCallback, useRef, useState } from "react";
+
+export type Course = {
+  id: number;
+  name: string;
+  street: string | null;
+  state: string | null;
+  postal_code: string | null;
+  city_id: number;
+  state_id: number;
+  layout_data: string | null;
+};
+
+export type Teebox = {
+  order: number;
+  name: string;
+  color?: string;
+  holes: Record<string, { par: string; length: string }>;
+};
+
+export type LayoutData = {
+  teeboxes: Teebox[];
+  hole_count: number;
+};
+
+export function useCourseSearch() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Course[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const search = useCallback((text: string) => {
+    setQuery(text);
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    if (text.trim().length < 2) {
+      setResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    debounceTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .ilike("name", `%${text.trim()}%`)
+        .limit(20);
+
+      if (!error && data) {
+        setResults(data);
+      }
+      setIsSearching(false);
+    }, 300);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setResults([]);
+    setIsSearching(false);
+  }, []);
+
+  return { query, results, isSearching, search, clearSearch };
+}
+
+export function parseTeeboxes(layoutData: string | null): Teebox[] {
+  if (!layoutData) return [];
+  try {
+    const parsed: LayoutData = JSON.parse(layoutData);
+    return parsed.teeboxes || [];
+  } catch {
+    return [];
+  }
+}

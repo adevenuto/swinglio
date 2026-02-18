@@ -59,18 +59,28 @@ export default function CreateLeagueScreen() {
     if (!selectedCourse || !selectedTeebox || !canSubmit) return;
 
     setIsSubmitting(true);
-    const { error } = await supabase.from("leagues").insert({
-      organizer_id: user?.id,
-      course_id: selectedCourse.id,
-      teebox_data: selectedTeebox,
-      game_config: gameConfig,
-    });
+    const { data: newLeague, error } = await supabase
+      .from("leagues")
+      .insert({
+        organizer_id: user?.id,
+        course_id: selectedCourse.id,
+        teebox_data: selectedTeebox,
+        game_config: gameConfig,
+      })
+      .select()
+      .single();
     setIsSubmitting(false);
 
-    if (error) {
+    if (error || !newLeague) {
       Alert.alert("Error", "Failed to create league. Please try again.");
       return;
     }
+
+    // Auto-add organizer as league member
+    await supabase.from("league_users").insert({
+      league_id: newLeague.id,
+      golfer_id: user?.id,
+    });
 
     router.back();
   };

@@ -48,6 +48,14 @@ export default function Dashboard() {
               Create League
             </Button>
 
+            <Button
+              mode="outlined"
+              onPress={() => router.push("/player-scores")}
+              style={{ marginTop: 12 }}
+            >
+              Player Scores
+            </Button>
+
             <LeagueList />
           </View>
         </View>

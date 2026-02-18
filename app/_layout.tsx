@@ -61,6 +61,17 @@ export default function RootLayout() {
                 headerShadowVisible: false,
               }}
             />
+            <Stack.Screen
+              name="player-scores"
+              options={{
+                presentation: "modal",
+                headerShown: true,
+                title: "Player Scores",
+                headerStyle: { backgroundColor: "#fff" },
+                headerTintColor: "#1a1a1a",
+                headerShadowVisible: false,
+              }}
+            />
           </Stack>
           <StatusBar style="auto" />
         </PaperProvider>

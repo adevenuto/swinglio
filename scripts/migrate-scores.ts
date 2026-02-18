@@ -22,6 +22,7 @@ type CsvScore = {
   golfer_id: number;
   score: number | null;
   course_name: string;
+  created_at: string | null;
 };
 
 function parseCsv(filePath: string): CsvScore[] {
@@ -34,6 +35,7 @@ function parseCsv(filePath: string): CsvScore[] {
       golfer_id: parseInt(parts[1], 10),
       score: parts[2] ? parseInt(parts[2], 10) : null,
       course_name: parts[3],
+      created_at: parts[4] || null,
     };
   });
 }
@@ -61,13 +63,25 @@ async function main() {
   }
   console.log(`Loaded ${oldIdToUuid.size} profile mappings (old_id → UUID)\n`);
 
+  // Delete existing scores before re-importing
+  const { error: deleteError } = await supabase
+    .from("scores")
+    .delete()
+    .neq("id", 0);
+
+  if (deleteError) {
+    console.error("Failed to delete existing scores:", deleteError.message);
+    process.exit(1);
+  }
+  console.log("Deleted existing scores\n");
+
   let inserted = 0;
   let skipped = 0;
   let errors = 0;
 
   // Batch insert in chunks of 500
   const BATCH_SIZE = 500;
-  const toInsert: { golfer_id: string; score: number | null; course_id: number }[] = [];
+  const toInsert: { golfer_id: string; score: number | null; course_id: number; created_at?: string; updated_at?: string }[] = [];
 
   for (const row of rows) {
     const uuid = oldIdToUuid.get(row.golfer_id);
@@ -76,11 +90,16 @@ async function main() {
       skipped++;
       continue;
     }
-    toInsert.push({
+    const record: typeof toInsert[number] = {
       golfer_id: uuid,
       score: row.score,
       course_id: COURSE_ID,
-    });
+    };
+    if (row.created_at) {
+      record.created_at = row.created_at;
+      record.updated_at = row.created_at;
+    }
+    toInsert.push(record);
   }
 
   for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {

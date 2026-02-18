@@ -1,9 +1,19 @@
 import { supabase } from "@/lib/supabase";
 import { League } from "@/hooks/use-leagues";
+import { useLeagueUsers } from "@/hooks/use-league-users";
+import { Player, usePlayerSearch } from "@/hooks/use-player-search";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
-import { ActivityIndicator, Button, Divider, Text } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Button,
+  Divider,
+  IconButton,
+  List,
+  Searchbar,
+  Text,
+} from "react-native-paper";
 import "../global.css";
 
 export default function LeagueDetailScreen() {
@@ -12,6 +22,11 @@ export default function LeagueDetailScreen() {
   const [league, setLeague] = useState<League | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+
+  const { members, isLoading: membersLoading, fetchMembers, addMember, removeMember } =
+    useLeagueUsers(id!);
+  const { query, results, isSearching, search, clearSearch } = usePlayerSearch();
 
   useEffect(() => {
     async function fetch() {
@@ -27,7 +42,8 @@ export default function LeagueDetailScreen() {
       setIsLoading(false);
     }
     fetch();
-  }, [id]);
+    fetchMembers();
+  }, [id, fetchMembers]);
 
   const handleDelete = () => {
     Alert.alert(
@@ -75,6 +91,26 @@ export default function LeagueDetailScreen() {
   const proxEnabled = config?.proxLowNet?.enabled;
   const skinsEnabled = config?.skins?.enabled;
 
+  const memberGolferIds = new Set(members.map((m) => m.golfer_id));
+  const filteredResults = results.filter((p) => !memberGolferIds.has(p.id));
+
+  const handleAddPlayer = async (player: Player) => {
+    await addMember(player.id);
+    clearSearch();
+    setShowAddPlayer(false);
+  };
+
+  const handleRemoveMember = (leagueUserId: number, name: string) => {
+    Alert.alert("Remove Player", `Remove ${name} from this league?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => removeMember(leagueUserId),
+      },
+    ]);
+  };
+
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="px-4 pt-6 pb-8">
@@ -94,6 +130,105 @@ export default function LeagueDetailScreen() {
         <Text variant="bodySmall" style={{ color: "#999", marginBottom: 20 }}>
           Created {new Date(league.created_at).toLocaleDateString()}
         </Text>
+
+        {/* Members */}
+        <View className="mb-4">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text variant="titleSmall" style={{ color: "#111827" }}>
+              Members ({members.length})
+            </Text>
+            <Button
+              mode="outlined"
+              compact
+              onPress={() => {
+                setShowAddPlayer(!showAddPlayer);
+                if (showAddPlayer) clearSearch();
+              }}
+            >
+              {showAddPlayer ? "Done" : "Add"}
+            </Button>
+          </View>
+
+          {showAddPlayer && (
+            <View className="mb-3">
+              <Searchbar
+                placeholder="Search players..."
+                onChangeText={search}
+                value={query}
+                loading={isSearching}
+                mode="bar"
+                style={{
+                  backgroundColor: "transparent",
+                  borderWidth: 1,
+                  borderColor: "#d4d4d4",
+                  borderRadius: 8,
+                }}
+                inputStyle={{ color: "#1a1a1a" }}
+              />
+              {filteredResults.map((player) => (
+                <List.Item
+                  key={player.id}
+                  title={
+                    [player.first_name, player.last_name]
+                      .filter(Boolean)
+                      .join(" ") || "Unknown"
+                  }
+                  titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                  description={player.email || undefined}
+                  descriptionStyle={{ color: "#555" }}
+                  onPress={() => handleAddPlayer(player)}
+                  left={(props) => <List.Icon {...props} icon="account-plus" />}
+                />
+              ))}
+              {query.length >= 2 && !isSearching && filteredResults.length === 0 && (
+                <Text
+                  variant="bodyMedium"
+                  style={{ textAlign: "center", paddingVertical: 12, color: "#999" }}
+                >
+                  No players found
+                </Text>
+              )}
+            </View>
+          )}
+
+          {membersLoading ? (
+            <ActivityIndicator size="small" style={{ paddingVertical: 12 }} />
+          ) : members.length === 0 ? (
+            <Text
+              variant="bodyMedium"
+              style={{ color: "#999", paddingVertical: 8 }}
+            >
+              No members yet
+            </Text>
+          ) : (
+            members.map((member) => {
+              const name =
+                [member.profiles.first_name, member.profiles.last_name]
+                  .filter(Boolean)
+                  .join(" ") || "Unknown";
+              return (
+                <List.Item
+                  key={member.id}
+                  title={name}
+                  titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                  description={member.profiles.email || undefined}
+                  descriptionStyle={{ color: "#555" }}
+                  left={(props) => <List.Icon {...props} icon="account" />}
+                  right={(props) => (
+                    <IconButton
+                      {...props}
+                      icon="close"
+                      size={18}
+                      onPress={() => handleRemoveMember(member.id, name)}
+                    />
+                  )}
+                />
+              );
+            })
+          )}
+        </View>
+
+        <Divider style={{ marginBottom: 16 }} />
 
         {/* Game Settings */}
         {config && (

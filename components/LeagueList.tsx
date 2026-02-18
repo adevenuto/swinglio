@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/auth-context";
 import { useLeagues } from "@/hooks/use-leagues";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback } from "react";
@@ -5,7 +6,8 @@ import { View } from "react-native";
 import { ActivityIndicator, List, Text } from "react-native-paper";
 
 export default function LeagueList() {
-  const { leagues, isLoading, refresh } = useLeagues();
+  const { user } = useAuth();
+  const { leagues, isLoading, refresh } = useLeagues(user?.id ?? "");
   const router = useRouter();
 
   useFocusEffect(

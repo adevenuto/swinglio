@@ -10,6 +10,7 @@ import {
   GameConfig,
   getPayoutTotal,
 } from "@/lib/game-config";
+import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -19,6 +20,7 @@ import "../global.css";
 
 export default function CreateLeagueScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { query, results, isSearching, search, clearSearch } =
     useCourseSearch();
 
@@ -58,6 +60,7 @@ export default function CreateLeagueScreen() {
 
     setIsSubmitting(true);
     const { error } = await supabase.from("leagues").insert({
+      organizer_id: user?.id,
       course_id: selectedCourse.id,
       teebox_data: selectedTeebox,
       game_config: gameConfig,

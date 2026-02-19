@@ -1,4 +1,5 @@
 import GameConfigForm from "@/components/GameConfigForm";
+import { useAuth } from "@/contexts/auth-context";
 import { GameConfig, getPayoutTotal } from "@/lib/game-config";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -9,6 +10,7 @@ import "../global.css";
 
 export default function EditGameConfigScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const router = useRouter();
   const [config, setConfig] = useState<GameConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,10 +27,25 @@ export default function EditGameConfigScreen() {
       if (!error && data?.game_config) {
         setConfig(data.game_config as GameConfig);
       }
+
+      // Verify coordinator access
+      const { data: membership } = await supabase
+        .from("league_users")
+        .select("role")
+        .eq("league_id", id)
+        .eq("golfer_id", user?.id)
+        .single();
+
+      if (!membership || membership.role !== "coordinator") {
+        Alert.alert("Access Denied", "Only coordinators can edit game settings.");
+        router.back();
+        return;
+      }
+
       setIsLoading(false);
     }
     fetch();
-  }, [id]);
+  }, [id, user?.id]);
 
   const handleSave = async () => {
     if (!config) return;

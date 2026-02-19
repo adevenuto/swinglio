@@ -18,7 +18,7 @@ type RoundData = {
   status: string;
   created_at: string;
   leagues: {
-    organizer_id: string;
+    owner_id: string;
     courses: { name: string };
     teebox_data: {
       order: number;
@@ -63,6 +63,7 @@ export default function GameplayScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCoordinator, setIsCoordinator] = useState(false);
 
   // Score entry modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -77,12 +78,23 @@ export default function GameplayScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, league_id, course_id, status, created_at, leagues(organizer_id, courses(name), teebox_data)",
+        "id, league_id, course_id, status, created_at, leagues(owner_id, courses(name), teebox_data)",
       )
       .eq("id", roundId)
       .single();
 
-    if (roundData) setRound(roundData as unknown as RoundData);
+    if (roundData) {
+      setRound(roundData as unknown as RoundData);
+
+      // Check if user is a coordinator for this league
+      const { data: membership } = await supabase
+        .from("league_users")
+        .select("role")
+        .eq("league_id", (roundData as any).league_id)
+        .eq("golfer_id", user?.id)
+        .single();
+      setIsCoordinator(membership?.role === "coordinator");
+    }
 
     const { data: scoreData } = await supabase
       .from("scores")
@@ -92,7 +104,7 @@ export default function GameplayScreen() {
     if (scoreData) setPlayers(scoreData as unknown as PlayerScore[]);
 
     setIsLoading(false);
-  }, [roundId]);
+  }, [roundId, user?.id]);
 
   useEffect(() => {
     fetchRound();
@@ -292,7 +304,7 @@ export default function GameplayScreen() {
             onCellPress={handleCellPress}
           />
         </View>
-        {user?.id === round.leagues?.organizer_id && (
+        {isCoordinator && (
           <Button
             mode="text"
             onPress={handleDeleteRound}

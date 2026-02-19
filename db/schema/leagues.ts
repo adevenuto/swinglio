@@ -3,7 +3,7 @@ import { courses } from './courses';
 
 export const leagues = pgTable('leagues', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  organizerId: uuid('organizer_id').notNull(),
+  ownerId: uuid('owner_id').notNull(),
   courseId: integer('course_id').notNull().references(() => courses.id),
   teeboxData: jsonb('teebox_data').notNull(),
   gameConfig: jsonb('game_config'),

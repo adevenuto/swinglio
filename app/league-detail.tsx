@@ -1,4 +1,5 @@
-import { useLeagueUsers } from "@/hooks/use-league-users";
+import { useAuth } from "@/contexts/auth-context";
+import { LeagueUser, useLeagueUsers } from "@/hooks/use-league-users";
 import { League } from "@/hooks/use-leagues";
 import { Player, usePlayerSearch } from "@/hooks/use-player-search";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +19,7 @@ import "../global.css";
 
 export default function LeagueDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const router = useRouter();
   const [league, setLeague] = useState<League | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,9 +33,17 @@ export default function LeagueDetailScreen() {
     fetchMembers,
     addMember,
     removeMember,
+    updateMemberRole,
   } = useLeagueUsers(id!);
   const { query, results, isSearching, search, clearSearch } =
     usePlayerSearch();
+
+  // Derive permissions
+  const isOwner = league?.owner_id === user?.id;
+  const currentUserMember = members.find((m) => m.golfer_id === user?.id);
+  const isCoordinator = currentUserMember?.role === "coordinator";
+  const canManage = isCoordinator; // coordinators (including owner) can manage
+  const canAdmin = isOwner; // only owner can promote/demote, delete
 
   const fetchLeague = useCallback(async () => {
     const { data, error } = await supabase
@@ -94,6 +104,27 @@ export default function LeagueDetailScreen() {
               router.back();
             }
           },
+        },
+      ],
+    );
+  };
+
+  const handleToggleRole = (member: LeagueUser) => {
+    const newRole = member.role === "coordinator" ? "member" : "coordinator";
+    const name =
+      [member.profiles.first_name, member.profiles.last_name]
+        .filter(Boolean)
+        .join(" ") || "Unknown";
+    const action = newRole === "coordinator" ? "Promote" : "Demote";
+
+    Alert.alert(
+      `${action} Player`,
+      `${action} ${name} ${newRole === "coordinator" ? "to" : "from"} coordinator?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: action,
+          onPress: () => updateMemberRole(member.id, newRole),
         },
       ],
     );
@@ -168,16 +199,18 @@ export default function LeagueDetailScreen() {
               <Text variant="titleSmall" style={{ color: "#111827" }}>
                 Members ({members.length})
               </Text>
-              <Button
-                mode="outlined"
-                compact
-                onPress={() => {
-                  setShowAddPlayer(!showAddPlayer);
-                  if (showAddPlayer) clearSearch();
-                }}
-              >
-                {showAddPlayer ? "Done" : "Add"}
-              </Button>
+              {canManage && (
+                <Button
+                  mode="outlined"
+                  compact
+                  onPress={() => {
+                    setShowAddPlayer(!showAddPlayer);
+                    if (showAddPlayer) clearSearch();
+                  }}
+                >
+                  {showAddPlayer ? "Done" : "Add"}
+                </Button>
+              )}
             </View>
 
             {showAddPlayer && (
@@ -245,6 +278,8 @@ export default function LeagueDetailScreen() {
                   [member.profiles.first_name, member.profiles.last_name]
                     .filter(Boolean)
                     .join(" ") || "Unknown";
+                const memberIsOwner = member.golfer_id === league.owner_id;
+                const memberIsCoordinator = member.role === "coordinator";
                 return (
                   <List.Item
                     key={member.id}
@@ -253,24 +288,40 @@ export default function LeagueDetailScreen() {
                     description={member.profiles.email || undefined}
                     descriptionStyle={{ color: "#555" }}
                     left={(props) => <List.Icon {...props} icon="account" />}
-                    right={(props) =>
-                      member.golfer_id === league.organizer_id ? (
-                        <Text
-                          {...props}
-                          variant="labelSmall"
-                          style={{ color: "#999", alignSelf: "center" }}
-                        >
-                          Organizer
-                        </Text>
-                      ) : (
-                        <IconButton
-                          {...props}
-                          icon="close"
-                          size={18}
-                          onPress={() => handleRemoveMember(member.id, name)}
-                        />
-                      )
-                    }
+                    right={(props) => (
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        {memberIsOwner ? (
+                          <Text
+                            variant="labelSmall"
+                            style={{ color: "#92400e", alignSelf: "center", marginRight: 4 }}
+                          >
+                            Owner
+                          </Text>
+                        ) : memberIsCoordinator ? (
+                          <Text
+                            variant="labelSmall"
+                            style={{ color: "#1e40af", alignSelf: "center", marginRight: 4 }}
+                          >
+                            Coordinator
+                          </Text>
+                        ) : null}
+                        {canAdmin && !memberIsOwner && (
+                          <IconButton
+                            icon={memberIsCoordinator ? "arrow-down" : "arrow-up"}
+                            size={18}
+                            onPress={() => handleToggleRole(member)}
+                          />
+                        )}
+                        {canManage && !memberIsOwner && (
+                          <IconButton
+                            {...props}
+                            icon="close"
+                            size={18}
+                            onPress={() => handleRemoveMember(member.id, name)}
+                          />
+                        )}
+                      </View>
+                    )}
                   />
                 );
               })
@@ -286,18 +337,20 @@ export default function LeagueDetailScreen() {
                 <Text variant="titleSmall" style={{ color: "#111827" }}>
                   Game Settings
                 </Text>
-                <Button
-                  mode="outlined"
-                  compact
-                  onPress={() =>
-                    router.push({
-                      pathname: "/edit-game-config",
-                      params: { id },
-                    })
-                  }
-                >
-                  Edit
-                </Button>
+                {canManage && (
+                  <Button
+                    mode="outlined"
+                    compact
+                    onPress={() =>
+                      router.push({
+                        pathname: "/edit-game-config",
+                        params: { id },
+                      })
+                    }
+                  >
+                    Edit
+                  </Button>
+                )}
               </View>
 
               {/* Prox / Low Net Card */}
@@ -398,16 +451,18 @@ export default function LeagueDetailScreen() {
             </>
           )}
 
-          {/* Delete League */}
-          <Button
-            mode="text"
-            onPress={handleDelete}
-            loading={isDeleting}
-            textColor="#dc2626"
-            style={{ marginTop: 8, marginBottom: 16 }}
-          >
-            Delete League
-          </Button>
+          {/* Delete League — owner only */}
+          {canAdmin && (
+            <Button
+              mode="text"
+              onPress={handleDelete}
+              loading={isDeleting}
+              textColor="#dc2626"
+              style={{ marginTop: 8, marginBottom: 16 }}
+            >
+              Delete League
+            </Button>
+          )}
         </View>
       </ScrollView>
 
@@ -435,7 +490,7 @@ export default function LeagueDetailScreen() {
             >
               Continue Round
             </Button>
-          ) : (
+          ) : canManage ? (
             <Button
               mode="outlined"
               onPress={() =>
@@ -446,6 +501,10 @@ export default function LeagueDetailScreen() {
               }
             >
               Start Round
+            </Button>
+          ) : (
+            <Button mode="outlined" disabled>
+              No Active Round
             </Button>
           )}
         </View>

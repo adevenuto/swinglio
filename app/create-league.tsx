@@ -62,7 +62,7 @@ export default function CreateLeagueScreen() {
     const { data: newLeague, error } = await supabase
       .from("leagues")
       .insert({
-        organizer_id: user?.id,
+        owner_id: user?.id,
         course_id: selectedCourse.id,
         teebox_data: selectedTeebox,
         game_config: gameConfig,
@@ -76,10 +76,11 @@ export default function CreateLeagueScreen() {
       return;
     }
 
-    // Auto-add organizer as league member
+    // Auto-add owner as league coordinator
     await supabase.from("league_users").insert({
       league_id: newLeague.id,
       golfer_id: user?.id,
+      role: "coordinator",
     });
 
     router.back();

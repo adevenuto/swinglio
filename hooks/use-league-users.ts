@@ -5,6 +5,7 @@ export type LeagueUser = {
   id: number;
   league_id: number;
   golfer_id: string;
+  role: "coordinator" | "member";
   profiles: {
     id: string;
     first_name: string | null;
@@ -21,7 +22,7 @@ export function useLeagueUsers(leagueId: number | string) {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("league_users")
-      .select("id, league_id, golfer_id, profiles(id, first_name, last_name, email)")
+      .select("id, league_id, golfer_id, role, profiles(id, first_name, last_name, email)")
       .eq("league_id", leagueId)
       .order("created_at", { ascending: true });
 
@@ -32,10 +33,10 @@ export function useLeagueUsers(leagueId: number | string) {
   }, [leagueId]);
 
   const addMember = useCallback(
-    async (golferId: string) => {
+    async (golferId: string, role: "coordinator" | "member" = "member") => {
       const { error } = await supabase
         .from("league_users")
-        .insert({ league_id: Number(leagueId), golfer_id: golferId });
+        .insert({ league_id: Number(leagueId), golfer_id: golferId, role });
 
       if (!error) {
         await fetchMembers();
@@ -60,5 +61,20 @@ export function useLeagueUsers(leagueId: number | string) {
     [fetchMembers]
   );
 
-  return { members, isLoading, fetchMembers, addMember, removeMember };
+  const updateMemberRole = useCallback(
+    async (leagueUserId: number, role: "coordinator" | "member") => {
+      const { error } = await supabase
+        .from("league_users")
+        .update({ role })
+        .eq("id", leagueUserId);
+
+      if (!error) {
+        await fetchMembers();
+      }
+      return { error };
+    },
+    [fetchMembers]
+  );
+
+  return { members, isLoading, fetchMembers, addMember, removeMember, updateMemberRole };
 }

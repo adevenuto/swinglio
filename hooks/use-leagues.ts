@@ -5,12 +5,13 @@ import { useCallback, useState } from "react";
 
 export type League = {
   id: number;
-  organizer_id: string;
+  owner_id: string;
   course_id: number;
   teebox_data: Teebox;
   game_config: GameConfig | null;
   created_at: string;
   courses: { name: string };
+  _userRole?: "coordinator" | "member";
 };
 
 export function useLeagues(userId: string) {
@@ -25,10 +26,10 @@ export function useLeagues(userId: string) {
     }
     setIsLoading(true);
 
-    // Get league IDs where user is a member
+    // Get league IDs + role where user is a member
     const { data: memberRows } = await supabase
       .from("league_users")
-      .select("league_id")
+      .select("league_id, role")
       .eq("golfer_id", userId);
 
     if (!memberRows || memberRows.length === 0) {
@@ -37,7 +38,11 @@ export function useLeagues(userId: string) {
       return;
     }
 
-    const leagueIds = memberRows.map((r) => r.league_id);
+    const roleByLeagueId = new Map<number, string>();
+    const leagueIds = memberRows.map((r) => {
+      roleByLeagueId.set(r.league_id, r.role);
+      return r.league_id;
+    });
 
     const { data, error } = await supabase
       .from("leagues")
@@ -46,7 +51,11 @@ export function useLeagues(userId: string) {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setLeagues(data as League[]);
+      const enriched = data.map((league: any) => ({
+        ...league,
+        _userRole: roleByLeagueId.get(league.id) ?? "member",
+      }));
+      setLeagues(enriched as League[]);
     }
     setIsLoading(false);
   }, [userId]);

@@ -2,6 +2,7 @@ import ActiveRoundCard from "@/components/ActiveRoundCard";
 import LeagueList from "@/components/LeagueList";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
+import { useLeagues } from "@/hooks/use-leagues";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
@@ -16,18 +17,22 @@ export default function Dashboard() {
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
   );
+  const { leagues, isLoading: leaguesLoading, refresh: refreshLeagues } = useLeagues(
+    user?.id ?? "",
+  );
 
   useFocusEffect(
     useCallback(() => {
       refreshRounds();
-    }, [refreshRounds]),
+      refreshLeagues();
+    }, [refreshRounds, refreshLeagues]),
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshUser(), refreshRounds()]);
+    await Promise.all([refreshUser(), refreshRounds(), refreshLeagues()]);
     setRefreshing(false);
-  }, [refreshUser, refreshRounds]);
+  }, [refreshUser, refreshRounds, refreshLeagues]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -69,7 +74,7 @@ export default function Dashboard() {
 
             <ActiveRoundCard rounds={activeRounds} />
 
-            <LeagueList />
+            <LeagueList leagues={leagues} isLoading={leaguesLoading} />
           </View>
         </View>
       </ScrollView>

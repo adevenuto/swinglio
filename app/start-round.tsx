@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/auth-context";
 import { useLeagueUsers, LeagueUser } from "@/hooks/use-league-users";
 import { League } from "@/hooks/use-leagues";
 import { Teebox } from "@/hooks/use-course-search";
@@ -23,6 +24,7 @@ function buildScoreDetails(teebox: Teebox) {
 
 export default function StartRoundScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [league, setLeague] = useState<League | null>(null);
@@ -79,6 +81,20 @@ export default function StartRoundScreen() {
           ]
         );
         setIsLoading(false);
+        return;
+      }
+
+      // Verify coordinator access
+      const { data: membership } = await supabase
+        .from("league_users")
+        .select("role")
+        .eq("league_id", id)
+        .eq("golfer_id", user?.id)
+        .single();
+
+      if (!membership || membership.role !== "coordinator") {
+        Alert.alert("Access Denied", "Only coordinators can start rounds.");
+        router.back();
         return;
       }
 

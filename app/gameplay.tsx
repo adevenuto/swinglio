@@ -1,8 +1,13 @@
-import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
+import Scorecard, {
+  ScorecardPlayer,
+  ScorecardRef,
+} from "@/components/Scorecard";
+import ScoreEntryModal from "@/components/ScoreEntryModal";
+import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, RefreshControl, ScrollView, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import "../global.css";
 
@@ -33,12 +38,35 @@ type PlayerScore = {
   profiles: { first_name: string | null; last_name: string | null };
 };
 
+function getCurrentHole(
+  players: PlayerScore[],
+  userId: string,
+): number | null {
+  const me = players.find((p) => p.golfer_id === userId);
+  if (!me?.score_details?.holes) return null;
+  const holeCount = Object.keys(me.score_details.holes).length;
+  for (let i = 1; i <= holeCount; i++) {
+    if (!me.score_details.holes[`hole-${i}`]?.score) return i;
+  }
+  return null;
+}
+
 export default function GameplayScreen() {
+  const { user } = useAuth();
   const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  const scorecardRef = useRef<ScorecardRef>(null);
+
   const [round, setRound] = useState<RoundData | null>(null);
   const [players, setPlayers] = useState<PlayerScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Score entry modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<{
+    player: ScorecardPlayer;
+    holeKey: string;
+  } | null>(null);
 
   const fetchRound = useCallback(async () => {
     setIsLoading(true);
@@ -67,6 +95,114 @@ export default function GameplayScreen() {
     fetchRound();
   }, [fetchRound]);
 
+  // Auto-scroll to current hole after data loads
+  useEffect(() => {
+    if (!isLoading && players.length > 0 && user?.id) {
+      const nextHole = getCurrentHole(players, user.id);
+      if (nextHole) {
+        // Small delay to let the scorecard layout complete
+        setTimeout(() => scorecardRef.current?.scrollToHole(nextHole), 100);
+      }
+    }
+  }, [isLoading, players, user?.id]);
+
+  const handleCellPress = useCallback(
+    (player: ScorecardPlayer, holeKey: string) => {
+      if (player.golfer_id !== user?.id) return;
+      setSelectedCell({ player, holeKey });
+      setModalVisible(true);
+    },
+    [user?.id],
+  );
+
+  const handleSaveScore = useCallback(
+    async (score: string) => {
+      if (!selectedCell) return;
+      const { player, holeKey } = selectedCell;
+
+      // Find the full player data for Supabase update
+      const targetPlayer = players.find((p) => p.id === player.id);
+      if (!targetPlayer) return;
+
+      // Build updated score_details
+      const updatedScoreDetails = {
+        ...targetPlayer.score_details,
+        holes: {
+          ...targetPlayer.score_details.holes,
+          [holeKey]: {
+            ...targetPlayer.score_details.holes[holeKey],
+            score,
+          },
+        },
+      };
+
+      // Optimistic update
+      const prevPlayers = players;
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === player.id
+            ? { ...p, score_details: updatedScoreDetails }
+            : p,
+        ),
+      );
+      setModalVisible(false);
+
+      // Persist to Supabase
+      const { error } = await supabase
+        .from("scores")
+        .update({ score_details: updatedScoreDetails })
+        .eq("id", player.id);
+
+      if (error) {
+        setPlayers(prevPlayers);
+        Alert.alert("Error", "Failed to save score. Please try again.");
+        return;
+      }
+
+      // Auto-scroll to next empty hole
+      const updatedPlayers = prevPlayers.map((p) =>
+        p.id === player.id
+          ? { ...p, score_details: updatedScoreDetails }
+          : p,
+      );
+      if (user?.id) {
+        const nextHole = getCurrentHole(updatedPlayers, user.id);
+        if (nextHole) {
+          scorecardRef.current?.scrollToHole(nextHole);
+        }
+      }
+    },
+    [selectedCell, players, user?.id],
+  );
+
+  // Derive modal props from selected cell
+  const modalProps = useMemo(() => {
+    if (!selectedCell) {
+      return { holeNumber: 0, par: "", yardage: "", playerName: "", currentScore: "" };
+    }
+    const { player, holeKey } = selectedCell;
+    const holeNumber = parseInt(holeKey.replace("hole-", ""), 10);
+    const holeData = player.score_details?.holes[holeKey];
+    return {
+      holeNumber,
+      par: holeData?.par ?? "",
+      yardage: holeData?.length ?? "",
+      playerName: player.first_name,
+      currentScore: holeData?.score ?? "",
+    };
+  }, [selectedCell]);
+
+  const scorecardPlayers: ScorecardPlayer[] = useMemo(
+    () =>
+      players.map((p) => ({
+        id: p.id,
+        golfer_id: p.golfer_id,
+        first_name: p.profiles?.first_name ?? "?",
+        score_details: p.score_details,
+      })),
+    [players],
+  );
+
   if (isLoading) {
     return (
       <View className="items-center justify-center flex-1 bg-white">
@@ -82,17 +218,6 @@ export default function GameplayScreen() {
       </View>
     );
   }
-
-  const scorecardPlayers: ScorecardPlayer[] = useMemo(
-    () =>
-      players.map((p) => ({
-        id: p.id,
-        golfer_id: p.golfer_id,
-        first_name: p.profiles?.first_name ?? "?",
-        score_details: p.score_details,
-      })),
-    [players],
-  );
 
   return (
     <View className="flex-1 bg-white">
@@ -132,11 +257,25 @@ export default function GameplayScreen() {
       >
         <View className="px-4 pb-4">
           <Scorecard
+            ref={scorecardRef}
             teeboxData={round.leagues.teebox_data}
             players={scorecardPlayers}
+            onCellPress={handleCellPress}
           />
         </View>
       </ScrollView>
+
+      {/* Score entry modal */}
+      <ScoreEntryModal
+        visible={modalVisible}
+        onDismiss={() => setModalVisible(false)}
+        onSave={handleSaveScore}
+        holeNumber={modalProps.holeNumber}
+        par={modalProps.par}
+        yardage={modalProps.yardage}
+        playerName={modalProps.playerName}
+        currentScore={modalProps.currentScore}
+      />
     </View>
   );
 }

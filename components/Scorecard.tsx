@@ -1,7 +1,7 @@
 import { getContrastColor } from "@/lib/color-contrast";
 import { Teebox } from "@/hooks/use-course-search";
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 // --- Types ---
 
@@ -18,6 +18,7 @@ export type ScorecardPlayer = {
 type ScorecardProps = {
   teeboxData: Teebox;
   players: ScorecardPlayer[];
+  onCellPress?: (player: ScorecardPlayer, holeKey: string) => void;
 };
 
 export type ScorecardRef = {
@@ -93,7 +94,7 @@ function sumField(
 // --- Component ---
 
 const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
-  ({ teeboxData, players }, ref) => {
+  ({ teeboxData, players, onCellPress }, ref) => {
     const scrollRef = useRef<ScrollView>(null);
 
     const holeCount = useMemo(
@@ -224,7 +225,19 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       return columns.map((col) => {
         if (col.type === "hole") {
           const score = holes[col.key]?.score ?? "";
-          return renderDataCell(score || " ", `${player.id}-${col.key}`);
+          const cell = renderDataCell(score || " ", `${player.id}-${col.key}`);
+          if (onCellPress) {
+            return (
+              <Pressable
+                key={`${player.id}-${col.key}`}
+                onPress={() => onCellPress(player, col.key)}
+                style={({ pressed }) => pressed ? { opacity: 0.5 } : undefined}
+              >
+                {cell}
+              </Pressable>
+            );
+          }
+          return cell;
         }
         if (col.type === "out") {
           const total = sumField(holes, front, "score");

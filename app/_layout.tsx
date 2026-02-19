@@ -1,13 +1,13 @@
 import { AuthProvider } from "@/contexts/auth-context";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { DefaultTheme as PaperDefaultTheme, PaperProvider } from "react-native-paper";
+import {
+  DefaultTheme as PaperDefaultTheme,
+  PaperProvider,
+} from "react-native-paper";
+import "react-native-reanimated";
+import "../global.css";
 
 const paperTheme = {
   ...PaperDefaultTheme,
@@ -17,15 +17,11 @@ const paperTheme = {
     secondaryContainer: "#e5e5e5",
   },
 };
-import "react-native-reanimated";
-import "../global.css";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={DefaultTheme}>
         <PaperProvider theme={paperTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
@@ -97,6 +93,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="gameplay"
               options={{
+                animation: "none",
                 headerShown: true,
                 title: "Round",
                 headerBackTitle: "Dashboard",

@@ -239,14 +239,24 @@ export default function LeagueDetailScreen() {
                     description={member.profiles.email || undefined}
                     descriptionStyle={{ color: "#555" }}
                     left={(props) => <List.Icon {...props} icon="account" />}
-                    right={(props) => (
-                      <IconButton
-                        {...props}
-                        icon="close"
-                        size={18}
-                        onPress={() => handleRemoveMember(member.id, name)}
-                      />
-                    )}
+                    right={(props) =>
+                      member.golfer_id === league.organizer_id ? (
+                        <Text
+                          {...props}
+                          variant="labelSmall"
+                          style={{ color: "#999", alignSelf: "center" }}
+                        >
+                          Organizer
+                        </Text>
+                      ) : (
+                        <IconButton
+                          {...props}
+                          icon="close"
+                          size={18}
+                          onPress={() => handleRemoveMember(member.id, name)}
+                        />
+                      )
+                    }
                   />
                 );
               })
@@ -373,12 +383,23 @@ export default function LeagueDetailScreen() {
               </View>
             </>
           )}
+
+          {/* Delete League */}
+          <Button
+            mode="text"
+            onPress={handleDelete}
+            loading={isDeleting}
+            textColor="#dc2626"
+            style={{ marginTop: 8, marginBottom: 16 }}
+          >
+            Delete League
+          </Button>
         </View>
       </ScrollView>
 
       {/* Sticky Footer */}
       <View
-        className="flex-row gap-3 px-4 pt-4 pb-12"
+        className="flex-row gap-3 px-4 pt-4 pb-14"
         style={{ borderTopWidth: 1, borderTopColor: "#e5e5e5" }}
       >
         <View className="flex-1">
@@ -389,12 +410,14 @@ export default function LeagueDetailScreen() {
         <View className="flex-1">
           <Button
             mode="outlined"
-            onPress={handleDelete}
-            loading={isDeleting}
-            textColor="#dc2626"
-            style={{ borderColor: "#dc2626" }}
+            onPress={() =>
+              router.push({
+                pathname: "/start-round",
+                params: { id },
+              })
+            }
           >
-            Delete League
+            Start Round
           </Button>
         </View>
       </View>

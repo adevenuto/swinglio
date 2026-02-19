@@ -83,6 +83,17 @@ export default function RootLayout() {
                 headerShadowVisible: false,
               }}
             />
+            <Stack.Screen
+              name="start-round"
+              options={{
+                presentation: "modal",
+                headerShown: true,
+                title: "Start Round",
+                headerStyle: { backgroundColor: "#fff" },
+                headerTintColor: "#1a1a1a",
+                headerShadowVisible: false,
+              }}
+            />
           </Stack>
           <StatusBar style="auto" />
         </PaperProvider>

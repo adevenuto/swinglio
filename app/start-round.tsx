@@ -47,6 +47,41 @@ export default function StartRoundScreen() {
   useEffect(() => {
     async function init() {
       setIsLoading(true);
+
+      // Check for existing active round — prevent duplicates
+      const { data: activeRound } = await supabase
+        .from("rounds")
+        .select("id")
+        .eq("league_id", id)
+        .eq("status", "active")
+        .limit(1);
+
+      if (activeRound && activeRound.length > 0) {
+        Alert.alert(
+          "Active Round Exists",
+          "There is already an active round for this league.",
+          [
+            {
+              text: "Go to Round",
+              onPress: () => {
+                router.dismissAll();
+                router.push({
+                  pathname: "/gameplay",
+                  params: { roundId: activeRound[0].id },
+                });
+              },
+            },
+            {
+              text: "Cancel",
+              onPress: () => router.back(),
+              style: "cancel",
+            },
+          ]
+        );
+        setIsLoading(false);
+        return;
+      }
+
       await Promise.all([fetchLeague(), fetchMembers()]);
 
       // Determine pre-selected players from most recent round
@@ -75,7 +110,7 @@ export default function StartRoundScreen() {
     }
 
     init();
-  }, [id, fetchLeague, fetchMembers]);
+  }, [id, fetchLeague, fetchMembers, router]);
 
   // Once members load, if __ALL__ marker is set, select all
   useEffect(() => {
@@ -110,7 +145,7 @@ export default function StartRoundScreen() {
     // 1. Create the round
     const { data: round, error: roundError } = await supabase
       .from("rounds")
-      .insert({ league_id: Number(id), course_id: league.course_id })
+      .insert({ league_id: Number(id), course_id: league.course_id, status: "active" })
       .select()
       .single();
 
@@ -143,7 +178,11 @@ export default function StartRoundScreen() {
       return;
     }
 
-    router.back();
+    router.dismissAll();
+    router.push({
+      pathname: "/gameplay",
+      params: { roundId: round.id },
+    });
   };
 
   if (isLoading || membersLoading) {

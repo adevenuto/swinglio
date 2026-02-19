@@ -94,6 +94,17 @@ export default function RootLayout() {
                 headerShadowVisible: false,
               }}
             />
+            <Stack.Screen
+              name="gameplay"
+              options={{
+                headerShown: true,
+                title: "Round",
+                headerBackTitle: "Dashboard",
+                headerStyle: { backgroundColor: "#fff" },
+                headerTintColor: "#1a1a1a",
+                headerShadowVisible: false,
+              }}
+            />
           </Stack>
           <StatusBar style="auto" />
         </PaperProvider>

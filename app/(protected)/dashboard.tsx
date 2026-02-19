@@ -1,22 +1,33 @@
+import ActiveRoundCard from "@/components/ActiveRoundCard";
 import LeagueList from "@/components/LeagueList";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "expo-router";
+import { useActiveRounds } from "@/hooks/use-active-rounds";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
 
 export default function Dashboard() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const { activeRounds, refresh: refreshRounds } = useActiveRounds(
+    user?.id ?? "",
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshRounds();
+    }, [refreshRounds]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshUser();
+    await Promise.all([refreshUser(), refreshRounds()]);
     setRefreshing(false);
-  }, [refreshUser]);
+  }, [refreshUser, refreshRounds]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -48,13 +59,15 @@ export default function Dashboard() {
               Create League
             </Button>
 
-            <Button
+            {/* <Button
               mode="outlined"
               onPress={() => router.push("/player-scores")}
               style={{ marginTop: 12 }}
             >
               Player Scores
-            </Button>
+            </Button> */}
+
+            <ActiveRoundCard rounds={activeRounds} />
 
             <LeagueList />
           </View>

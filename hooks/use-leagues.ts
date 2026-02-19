@@ -24,10 +24,25 @@ export function useLeagues(userId: string) {
       return;
     }
     setIsLoading(true);
+
+    // Get league IDs where user is a member
+    const { data: memberRows } = await supabase
+      .from("league_users")
+      .select("league_id")
+      .eq("golfer_id", userId);
+
+    if (!memberRows || memberRows.length === 0) {
+      setLeagues([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const leagueIds = memberRows.map((r) => r.league_id);
+
     const { data, error } = await supabase
       .from("leagues")
       .select("*, courses(name)")
-      .eq("organizer_id", userId)
+      .in("id", leagueIds)
       .order("created_at", { ascending: false });
 
     if (!error && data) {

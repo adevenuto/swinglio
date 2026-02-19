@@ -23,6 +23,7 @@ export default function LeagueDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [activeRoundId, setActiveRoundId] = useState<number | null>(null);
 
   const {
     members,
@@ -44,6 +45,19 @@ export default function LeagueDetailScreen() {
     if (!error && data) {
       setLeague(data as League);
     }
+
+    // Check for active round
+    const { data: activeRound } = await supabase
+      .from("rounds")
+      .select("id")
+      .eq("league_id", id)
+      .eq("status", "active")
+      .limit(1);
+
+    setActiveRoundId(
+      activeRound && activeRound.length > 0 ? activeRound[0].id : null
+    );
+
     setIsLoading(false);
   }, [id]);
 
@@ -408,17 +422,32 @@ export default function LeagueDetailScreen() {
           </Button>
         </View>
         <View className="flex-1">
-          <Button
-            mode="outlined"
-            onPress={() =>
-              router.push({
-                pathname: "/start-round",
-                params: { id },
-              })
-            }
-          >
-            Start Round
-          </Button>
+          {activeRoundId ? (
+            <Button
+              mode="outlined"
+              onPress={() => {
+                router.dismissAll();
+                router.push({
+                  pathname: "/gameplay",
+                  params: { roundId: activeRoundId },
+                });
+              }}
+            >
+              Continue Round
+            </Button>
+          ) : (
+            <Button
+              mode="outlined"
+              onPress={() =>
+                router.push({
+                  pathname: "/start-round",
+                  params: { id },
+                })
+              }
+            >
+              Start Round
+            </Button>
+          )}
         </View>
       </View>
     </View>

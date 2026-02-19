@@ -39,7 +39,7 @@ function parseCsv(filePath: string): CsvUser[] {
 
 function generateTempPassword(email: string): string {
   const local = email.split("@")[0];
-  return `TempPass_${local}!2024`;
+  return `${local}@1234`;
 }
 
 async function main() {

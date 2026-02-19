@@ -5,10 +5,10 @@ import Scorecard, {
 import ScoreEntryModal from "@/components/ScoreEntryModal";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, RefreshControl, ScrollView, View } from "react-native";
-import { ActivityIndicator, Text } from "react-native-paper";
+import { ActivityIndicator, Button, Text } from "react-native-paper";
 import "../global.css";
 
 type RoundData = {
@@ -18,6 +18,7 @@ type RoundData = {
   status: string;
   created_at: string;
   leagues: {
+    organizer_id: string;
     courses: { name: string };
     teebox_data: {
       order: number;
@@ -53,6 +54,7 @@ function getCurrentHole(
 
 export default function GameplayScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const { roundId } = useLocalSearchParams<{ roundId: string }>();
   const scorecardRef = useRef<ScorecardRef>(null);
 
@@ -60,6 +62,7 @@ export default function GameplayScreen() {
   const [players, setPlayers] = useState<PlayerScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Score entry modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -74,7 +77,7 @@ export default function GameplayScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, league_id, course_id, status, created_at, leagues(courses(name), teebox_data)",
+        "id, league_id, course_id, status, created_at, leagues(organizer_id, courses(name), teebox_data)",
       )
       .eq("id", roundId)
       .single();
@@ -175,6 +178,32 @@ export default function GameplayScreen() {
     [selectedCell, players, user?.id],
   );
 
+  const handleDeleteRound = () => {
+    Alert.alert(
+      "Delete Round",
+      "Are you sure you want to delete this round and all scores? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setIsDeleting(true);
+            await supabase.from("scores").delete().eq("round_id", roundId);
+            const { error } = await supabase
+              .from("rounds")
+              .delete()
+              .eq("id", roundId);
+            setIsDeleting(false);
+            if (!error) {
+              router.back();
+            }
+          },
+        },
+      ],
+    );
+  };
+
   // Derive modal props from selected cell
   const modalProps = useMemo(() => {
     if (!selectedCell) {
@@ -263,6 +292,17 @@ export default function GameplayScreen() {
             onCellPress={handleCellPress}
           />
         </View>
+        {user?.id === round.leagues?.organizer_id && (
+          <Button
+            mode="text"
+            onPress={handleDeleteRound}
+            loading={isDeleting}
+            textColor="#dc2626"
+            style={{ marginTop: 8, marginBottom: 16 }}
+          >
+            Delete Round
+          </Button>
+        )}
       </ScrollView>
 
       {/* Score entry modal */}

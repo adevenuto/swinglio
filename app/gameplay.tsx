@@ -1,6 +1,7 @@
+import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import "../global.css";
@@ -14,7 +15,9 @@ type RoundData = {
   leagues: {
     courses: { name: string };
     teebox_data: {
+      order: number;
       name: string;
+      color?: string;
       holes: Record<string, { par: string; length: string }>;
     };
   };
@@ -80,6 +83,17 @@ export default function GameplayScreen() {
     );
   }
 
+  const scorecardPlayers: ScorecardPlayer[] = useMemo(
+    () =>
+      players.map((p) => ({
+        id: p.id,
+        golfer_id: p.golfer_id,
+        first_name: p.profiles?.first_name ?? "?",
+        score_details: p.score_details,
+      })),
+    [players],
+  );
+
   return (
     <View className="flex-1 bg-white">
       {/* Course info header */}
@@ -100,9 +114,9 @@ export default function GameplayScreen() {
         </View>
       </View>
 
-      {/* Players list */}
+      {/* Scorecard */}
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -116,38 +130,12 @@ export default function GameplayScreen() {
           />
         }
       >
-        <Text
-          variant="titleSmall"
-          style={{ color: "#111827", marginBottom: 12 }}
-        >
-          Players ({players.length})
-        </Text>
-        {players.map((p) => {
-          const name =
-            [p.profiles?.first_name, p.profiles?.last_name]
-              .filter(Boolean)
-              .join(" ") || "Unknown";
-          return (
-            <View
-              key={p.id}
-              className="py-3"
-              style={{
-                borderBottomWidth: 1,
-                borderBottomColor: "#f0f0f0",
-              }}
-            >
-              <Text
-                variant="bodyLarge"
-                style={{ color: "#1a1a1a", fontWeight: "600" }}
-              >
-                {name}
-              </Text>
-              <Text variant="bodySmall" style={{ color: "#555" }}>
-                Teebox: {p.score_details?.name ?? "N/A"}
-              </Text>
-            </View>
-          );
-        })}
+        <View className="px-4 pb-4">
+          <Scorecard
+            teeboxData={round.leagues.teebox_data}
+            players={scorecardPlayers}
+          />
+        </View>
       </ScrollView>
     </View>
   );

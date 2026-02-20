@@ -69,6 +69,17 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="edit-league-info"
+              options={{
+                presentation: "modal",
+                headerShown: true,
+                title: "Edit League Info",
+                headerStyle: { backgroundColor: "#fff" },
+                headerTintColor: "#1a1a1a",
+                headerShadowVisible: false,
+              }}
+            />
+            <Stack.Screen
               name="player-scores"
               options={{
                 presentation: "modal",

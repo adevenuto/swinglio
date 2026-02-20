@@ -11,6 +11,7 @@ export type LeagueUser = {
     first_name: string | null;
     last_name: string | null;
     email: string | null;
+    avatar_url: string | null;
   };
 };
 
@@ -22,7 +23,7 @@ export function useLeagueUsers(leagueId: number | string) {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("league_users")
-      .select("id, league_id, golfer_id, role, profiles(id, first_name, last_name, email)")
+      .select("id, league_id, golfer_id, role, profiles(id, first_name, last_name, email, avatar_url)")
       .eq("league_id", leagueId)
       .order("created_at", { ascending: true });
 

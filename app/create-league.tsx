@@ -13,8 +13,9 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
-import { Alert, FlatList, ScrollView, View } from "react-native";
+import { Alert, FlatList, Platform, Pressable, ScrollView, View } from "react-native";
 import { Button, Chip, List, Searchbar, Text } from "react-native-paper";
 import "../global.css";
 
@@ -29,6 +30,9 @@ export default function CreateLeagueScreen() {
   const [selectedTeebox, setSelectedTeebox] = useState<Teebox | null>(null);
   const [gameConfig, setGameConfig] = useState<GameConfig>(DEFAULT_GAME_CONFIG);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [playDay, setPlayDay] = useState<string | null>(null);
+  const [playTime, setPlayTime] = useState<Date | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const teeboxes = selectedCourse
     ? parseTeeboxes(selectedCourse.layout_data)
@@ -66,6 +70,10 @@ export default function CreateLeagueScreen() {
         course_id: selectedCourse.id,
         teebox_data: selectedTeebox,
         game_config: gameConfig,
+        play_day: playDay,
+        play_time: playTime
+          ? playTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+          : null,
       })
       .select()
       .single();
@@ -136,17 +144,26 @@ export default function CreateLeagueScreen() {
             />
           </>
         ) : (
-          <>
-            <View className="p-4 mb-4 border border-green-200 rounded-lg bg-green-50">
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <View
+              style={{
+                padding: 16,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: "#d4d4d4",
+                borderRadius: 8,
+                backgroundColor: "#fff",
+              }}
+            >
               <View className="flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text
                     variant="titleMedium"
-                    style={{ color: "#14532d", fontWeight: "600" }}
+                    style={{ color: "#1a1a1a", fontWeight: "600" }}
                   >
                     {selectedCourse.name}
                   </Text>
-                  <Text variant="bodySmall" style={{ color: "#15803d" }}>
+                  <Text variant="bodySmall" style={{ color: "#555" }}>
                     {[
                       selectedCourse.street,
                       selectedCourse.state,
@@ -193,15 +210,102 @@ export default function CreateLeagueScreen() {
               </View>
             )}
 
+            {/* Play Day (optional) */}
+            <Text
+              variant="titleSmall"
+              style={{ marginTop: 16, marginBottom: 12, color: "#111827" }}
+            >
+              Play Day
+              <Text variant="bodySmall" style={{ color: "#999" }}>
+                {" "}(optional)
+              </Text>
+            </Text>
+            <View className="flex-row flex-wrap gap-2 mb-2">
+              {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(
+                (day) => (
+                  <Chip
+                    key={day}
+                    mode="outlined"
+                    selected={playDay === day}
+                    onPress={() => setPlayDay(playDay === day ? null : day)}
+                    style={
+                      playDay === day
+                        ? undefined
+                        : { backgroundColor: "transparent" }
+                    }
+                  >
+                    {day.charAt(0).toUpperCase() + day.slice(1, 3)}
+                  </Chip>
+                ),
+              )}
+            </View>
+
+            {/* Tee Time (optional) */}
+            <Text
+              variant="titleSmall"
+              style={{ marginTop: 12, marginBottom: 12, color: "#111827" }}
+            >
+              Tee Time
+              <Text variant="bodySmall" style={{ color: "#999" }}>
+                {" "}(optional)
+              </Text>
+            </Text>
+            <View className="flex-row items-center gap-3 mb-2">
+              <Pressable
+                onPress={() => {
+                  if (!playTime) setPlayTime(new Date());
+                  setShowTimePicker(true);
+                }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderWidth: 1,
+                  borderColor: "#d4d4d4",
+                  borderRadius: 8,
+                  backgroundColor: "#fff",
+                }}
+              >
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: playTime ? "#1a1a1a" : "#999" }}
+                >
+                  {playTime
+                    ? playTime.toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })
+                    : "Select time"}
+                </Text>
+              </Pressable>
+              {playTime && (
+                <Pressable onPress={() => { setPlayTime(null); setShowTimePicker(false); }}>
+                  <Text variant="bodySmall" style={{ color: "#dc2626" }}>
+                    Clear
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+            {showTimePicker && (
+              <DateTimePicker
+                value={playTime || new Date()}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, date) => {
+                  if (Platform.OS === "android") setShowTimePicker(false);
+                  if (date) setPlayTime(date);
+                }}
+              />
+            )}
+
             <Button
               mode="outlined"
               onPress={() => setStep(2)}
               disabled={!selectedTeebox}
-              style={{ marginTop: 16 }}
+              style={{ marginTop: 16, marginBottom: 32 }}
             >
               Next
             </Button>
-          </>
+          </ScrollView>
         )}
       </View>
     );
@@ -211,10 +315,19 @@ export default function CreateLeagueScreen() {
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 px-4 pt-4">
-        <View className="p-3 mb-4 border border-green-200 rounded-lg bg-green-50">
+        <View
+          style={{
+            padding: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: "#d4d4d4",
+            borderRadius: 8,
+            backgroundColor: "#fff",
+          }}
+        >
           <Text
             variant="bodyMedium"
-            style={{ color: "#14532d", fontWeight: "600" }}
+            style={{ color: "#1a1a1a", fontWeight: "600" }}
           >
             {selectedCourse?.name} — {selectedTeebox?.name} tees
           </Text>

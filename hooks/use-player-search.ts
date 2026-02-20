@@ -6,6 +6,7 @@ export type Player = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url: string | null;
 };
 
 export type PlayerScore = {
@@ -40,7 +41,7 @@ export function usePlayerSearch() {
       const trimmed = text.trim();
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, email")
+        .select("id, first_name, last_name, email, avatar_url")
         .or(
           `first_name.ilike.%${trimmed}%,last_name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`
         )

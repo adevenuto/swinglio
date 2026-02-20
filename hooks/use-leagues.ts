@@ -5,10 +5,13 @@ import { useCallback, useState } from "react";
 
 export type League = {
   id: number;
+  name: string | null;
   owner_id: string;
   course_id: number;
   teebox_data: Teebox;
   game_config: GameConfig | null;
+  play_day: string | null;
+  play_time: string | null;
   created_at: string;
   courses: { name: string };
   _userRole?: "coordinator" | "member";

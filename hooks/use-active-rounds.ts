@@ -9,6 +9,7 @@ export type ActiveRound = {
   created_at: string;
   leagues: {
     id: number;
+    name: string | null;
     courses: { name: string };
     teebox_data: { name: string };
   };
@@ -52,7 +53,7 @@ export function useActiveRounds(userId: string) {
     const { data } = await supabase
       .from("rounds")
       .select(
-        "id, league_id, course_id, status, created_at, leagues(id, courses(name), teebox_data)"
+        "id, league_id, course_id, status, created_at, leagues(id, name, courses(name), teebox_data)"
       )
       .in("id", roundIds)
       .eq("status", "active")

@@ -1,3 +1,4 @@
+import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/auth-context";
 import { LeagueUser, useLeagueUsers } from "@/hooks/use-league-users";
 import { League } from "@/hooks/use-leagues";
@@ -174,19 +175,69 @@ export default function LeagueDetailScreen() {
     <View className="flex-1 bg-white">
       {/* Sticky Header */}
       <View className="px-4 pt-6 pb-4">
-        <View className="p-4 border border-green-200 rounded-lg bg-green-50">
-          <Text
-            variant="titleLarge"
-            style={{ fontWeight: "700", color: "#14532d", marginBottom: 2 }}
+        <View
+          style={{
+            padding: 16,
+            borderWidth: 1,
+            borderColor: "#d4d4d4",
+            borderRadius: 8,
+            backgroundColor: "#fff",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            {league.courses?.name ?? "Unknown Course"}
+            <Text
+              variant="titleLarge"
+              style={{
+                fontWeight: "700",
+                color: "#1a1a1a",
+                textTransform: "capitalize",
+                flex: 1,
+              }}
+            >
+              {league.name || league.courses?.name || "Unknown"}
+            </Text>
+            {canManage && (
+              <Button
+                mode="outlined"
+                compact
+                onPress={() =>
+                  router.push({
+                    pathname: "/edit-league-info",
+                    params: { id },
+                  })
+                }
+              >
+                Edit
+              </Button>
+            )}
+          </View>
+          <Text
+            variant="bodyMedium"
+            style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
+          >
+            {league.courses?.name}
+            {league.teebox_data?.name
+              ? ` · ${league.teebox_data.name} tees`
+              : ""}
           </Text>
-          <Text variant="bodyMedium" style={{ color: "#15803d" }}>
-            {league.teebox_data?.name ?? "N/A"} tees
-          </Text>
-          <Text variant="bodySmall" style={{ color: "#15803d", marginTop: 4 }}>
-            Created {new Date(league.created_at).toLocaleDateString()}
-          </Text>
+          {(league.play_day || league.play_time) && (
+            <Text
+              variant="bodySmall"
+              style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
+            >
+              {league.play_day ? `${league.play_day}s` : ""}
+              {league.play_day && league.play_time ? " · " : ""}
+              {league.play_time
+                ? formatTime(league.play_time)
+                : ""}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -287,7 +338,11 @@ export default function LeagueDetailScreen() {
                     titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
                     description={member.profiles.email || undefined}
                     descriptionStyle={{ color: "#555" }}
-                    left={(props) => <List.Icon {...props} icon="account" />}
+                    left={() => (
+                      <View style={{ justifyContent: "center", marginLeft: 8 }}>
+                        <UserAvatar avatarUrl={member.profiles.avatar_url} firstName={member.profiles.first_name} size={40} />
+                      </View>
+                    )}
                     right={(props) => (
                       <View style={{ flexDirection: "row", alignItems: "center" }}>
                         {memberIsOwner ? (
@@ -511,6 +566,13 @@ export default function LeagueDetailScreen() {
       </View>
     </View>
   );
+}
+
+function formatTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
 function Row({ label, value }: { label: string; value: string }) {

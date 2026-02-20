@@ -1,3 +1,4 @@
+import UserAvatar from "@/components/UserAvatar";
 import {
   Player,
   usePlayerSearch,
@@ -78,7 +79,11 @@ export default function PlayerScoresScreen() {
               description={item.email || undefined}
               descriptionStyle={{ color: "#555" }}
               onPress={() => handleSelectPlayer(item)}
-              left={(props) => <List.Icon {...props} icon="account" />}
+              left={() => (
+                <View style={{ justifyContent: "center", marginLeft: 8 }}>
+                  <UserAvatar avatarUrl={item.avatar_url} firstName={item.first_name} size={40} />
+                </View>
+              )}
             />
           )}
           ListEmptyComponent={

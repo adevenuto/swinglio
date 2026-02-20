@@ -19,6 +19,7 @@ type RoundData = {
   created_at: string;
   leagues: {
     owner_id: string;
+    name: string | null;
     courses: { name: string };
     teebox_data: {
       order: number;
@@ -35,6 +36,8 @@ type PlayerScore = {
   score_details: {
     name: string;
     holes: Record<string, { par: string; length: string; score: string }>;
+    inProxs?: boolean;
+    inSkins?: boolean;
   };
   profiles: { first_name: string | null; last_name: string | null };
 };
@@ -78,7 +81,7 @@ export default function GameplayScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, league_id, course_id, status, created_at, leagues(owner_id, courses(name), teebox_data)",
+        "id, league_id, course_id, status, created_at, leagues(owner_id, name, courses(name), teebox_data)",
       )
       .eq("id", roundId)
       .single();
@@ -262,20 +265,58 @@ export default function GameplayScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Course info header */}
+      {/* Header */}
       <View className="px-4 pt-6 pb-4">
-        <View className="p-4 border border-green-200 rounded-lg bg-green-50">
-          <Text
-            variant="titleLarge"
-            style={{ fontWeight: "700", color: "#14532d", marginBottom: 2 }}
+        <View
+          style={{
+            padding: 16,
+            borderWidth: 1,
+            borderColor: "#d4d4d4",
+            borderRadius: 8,
+            backgroundColor: "#fff",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            {round.leagues?.courses?.name ?? "Unknown Course"}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: "#15803d" }}>
-            {round.leagues?.teebox_data?.name ?? "N/A"} tees
-          </Text>
-          <Text variant="bodySmall" style={{ color: "#15803d", marginTop: 4 }}>
-            Round — {round.status}
+            <Text
+              variant="titleLarge"
+              style={{
+                fontWeight: "700",
+                color: "#1a1a1a",
+                flex: 1,
+                textTransform: "capitalize",
+              }}
+            >
+              {round.leagues?.name || round.leagues?.courses?.name || "Unknown"}
+            </Text>
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 4,
+                borderWidth: 1,
+                borderColor: "#86efac",
+                backgroundColor: "#f0fdf4",
+              }}
+            >
+              <Text style={{ fontSize: 11, fontWeight: "600", color: "#16a34a" }}>
+                Active
+              </Text>
+            </View>
+          </View>
+          <Text
+            variant="bodyMedium"
+            style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
+          >
+            {round.leagues?.courses?.name}
+            {round.leagues?.teebox_data?.name
+              ? ` · ${round.leagues.teebox_data.name} tees`
+              : ""}
           </Text>
         </View>
       </View>
@@ -302,6 +343,7 @@ export default function GameplayScreen() {
             teeboxData={round.leagues.teebox_data}
             players={scorecardPlayers}
             onCellPress={handleCellPress}
+            currentUserId={user?.id}
           />
         </View>
         {isCoordinator && (

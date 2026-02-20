@@ -22,6 +22,13 @@ const badgeStyles = {
   Member: { backgroundColor: "#f3f4f6", color: "#374151", borderColor: "#d1d5db" },
 } as const;
 
+function formatTime(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
 export default function LeagueList({ leagues, isLoading }: Props) {
   const { user } = useAuth();
   const router = useRouter();
@@ -70,9 +77,9 @@ export default function LeagueList({ leagues, isLoading }: Props) {
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <Text
                 variant="titleMedium"
-                style={{ fontWeight: "700", color: "#1a1a1a", flex: 1 }}
+                style={{ fontWeight: "700", color: "#1a1a1a", flex: 1, textTransform: "capitalize" }}
               >
-                {league.courses?.name ?? "Unknown Course"}
+                {league.name || league.courses?.name || "Unknown"}
               </Text>
               <View
                 style={{
@@ -89,9 +96,19 @@ export default function LeagueList({ leagues, isLoading }: Props) {
                 </Text>
               </View>
             </View>
-            <Text variant="bodyMedium" style={{ color: "#555", marginTop: 4 }}>
-              {league.teebox_data?.name ?? "No teebox"} tees
+            <Text variant="bodyMedium" style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}>
+              {league.courses?.name}
+              {league.teebox_data?.name
+                ? ` · ${league.teebox_data.name} tees`
+                : ""}
             </Text>
+            {(league.play_day || league.play_time) && (
+              <Text variant="bodySmall" style={{ color: "#555", marginTop: 2, textTransform: "capitalize" }}>
+                {league.play_day ? `${league.play_day}s` : ""}
+                {league.play_day && league.play_time ? " · " : ""}
+                {league.play_time ? formatTime(league.play_time) : ""}
+              </Text>
+            )}
           </TouchableOpacity>
         );
       })}

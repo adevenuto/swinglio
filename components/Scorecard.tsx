@@ -1,5 +1,5 @@
-import { getContrastColor } from "@/lib/color-contrast";
 import { Teebox } from "@/hooks/use-course-search";
+import { getContrastColor } from "@/lib/color-contrast";
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -12,6 +12,8 @@ export type ScorecardPlayer = {
   score_details: {
     name: string;
     holes: Record<string, { par: string; length: string; score: string }>;
+    inProxs?: boolean;
+    inSkins?: boolean;
   } | null;
 };
 
@@ -19,6 +21,7 @@ type ScorecardProps = {
   teeboxData: Teebox;
   players: ScorecardPlayer[];
   onCellPress?: (player: ScorecardPlayer, holeKey: string) => void;
+  currentUserId?: string;
 };
 
 export type ScorecardRef = {
@@ -27,7 +30,7 @@ export type ScorecardRef = {
 
 // --- Constants ---
 
-const FIXED_COL_WIDTH = 80;
+const FIXED_COL_WIDTH = 90;
 const CELL_WIDTH = 56;
 const CELL_HEIGHT = 44;
 const BORDER_COLOR = "#f1f1f1";
@@ -94,7 +97,7 @@ function sumField(
 // --- Component ---
 
 const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
-  ({ teeboxData, players, onCellPress }, ref) => {
+  ({ teeboxData, players, onCellPress, currentUserId }, ref) => {
     const scrollRef = useRef<ScrollView>(null);
 
     const holeCount = useMemo(
@@ -137,7 +140,10 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         ]}
       >
         <Text
-          style={[styles.cellText, textColor ? { color: textColor } : undefined]}
+          style={[
+            styles.cellText,
+            textColor ? { color: textColor } : undefined,
+          ]}
           numberOfLines={1}
         >
           {label}
@@ -159,7 +165,10 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         ]}
       >
         <Text
-          style={[styles.cellText, textColor ? { color: textColor } : undefined]}
+          style={[
+            styles.cellText,
+            textColor ? { color: textColor } : undefined,
+          ]}
         >
           {content}
         </Text>
@@ -192,12 +201,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         }
         if (col.type === "out") {
           const total = sumField(teeboxData.holes, front, "length");
-          return renderDataCell(
-            total,
-            "tb-out",
-            teeboxColor,
-            teeboxTextColor,
-          );
+          return renderDataCell(total, "tb-out", teeboxColor, teeboxTextColor);
         }
         // IN
         const inKeys = holeCount > 9 ? back : allKeys;
@@ -231,7 +235,9 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
               <Pressable
                 key={`${player.id}-${col.key}`}
                 onPress={() => onCellPress(player, col.key)}
-                style={({ pressed }) => pressed ? { opacity: 0.5 } : undefined}
+                style={({ pressed }) =>
+                  pressed ? { opacity: 0.5 } : undefined
+                }
               >
                 {cell}
               </Pressable>
@@ -256,11 +262,25 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
           {renderFixedCell("Hole")}
           {renderFixedCell(teeboxData.name, teeboxColor, teeboxTextColor)}
           {renderFixedCell("Par", "#fafafa")}
-          {players.map((p) => (
-            <View key={`fixed-${p.id}`}>
-              {renderFixedCell(p.first_name)}
-            </View>
-          ))}
+          {players.map((p) => {
+            const isCurrentUser = p.golfer_id === currentUserId;
+            const inSkins = p.score_details?.inSkins === true;
+            return (
+              <View key={`fixed-${p.id}`} style={styles.fixedCell}>
+                {inSkins && <View style={styles.skinsIndicator} />}
+                <Text
+                  style={[
+                    styles.cellText,
+                    { textTransform: "capitalize" },
+                    isCurrentUser && { fontWeight: "700" },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {p.first_name}
+                </Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* Scrollable right area */}
@@ -329,7 +349,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cellText: {
-    fontSize: 13,
+    fontSize: 18,
     color: "#1a1a1a",
+  },
+  skinsIndicator: {
+    position: "absolute" as const,
+    top: 4,
+    right: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 4,
+    backgroundColor: "#16a34a",
   },
 });

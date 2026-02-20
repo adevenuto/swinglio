@@ -39,7 +39,7 @@ type PlayerScore = {
     inProxs?: boolean;
     inSkins?: boolean;
   };
-  profiles: { first_name: string | null; last_name: string | null };
+  profiles: { first_name: string | null; last_name: string | null; display_name: string | null };
 };
 
 function getCurrentHole(
@@ -101,7 +101,7 @@ export default function GameplayScreen() {
 
     const { data: scoreData } = await supabase
       .from("scores")
-      .select("id, golfer_id, score_details, profiles(first_name, last_name)")
+      .select("id, golfer_id, score_details, profiles(first_name, last_name, display_name)")
       .eq("round_id", roundId);
 
     if (scoreData) setPlayers(scoreData as unknown as PlayerScore[]);
@@ -241,7 +241,7 @@ export default function GameplayScreen() {
       players.map((p) => ({
         id: p.id,
         golfer_id: p.golfer_id,
-        first_name: p.profiles?.first_name ?? "?",
+        first_name: p.profiles?.display_name || p.profiles?.first_name || "?",
         score_details: p.score_details,
       })),
     [players],

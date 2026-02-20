@@ -30,7 +30,7 @@ export type ScorecardRef = {
 
 // --- Constants ---
 
-const FIXED_COL_WIDTH = 90;
+const FIXED_COL_WIDTH = 120;
 const CELL_WIDTH = 56;
 const CELL_HEIGHT = 44;
 const BORDER_COLOR = "#f1f1f1";

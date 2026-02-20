@@ -3,9 +3,9 @@ import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { ActivityIndicator, Button, Text as PaperText, TextInput } from "react-native-paper";
+import { ActivityIndicator, Button, Snackbar, Text as PaperText, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
 
@@ -13,34 +13,35 @@ export default function Profile() {
   const { user, signOut, refreshUser } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [displayName, setDisplayName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Track original values for dirty check
-  const [originalFirstName, setOriginalFirstName] = useState("");
-  const [originalLastName, setOriginalLastName] = useState("");
-
-  const isDirty = firstName !== originalFirstName || lastName !== originalLastName;
+  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
+  const savedValues = useRef({ displayName: "", firstName: "", lastName: "" });
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
 
     const { data } = await supabase
       .from("profiles")
-      .select("first_name, last_name, avatar_url")
+      .select("display_name, first_name, last_name, avatar_url")
       .eq("id", user.id)
       .single();
 
     if (data) {
+      setDisplayName(data.display_name ?? "");
       setFirstName(data.first_name ?? "");
       setLastName(data.last_name ?? "");
       setAvatarUrl(data.avatar_url);
-      setOriginalFirstName(data.first_name ?? "");
-      setOriginalLastName(data.last_name ?? "");
+      savedValues.current = {
+        displayName: data.display_name ?? "",
+        firstName: data.first_name ?? "",
+        lastName: data.last_name ?? "",
+      };
     }
     setIsLoading(false);
   }, [user?.id]);
@@ -55,29 +56,39 @@ export default function Profile() {
     setRefreshing(false);
   }, [refreshUser, fetchProfile]);
 
-  const handleSave = async () => {
+  const handleFieldBlur = useCallback(async () => {
     if (!user?.id) return;
-    setIsSaving(true);
+
+    const current = {
+      displayName: displayName.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    };
+
+    // Only save if something changed
+    if (
+      current.displayName === savedValues.current.displayName &&
+      current.firstName === savedValues.current.firstName &&
+      current.lastName === savedValues.current.lastName
+    ) return;
 
     const { error } = await supabase
       .from("profiles")
       .update({
-        first_name: firstName.trim() || null,
-        last_name: lastName.trim() || null,
+        display_name: current.displayName || null,
+        first_name: current.firstName || null,
+        last_name: current.lastName || null,
       })
       .eq("id", user.id);
 
-    setIsSaving(false);
-
     if (error) {
-      Alert.alert("Error", "Failed to save profile.");
+      setSnackbar({ visible: true, message: "Failed to save" });
       return;
     }
 
-    setOriginalFirstName(firstName);
-    setOriginalLastName(lastName);
-    Alert.alert("Saved", "Profile updated successfully.");
-  };
+    savedValues.current = current;
+    setSnackbar({ visible: true, message: "Profile updated" });
+  }, [user?.id, displayName, firstName, lastName]);
 
   const pickImage = async (source: "camera" | "gallery") => {
     // Request permissions
@@ -159,6 +170,7 @@ export default function Profile() {
     }
 
     setAvatarUrl(publicUrl);
+    setSnackbar({ visible: true, message: "Photo updated" });
   };
 
   const removeAvatar = async () => {
@@ -174,6 +186,7 @@ export default function Profile() {
       .eq("id", user.id);
 
     setAvatarUrl(null);
+    setSnackbar({ visible: true, message: "Photo removed" });
   };
 
   const handleAvatarPress = () => {
@@ -240,18 +253,17 @@ export default function Profile() {
               Manage your account
             </Text>
           {/* Avatar */}
-          <Pressable
-            onPress={handleAvatarPress}
-            style={{ alignItems: "center", marginBottom: 24 }}
-          >
-            <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={120} />
+          <View style={{ alignItems: "center", marginBottom: 24 }}>
+            <Pressable onPress={handleAvatarPress}>
+              <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={120} />
+            </Pressable>
             <PaperText
               variant="bodySmall"
               style={{ color: "#555", marginTop: 8 }}
             >
               Tap to change photo
             </PaperText>
-          </Pressable>
+          </View>
 
           {/* Info Card */}
           <View
@@ -266,9 +278,24 @@ export default function Profile() {
           >
             <TextInput
               mode="outlined"
+              label="Display Name"
+              value={displayName}
+              onChangeText={setDisplayName}
+              onBlur={handleFieldBlur}
+              style={{ marginBottom: 4 }}
+            />
+            <PaperText
+              variant="bodySmall"
+              style={{ color: "#999", marginBottom: 12 }}
+            >
+              Shown on scorecards
+            </PaperText>
+            <TextInput
+              mode="outlined"
               label="First Name"
               value={firstName}
               onChangeText={setFirstName}
+              onBlur={handleFieldBlur}
               style={{ marginBottom: 12 }}
             />
             <TextInput
@@ -276,6 +303,7 @@ export default function Profile() {
               label="Last Name"
               value={lastName}
               onChangeText={setLastName}
+              onBlur={handleFieldBlur}
               style={{ marginBottom: 12 }}
             />
             <View>
@@ -288,17 +316,6 @@ export default function Profile() {
             </View>
           </View>
 
-          {/* Save Button */}
-          <Button
-            mode="outlined"
-            onPress={handleSave}
-            loading={isSaving}
-            disabled={!isDirty || isSaving}
-            style={{ marginBottom: 24 }}
-          >
-            Save Changes
-          </Button>
-
           {/* Sign Out */}
           <Button
             mode="text"
@@ -310,6 +327,13 @@ export default function Profile() {
           </View>
         </View>
       </ScrollView>
+      <Snackbar
+        visible={snackbar.visible}
+        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
+        duration={2000}
+      >
+        {snackbar.message}
+      </Snackbar>
     </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-import { bigserial, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { bigserial, doublePrecision, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { cities } from './cities';
 import { states } from './states';
 
@@ -11,6 +11,11 @@ export const courses = pgTable('courses', {
   state: varchar('state', { length: 255 }),
   postalCode: varchar('postal_code', { length: 255 }),
   layoutData: text('layout_data'),
+  lat: doublePrecision('lat'),
+  lng: doublePrecision('lng'),
+  phone: varchar('phone', { length: 50 }),
+  website: varchar('website', { length: 500 }),
+  enrichedAt: timestamp('enriched_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

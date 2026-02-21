@@ -10,12 +10,19 @@ export type Course = {
   city_id: number;
   state_id: number;
   layout_data: string | null;
+  lat: number | null;
+  lng: number | null;
+  phone: string | null;
+  website: string | null;
 };
 
 export type Teebox = {
   order: number;
   name: string;
   color?: string;
+  slope?: number;
+  courseRating?: number;
+  totalYardage?: number;
   holes: Record<string, { par: string; length: string }>;
 };
 

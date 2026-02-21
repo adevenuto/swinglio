@@ -13,21 +13,17 @@ import "../global.css";
 
 type RoundData = {
   id: number;
-  league_id: number;
+  creator_id: string;
   course_id: number;
   status: string;
   created_at: string;
-  leagues: {
-    owner_id: string;
-    name: string | null;
-    courses: { name: string };
-    teebox_data: {
-      order: number;
-      name: string;
-      color?: string;
-      holes: Record<string, { par: string; length: string }>;
-    };
+  teebox_data: {
+    order: number;
+    name: string;
+    color?: string;
+    holes: Record<string, { par: string; length: string }>;
   };
+  courses: { name: string };
 };
 
 type PlayerScore = {
@@ -36,8 +32,6 @@ type PlayerScore = {
   score_details: {
     name: string;
     holes: Record<string, { par: string; length: string; score: string }>;
-    inProxs?: boolean;
-    inSkins?: boolean;
   };
   profiles: { first_name: string | null; last_name: string | null; display_name: string | null };
 };
@@ -66,7 +60,7 @@ export default function GameplayScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isCoordinator, setIsCoordinator] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   // Score entry modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -80,23 +74,13 @@ export default function GameplayScreen() {
 
     const { data: roundData } = await supabase
       .from("rounds")
-      .select(
-        "id, league_id, course_id, status, created_at, leagues(owner_id, name, courses(name), teebox_data)",
-      )
+      .select("id, creator_id, course_id, status, created_at, teebox_data, courses(name)")
       .eq("id", roundId)
       .single();
 
     if (roundData) {
       setRound(roundData as unknown as RoundData);
-
-      // Check if user is a coordinator for this league
-      const { data: membership } = await supabase
-        .from("league_users")
-        .select("role")
-        .eq("league_id", (roundData as any).league_id)
-        .eq("golfer_id", user?.id)
-        .single();
-      setIsCoordinator(membership?.role === "coordinator");
+      setIsCreator(roundData.creator_id === user?.id);
     }
 
     const { data: scoreData } = await supabase
@@ -118,7 +102,6 @@ export default function GameplayScreen() {
     if (!isLoading && players.length > 0 && user?.id) {
       const nextHole = getCurrentHole(players, user.id);
       if (nextHole) {
-        // Small delay to let the scorecard layout complete
         setTimeout(() => scorecardRef.current?.scrollToHole(nextHole), 100);
       }
     }
@@ -138,11 +121,9 @@ export default function GameplayScreen() {
       if (!selectedCell) return;
       const { player, holeKey } = selectedCell;
 
-      // Find the full player data for Supabase update
       const targetPlayer = players.find((p) => p.id === player.id);
       if (!targetPlayer) return;
 
-      // Build updated score_details
       const updatedScoreDetails = {
         ...targetPlayer.score_details,
         holes: {
@@ -165,7 +146,6 @@ export default function GameplayScreen() {
       );
       setModalVisible(false);
 
-      // Persist to Supabase
       const { error } = await supabase
         .from("scores")
         .update({ score_details: updatedScoreDetails })
@@ -292,7 +272,7 @@ export default function GameplayScreen() {
                 textTransform: "capitalize",
               }}
             >
-              {round.leagues?.name || round.leagues?.courses?.name || "Unknown"}
+              {round.courses?.name || "Unknown"}
             </Text>
             <View
               style={{
@@ -313,9 +293,9 @@ export default function GameplayScreen() {
             variant="bodyMedium"
             style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
           >
-            {round.leagues?.courses?.name}
-            {round.leagues?.teebox_data?.name
-              ? ` · ${round.leagues.teebox_data.name} tees`
+            {round.courses?.name}
+            {(round.teebox_data as any)?.name
+              ? ` · ${(round.teebox_data as any).name} tees`
               : ""}
           </Text>
         </View>
@@ -340,13 +320,13 @@ export default function GameplayScreen() {
         <View className="px-4 pb-4">
           <Scorecard
             ref={scorecardRef}
-            teeboxData={round.leagues.teebox_data}
+            teeboxData={round.teebox_data}
             players={scorecardPlayers}
             onCellPress={handleCellPress}
             currentUserId={user?.id}
           />
         </View>
-        {isCoordinator && (
+        {isCreator && (
           <Button
             mode="text"
             onPress={handleDeleteRound}

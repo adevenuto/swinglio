@@ -1,11 +1,12 @@
-import { bigserial, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { leagues } from './leagues';
+import { bigserial, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { courses } from './courses';
+import { profiles } from './profiles';
 
 export const rounds = pgTable('rounds', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  leagueId: integer('league_id').notNull().references(() => leagues.id, { onDelete: 'cascade' }),
+  creatorId: uuid('creator_id').notNull().references(() => profiles.id),
   courseId: integer('course_id').notNull().references(() => courses.id),
+  teeboxData: jsonb('teebox_data').notNull(),
   status: text('status').notNull().default('active'),
   resultsData: jsonb('results_data'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

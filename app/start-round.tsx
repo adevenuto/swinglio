@@ -1,192 +1,105 @@
+import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/auth-context";
-import { Teebox } from "@/hooks/use-course-search";
-import { LeagueUser, useLeagueUsers } from "@/hooks/use-league-users";
-import { League } from "@/hooks/use-leagues";
+import {
+  Course,
+  Teebox,
+  parseTeeboxes,
+  useCourseSearch,
+} from "@/hooks/use-course-search";
+import { FriendWithProfile, useFriends } from "@/hooks/use-friends";
 import { supabase } from "@/lib/supabase";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
-import { ActivityIndicator, Button, Text } from "react-native-paper";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, Pressable, ScrollView, View } from "react-native";
+import {
+  Button,
+  Chip,
+  List,
+  Searchbar,
+  Text,
+} from "react-native-paper";
 import "../global.css";
 
-function buildScoreDetails(teebox: Teebox, inProxs: boolean, inSkins: boolean) {
+function buildScoreDetails(teebox: Teebox) {
   const holes: Record<string, { par: string; length: string; score: string }> =
     {};
   for (const [key, value] of Object.entries(teebox.holes)) {
     holes[key] = { ...value, score: "" };
   }
-  return { name: teebox.name, holes, inProxs, inSkins };
+  return { name: teebox.name, holes };
 }
 
 export default function StartRoundScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const router = useRouter();
 
-  const [league, setLeague] = useState<League | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isStarting, setIsStarting] = useState(false);
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(
+  // Step 1: Course + Teebox
+  const {
+    query: courseQuery,
+    results: courseResults,
+    isSearching: courseSearching,
+    search: searchCourses,
+    clearSearch: clearCourseSearch,
+  } = useCourseSearch();
+
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [teeboxes, setTeeboxes] = useState<Teebox[]>([]);
+  const [selectedTeebox, setSelectedTeebox] = useState<Teebox | null>(null);
+
+  // Step 2: Friends selection
+  const { friends, refresh: refreshFriends } = useFriends(user?.id ?? "");
+  const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(
     new Set(),
   );
-  const [skinsPlayerIds, setSkinsPlayerIds] = useState<Set<string>>(new Set());
+  const [isStarting, setIsStarting] = useState(false);
 
-  const {
-    members,
-    isLoading: membersLoading,
-    fetchMembers,
-  } = useLeagueUsers(id!);
-
-  const skinsEnabled = league?.game_config?.skins?.enabled === true;
-  const skinsEntryFee = league?.game_config?.skins?.entryFee ?? 0;
-
-  const fetchLeague = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("leagues")
-      .select("*, courses(name)")
-      .eq("id", id)
-      .single();
-
-    if (!error && data) {
-      setLeague(data as League);
-    }
-  }, [id]);
-
+  // Load friends when reaching step 2
   useEffect(() => {
-    async function init() {
-      setIsLoading(true);
-
-      // Check for existing active round — prevent duplicates
-      const { data: activeRound } = await supabase
-        .from("rounds")
-        .select("id")
-        .eq("league_id", id)
-        .eq("status", "active")
-        .limit(1);
-
-      if (activeRound && activeRound.length > 0) {
-        Alert.alert(
-          "Active Round Exists",
-          "There is already an active round for this league.",
-          [
-            {
-              text: "Go to Round",
-              onPress: () => {
-                router.dismissAll();
-                router.push({
-                  pathname: "/gameplay",
-                  params: { roundId: activeRound[0].id },
-                });
-              },
-            },
-            {
-              text: "Cancel",
-              onPress: () => router.back(),
-              style: "cancel",
-            },
-          ],
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // Verify coordinator access
-      const { data: membership } = await supabase
-        .from("league_users")
-        .select("role")
-        .eq("league_id", id)
-        .eq("golfer_id", user?.id)
-        .single();
-
-      if (!membership || membership.role !== "coordinator") {
-        Alert.alert("Access Denied", "Only coordinators can start rounds.");
-        router.back();
-        return;
-      }
-
-      await Promise.all([fetchLeague(), fetchMembers()]);
-
-      // Determine pre-selected players from most recent round
-      const { data: lastRound } = await supabase
-        .from("rounds")
-        .select("id")
-        .eq("league_id", id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (lastRound && lastRound.length > 0) {
-        const { data: lastScores } = await supabase
-          .from("scores")
-          .select("golfer_id, score_details")
-          .eq("round_id", lastRound[0].id);
-
-        if (lastScores) {
-          setSelectedPlayerIds(new Set(lastScores.map((s) => s.golfer_id)));
-
-          // Pre-select skins from previous round
-          const skinsIds = lastScores
-            .filter((s: any) => s.score_details?.inSkins === true)
-            .map((s) => s.golfer_id);
-          setSkinsPlayerIds(new Set(skinsIds));
-        }
-      } else {
-        // First round — will select all members once they load
-        setSelectedPlayerIds(new Set(["__ALL__"]));
-      }
-
-      setIsLoading(false);
+    if (selectedTeebox) {
+      refreshFriends();
     }
+  }, [selectedTeebox, refreshFriends]);
 
-    init();
-  }, [id, fetchLeague, fetchMembers, router]);
+  // --- Course selection ---
+  const handleSelectCourse = (course: Course) => {
+    setSelectedCourse(course);
+    const parsed = parseTeeboxes(course.layout_data);
+    setTeeboxes(parsed);
+    setSelectedTeebox(parsed.length === 1 ? parsed[0] : null);
+    clearCourseSearch();
+  };
 
-  // Once members load, if __ALL__ marker is set, select all
-  useEffect(() => {
-    if (members.length > 0 && selectedPlayerIds.has("__ALL__")) {
-      setSelectedPlayerIds(new Set(members.map((m) => m.golfer_id)));
-    }
-  }, [members, selectedPlayerIds]);
+  const handleChangeCourse = () => {
+    setSelectedCourse(null);
+    setTeeboxes([]);
+    setSelectedTeebox(null);
+  };
 
-  const togglePlayer = (golferId: string) => {
-    setSelectedPlayerIds((prev) => {
+  // --- Friend toggle ---
+  const toggleFriend = (friendId: string) => {
+    setSelectedFriendIds((prev) => {
       const next = new Set(prev);
-      if (next.has(golferId)) {
-        next.delete(golferId);
-        // Also remove from skins
-        setSkinsPlayerIds((prevSkins) => {
-          const nextSkins = new Set(prevSkins);
-          nextSkins.delete(golferId);
-          return nextSkins;
-        });
+      if (next.has(friendId)) {
+        next.delete(friendId);
       } else {
-        next.add(golferId);
+        next.add(friendId);
       }
       return next;
     });
   };
 
-  const toggleSkins = (golferId: string) => {
-    setSkinsPlayerIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(golferId)) {
-        next.delete(golferId);
-      } else {
-        next.add(golferId);
-      }
-      return next;
-    });
-  };
-
+  // --- Start round ---
   const handleStartRound = async () => {
-    if (!league) return;
+    if (!selectedCourse || !selectedTeebox || !user?.id) return;
 
-    const playerIds = Array.from(selectedPlayerIds);
-    if (playerIds.length === 0) {
-      Alert.alert("No Players", "Select at least one player to start a round.");
-      return;
-    }
+    // All players = current user + selected friends
+    const allPlayerIds = [
+      user.id,
+      ...friends
+        .filter((f) => selectedFriendIds.has(f.profile.id))
+        .map((f) => f.profile.id),
+    ];
 
     setIsStarting(true);
 
@@ -194,8 +107,9 @@ export default function StartRoundScreen() {
     const { data: round, error: roundError } = await supabase
       .from("rounds")
       .insert({
-        league_id: Number(id),
-        course_id: league.course_id,
+        creator_id: user.id,
+        course_id: selectedCourse.id,
+        teebox_data: selectedTeebox,
         status: "active",
       })
       .select()
@@ -207,17 +121,13 @@ export default function StartRoundScreen() {
       return;
     }
 
-    // 2. Batch insert scores for selected players (per-player score_details)
-    const scoreRows = playerIds.map((golferId) => ({
+    // 2. Create score rows for all players
+    const scoreRows = allPlayerIds.map((golferId) => ({
       golfer_id: golferId,
       round_id: round.id,
-      course_id: league.course_id,
+      course_id: selectedCourse.id,
       score: null,
-      score_details: buildScoreDetails(
-        league.teebox_data,
-        true,
-        skinsPlayerIds.has(golferId),
-      ),
+      score_details: buildScoreDetails(selectedTeebox),
     }));
 
     const { error: scoresError } = await supabase
@@ -238,33 +148,135 @@ export default function StartRoundScreen() {
     });
   };
 
-  if (isLoading || membersLoading) {
+  const getFriendName = (f: FriendWithProfile) =>
+    [f.profile.first_name, f.profile.last_name].filter(Boolean).join(" ") ||
+    f.profile.email ||
+    "Unknown";
+
+  const totalPlayers = selectedFriendIds.size + 1; // +1 for current user
+
+  // --- Step 1: Course search ---
+  if (!selectedCourse) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <ActivityIndicator size="large" />
+      <View className="flex-1 bg-white">
+        <View className="px-4 pt-4">
+          <Text
+            variant="titleSmall"
+            style={{ color: "#111827", marginBottom: 12 }}
+          >
+            Search for a Course
+          </Text>
+          <Searchbar
+            placeholder="Search courses..."
+            onChangeText={searchCourses}
+            value={courseQuery}
+            loading={courseSearching}
+            mode="bar"
+            style={{
+              backgroundColor: "transparent",
+              borderWidth: 1,
+              borderColor: "#d4d4d4",
+              borderRadius: 8,
+            }}
+            inputStyle={{ color: "#1a1a1a" }}
+          />
+        </View>
+        <FlatList
+          data={courseResults}
+          keyExtractor={(item) => item.id.toString()}
+          className="mt-2 px-4"
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => (
+            <List.Item
+              title={item.name}
+              titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+              description={
+                [item.street, item.state, item.postal_code]
+                  .filter(Boolean)
+                  .join(", ") || undefined
+              }
+              descriptionStyle={{ color: "#555" }}
+              onPress={() => handleSelectCourse(item)}
+              left={(props) => <List.Icon {...props} icon="golf" />}
+            />
+          )}
+          ListEmptyComponent={
+            courseQuery.length >= 2 && !courseSearching ? (
+              <View className="items-center py-8">
+                <Text variant="bodyMedium">No courses found</Text>
+              </View>
+            ) : null
+          }
+        />
       </View>
     );
   }
 
-  if (!league) {
+  // --- Step 1b: Teebox selection (if course has multiple) ---
+  if (!selectedTeebox) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <Text variant="bodyLarge">League not found</Text>
+      <View className="flex-1 bg-white">
+        <View className="px-4 pt-4">
+          <View
+            style={{
+              padding: 16,
+              borderWidth: 1,
+              borderColor: "#d4d4d4",
+              borderRadius: 8,
+              backgroundColor: "#fff",
+              marginBottom: 16,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                variant="titleMedium"
+                style={{
+                  fontWeight: "700",
+                  color: "#1a1a1a",
+                  textTransform: "capitalize",
+                }}
+              >
+                {selectedCourse.name}
+              </Text>
+              <Button mode="outlined" onPress={handleChangeCourse} compact>
+                Change
+              </Button>
+            </View>
+          </View>
+
+          <Text
+            variant="titleSmall"
+            style={{ color: "#111827", marginBottom: 12 }}
+          >
+            Select Tee Box
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {teeboxes.map((tb) => (
+              <Chip
+                key={tb.name}
+                mode="outlined"
+                onPress={() => setSelectedTeebox(tb)}
+              >
+                {tb.name.charAt(0).toUpperCase() + tb.name.slice(1)}
+              </Chip>
+            ))}
+          </View>
+        </View>
       </View>
     );
   }
 
-  const selectedCount = selectedPlayerIds.size;
-
-  const getName = (member: LeagueUser) =>
-    [member.profiles.first_name, member.profiles.last_name]
-      .filter(Boolean)
-      .join(" ") || "Unknown";
-
+  // --- Step 2: Select friends ---
   return (
     <View className="flex-1 bg-white">
-      {/* Sticky Header */}
-      <View className="px-4 pt-6 pb-4">
+      {/* Header: Course + Teebox */}
+      <View className="px-4 pt-4 pb-2">
         <View
           style={{
             padding: 16,
@@ -274,113 +286,118 @@ export default function StartRoundScreen() {
             backgroundColor: "#fff",
           }}
         >
-          <Text
-            variant="titleLarge"
+          <View
             style={{
-              fontWeight: "700",
-              color: "#1a1a1a",
-              textTransform: "capitalize",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            {league.name || league.courses?.name || "Unknown"}
-          </Text>
-          <Text
-            variant="bodyMedium"
-            style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
-          >
-            {league.courses?.name}
-            {league.teebox_data?.name
-              ? ` · ${league.teebox_data.name} tees`
-              : ""}
-          </Text>
-        </View>
-      </View>
-
-      {/* Legend */}
-      <View
-        style={{
-          borderWidth: 1,
-          borderColor: "#d4d4d4",
-          borderRadius: 8,
-          backgroundColor: "#fff",
-          padding: 12,
-          marginHorizontal: 16,
-          marginBottom: 12,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 20,
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <FontAwesome5 name="check-circle" size={14} color="#16a34a" />
-          <Text variant="bodyLarge" style={{ color: "#1a1a1a" }}>
-            Playing
-          </Text>
-          <Text
-            variant="bodyLarge"
-            style={{ color: "#1a1a1a", fontWeight: "600" }}
-          >
-            {selectedCount}/{members.length}
-          </Text>
-        </View>
-        {skinsEnabled && (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <FontAwesome name="money" size={14} color="#16a34a" />
-            <Text variant="bodyLarge" style={{ color: "#1a1a1a" }}>
-              In Skins
-            </Text>
-            <Text
-              variant="bodyLarge"
-              style={{ color: "#1a1a1a", fontWeight: "600" }}
-            >
-              {skinsPlayerIds.size}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text
+                variant="titleMedium"
+                style={{
+                  fontWeight: "700",
+                  color: "#1a1a1a",
+                  textTransform: "capitalize",
+                }}
+              >
+                {selectedCourse.name}
+              </Text>
+              <Text
+                variant="bodyMedium"
+                style={{
+                  color: "#555",
+                  marginTop: 2,
+                  textTransform: "capitalize",
+                }}
+              >
+                {selectedTeebox.name} tees
+              </Text>
+            </View>
+            <Button mode="outlined" onPress={handleChangeCourse} compact>
+              Change
+            </Button>
           </View>
-        )}
+        </View>
       </View>
 
-      {/* Player List */}
-      <ScrollView className="flex-1 px-4">
+      {/* Friends selection */}
+      <View className="px-4 pb-2">
         <Text
           variant="titleSmall"
-          style={{ color: "#111827", marginBottom: 12 }}
+          style={{ color: "#111827", marginBottom: 8 }}
         >
-          Select Players
+          Select Players ({totalPlayers})
         </Text>
+      </View>
 
-        {members.length === 0 ? (
-          <Text
-            variant="bodyMedium"
-            style={{ color: "#999", paddingVertical: 8 }}
+      <ScrollView className="flex-1 px-4">
+        {/* Current user (always included) */}
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: "#d4d4d4",
+            backgroundColor: "#fff",
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 8,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View
+            style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
           >
-            No members in this league
-          </Text>
-        ) : (
-          members.map((member) => {
-            const isSelected = selectedPlayerIds.has(member.golfer_id);
-            const inSkins = skinsPlayerIds.has(member.golfer_id);
-            return (
-              <Pressable
-                key={member.id}
-                onPress={() => togglePlayer(member.golfer_id)}
+            <Text
+              variant="bodyLarge"
+              style={{
+                color: "#1a1a1a",
+                fontWeight: "600",
+              }}
+            >
+              You
+            </Text>
+          </View>
+          <FontAwesome5 name="check-circle" size={20} color="#16a34a" />
+        </View>
+
+        {/* Friends list */}
+        {friends.map((friend) => {
+          const isSelected = selectedFriendIds.has(friend.profile.id);
+          return (
+            <Pressable
+              key={friend.id}
+              onPress={() => toggleFriend(friend.profile.id)}
+            >
+              <View
                 style={{
                   borderWidth: 1,
-                  borderColor: "#d4d4d4",
-                  backgroundColor: "#fff",
+                  borderColor: isSelected ? "#16a34a" : "#d4d4d4",
+                  backgroundColor: isSelected ? "#f0fdf4" : "#fff",
                   borderRadius: 8,
                   padding: 16,
                   marginBottom: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                {/* Top row: name + checkmark */}
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "space-between",
+                    flex: 1,
+                    gap: 12,
                   }}
                 >
-                  <View style={{ flex: 1, marginRight: 12 }}>
+                  <UserAvatar
+                    avatarUrl={friend.profile.avatar_url}
+                    firstName={friend.profile.first_name}
+                    size={36}
+                  />
+                  <View>
                     <Text
                       variant="bodyLarge"
                       style={{
@@ -389,40 +406,40 @@ export default function StartRoundScreen() {
                         textTransform: "capitalize",
                       }}
                     >
-                      {getName(member)}
+                      {getFriendName(friend)}
                     </Text>
-                    {member.profiles.email && (
+                    {friend.profile.email && (
                       <Text variant="bodySmall" style={{ color: "#555" }}>
-                        {member.profiles.email}
+                        {friend.profile.email}
                       </Text>
                     )}
                   </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 32,
-                    }}
-                  >
-                    {skinsEnabled && isSelected && (
-                      <Pressable hitSlop={16} onPress={() => toggleSkins(member.golfer_id)}>
-                        <FontAwesome
-                          name="money"
-                          size={30}
-                          color={inSkins ? "#16a34a" : "#d4d4d4"}
-                        />
-                      </Pressable>
-                    )}
-                    <FontAwesome5
-                      name="check-circle"
-                      size={24}
-                      color={isSelected ? "#16a34a" : "#d4d4d4"}
-                    />
-                  </View>
                 </View>
-              </Pressable>
-            );
-          })
+                {isSelected ? (
+                  <FontAwesome5
+                    name="check-circle"
+                    size={20}
+                    color="#16a34a"
+                  />
+                ) : (
+                  <FontAwesome5 name="circle" size={20} color="#d4d4d4" />
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
+
+        {/* Empty friends message */}
+        {friends.length === 0 && (
+          <View className="items-center py-8">
+            <Text
+              variant="bodyMedium"
+              style={{ color: "#999", textAlign: "center" }}
+            >
+              No friends yet. Add friends from the Friends tab to play
+              together!
+            </Text>
+          </View>
         )}
       </ScrollView>
 
@@ -435,11 +452,10 @@ export default function StartRoundScreen() {
           mode="outlined"
           onPress={handleStartRound}
           loading={isStarting}
-          disabled={selectedCount === 0 || isStarting}
+          disabled={isStarting}
         >
-          {skinsEnabled
-            ? `Start Round (${selectedCount} players, ${skinsPlayerIds.size} in skins)`
-            : `Start Round (${selectedCount} players)`}
+          Start Round ({totalPlayers}{" "}
+          {totalPlayers === 1 ? "player" : "players"})
         </Button>
       </View>
     </View>

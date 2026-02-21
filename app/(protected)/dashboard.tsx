@@ -1,8 +1,6 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
-import LeagueList from "@/components/LeagueList";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
-import { useLeagues } from "@/hooks/use-leagues";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
@@ -17,22 +15,18 @@ export default function Dashboard() {
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
   );
-  const { leagues, isLoading: leaguesLoading, refresh: refreshLeagues } = useLeagues(
-    user?.id ?? "",
-  );
 
   useFocusEffect(
     useCallback(() => {
       refreshRounds();
-      refreshLeagues();
-    }, [refreshRounds, refreshLeagues]),
+    }, [refreshRounds]),
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshUser(), refreshRounds(), refreshLeagues()]);
+    await Promise.all([refreshUser(), refreshRounds()]);
     setRefreshing(false);
-  }, [refreshUser, refreshRounds, refreshLeagues]);
+  }, [refreshUser, refreshRounds]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -58,23 +52,13 @@ export default function Dashboard() {
 
             <Button
               mode="outlined"
-              onPress={() => router.push("/create-league")}
+              onPress={() => router.push("/start-round")}
               style={{ marginTop: 16 }}
             >
-              Create League
+              Start Round
             </Button>
 
-            {/* <Button
-              mode="outlined"
-              onPress={() => router.push("/player-scores")}
-              style={{ marginTop: 12 }}
-            >
-              Player Scores
-            </Button> */}
-
             <ActiveRoundCard rounds={activeRounds} />
-
-            <LeagueList leagues={leagues} isLoading={leaguesLoading} />
           </View>
         </View>
       </ScrollView>

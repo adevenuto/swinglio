@@ -3,12 +3,27 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Redirect, Tabs } from "expo-router";
+import { usePendingFriendCount } from "@/hooks/use-friends";
+import { on } from "@/lib/events";
+import { Redirect, Tabs, useFocusEffect } from "expo-router";
+import { useCallback, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function ProtectedLayout() {
   const { user, isLoading } = useAuth();
   const colorScheme = useColorScheme();
+  const { count: pendingCount, refresh: refreshPendingCount } =
+    usePendingFriendCount(user?.id ?? "");
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshPendingCount();
+    }, [refreshPendingCount]),
+  );
+
+  useEffect(() => {
+    return on("friends-changed", refreshPendingCount);
+  }, [refreshPendingCount]);
 
   if (isLoading) {
     return (
@@ -38,6 +53,16 @@ export default function ProtectedLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.2.fill" color={color} />
+          ),
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
       <Tabs.Screen

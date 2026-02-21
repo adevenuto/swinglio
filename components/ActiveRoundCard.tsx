@@ -50,7 +50,7 @@ export default function ActiveRoundCard({ rounds }: Props) {
                 textTransform: "capitalize",
               }}
             >
-              {round.leagues?.name || round.leagues?.courses?.name || "Unknown"}
+              {round.courses?.name || "Unknown Course"}
             </Text>
             <View
               style={{
@@ -71,9 +71,9 @@ export default function ActiveRoundCard({ rounds }: Props) {
             variant="bodyMedium"
             style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
           >
-            {round.leagues?.courses?.name}
-            {round.leagues?.teebox_data?.name
-              ? ` · ${round.leagues.teebox_data.name} tees`
+            {round.courses?.name}
+            {(round.teebox_data as any)?.name
+              ? ` · ${(round.teebox_data as any).name} tees`
               : ""}
           </Text>
         </TouchableOpacity>

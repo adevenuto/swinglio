@@ -35,51 +35,7 @@ export default function RootLayout() {
                 title: "Modal",
               }}
             />
-            <Stack.Screen
-              name="create-league"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Create League",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
-              name="league-detail"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "League Details",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
-              name="edit-game-config"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Edit Game Config",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
-              name="edit-league-info"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Edit League Info",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
+<Stack.Screen
               name="player-scores"
               options={{
                 presentation: "modal",

@@ -3,16 +3,12 @@ import { useCallback, useState } from "react";
 
 export type ActiveRound = {
   id: number;
-  league_id: number;
   course_id: number;
+  creator_id: string;
+  teebox_data: { name: string; color?: string };
   status: string;
   created_at: string;
-  leagues: {
-    id: number;
-    name: string | null;
-    courses: { name: string };
-    teebox_data: { name: string };
-  };
+  courses: { name: string };
 };
 
 export function useActiveRounds(userId: string) {
@@ -49,12 +45,10 @@ export function useActiveRounds(userId: string) {
       return;
     }
 
-    // Fetch active rounds with league + course info
+    // Fetch active rounds with course info (teebox_data is on rounds now)
     const { data } = await supabase
       .from("rounds")
-      .select(
-        "id, league_id, course_id, status, created_at, leagues(id, name, courses(name), teebox_data)"
-      )
+      .select("id, course_id, creator_id, teebox_data, status, created_at, courses(name)")
       .in("id", roundIds)
       .eq("status", "active")
       .order("created_at", { ascending: false });

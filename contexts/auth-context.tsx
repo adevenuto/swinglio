@@ -10,6 +10,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  role: string | null;
+  isEditor: boolean;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
@@ -26,12 +28,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+
+  const fetchRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    setRole(data?.role ?? null);
+  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) fetchRole(session.user.id);
       setIsLoading(false);
     });
 
@@ -42,6 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth state changed:", _event, session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (session?.user) {
+        fetchRole(session.user.id);
+      } else {
+        setRole(null);
+      }
 
       // Resolve the auth promise when sign in is complete
       if (_event === "SIGNED_IN" && authPromise) {
@@ -179,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    setRole(null);
     await supabase.auth.signOut();
   };
 
@@ -201,6 +221,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        role,
+        isEditor: role === "editor",
         signUp,
         signIn,
         signInWithGoogle,

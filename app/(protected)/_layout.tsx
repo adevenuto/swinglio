@@ -10,7 +10,7 @@ import { useCallback, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function ProtectedLayout() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isEditor } = useAuth();
   const colorScheme = useColorScheme();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
@@ -71,6 +71,16 @@ export default function ProtectedLayout() {
           title: "Profile",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="person.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="editor"
+        options={{
+          title: "Editor",
+          href: isEditor ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape.fill" color={color} />
           ),
         }}
       />

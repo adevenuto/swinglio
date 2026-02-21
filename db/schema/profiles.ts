@@ -7,6 +7,7 @@ export const profiles = pgTable('profiles', {
   displayName: varchar('display_name'),
   avatarUrl: varchar('avatar_url'),
   email: varchar('email'),
+  role: varchar('role', { length: 50 }).default('user'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

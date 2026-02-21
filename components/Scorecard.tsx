@@ -22,6 +22,7 @@ type ScorecardProps = {
   players: ScorecardPlayer[];
   onCellPress?: (player: ScorecardPlayer, holeKey: string) => void;
   currentUserId?: string;
+  currentHole?: number | null;
 };
 
 export type ScorecardRef = {
@@ -36,6 +37,10 @@ const CELL_HEIGHT = 44;
 const BORDER_COLOR = "#f1f1f1";
 const CELL_PADDING = 7;
 const FALLBACK_TEEBOX_COLOR = "#677079";
+const HIGHLIGHT_BG = "#f9fafb";
+const HIGHLIGHT_BORDER = "#d4d4d4";
+const SYMBOL_SIZE = 28;
+const SYMBOL_COLOR = "#1a1a1a";
 
 // --- Column definitions ---
 
@@ -97,7 +102,7 @@ function sumField(
 // --- Component ---
 
 const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
-  ({ teeboxData, players, onCellPress, currentUserId }, ref) => {
+  ({ teeboxData, players, onCellPress, currentUserId, currentHole }, ref) => {
     const scrollRef = useRef<ScrollView>(null);
 
     const holeCount = useMemo(
@@ -156,12 +161,14 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       key: string,
       bgColor?: string,
       textColor?: string,
+      borderColor?: string,
     ) => (
       <View
         key={key}
         style={[
           styles.dataCell,
           bgColor ? { backgroundColor: bgColor } : undefined,
+          borderColor ? { borderColor } : undefined,
         ]}
       >
         <Text
@@ -175,12 +182,120 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       </View>
     );
 
+    const renderScoreCell = (
+      score: string,
+      par: string,
+      key: string,
+      highlight?: boolean,
+    ) => {
+      const scoreNum = parseInt(score, 10);
+      const parNum = parseInt(par, 10);
+      const hasScore = score !== "" && !isNaN(scoreNum);
+      const hasPar = !isNaN(parNum);
+
+      if (!hasScore) {
+        return renderDataCell(
+          " ",
+          key,
+          highlight ? HIGHLIGHT_BG : undefined,
+          undefined,
+          highlight ? HIGHLIGHT_BORDER : undefined,
+        );
+      }
+
+      if (!hasPar) {
+        return renderDataCell(
+          score,
+          key,
+          highlight ? HIGHLIGHT_BG : undefined,
+          undefined,
+          highlight ? HIGHLIGHT_BORDER : undefined,
+        );
+      }
+
+      const diff = scoreNum - parNum;
+
+      let inner: React.ReactNode;
+
+      if (diff === 0) {
+        // Par — plain number
+        inner = <Text style={styles.cellText}>{score}</Text>;
+      } else if (diff === -1) {
+        // Birdie — circle border
+        inner = (
+          <View style={symbolStyles.circle}>
+            <Text style={styles.cellText}>{score}</Text>
+          </View>
+        );
+      } else if (diff === -2) {
+        // Eagle — solid circle
+        inner = (
+          <View style={symbolStyles.circleSolid}>
+            <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+          </View>
+        );
+      } else if (diff <= -3) {
+        // Albatross+ — solid circle with frame
+        inner = (
+          <View style={symbolStyles.circleFrame}>
+            <View style={symbolStyles.circleSolid}>
+              <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+            </View>
+          </View>
+        );
+      } else if (diff === 1) {
+        // Bogey — square border
+        inner = (
+          <View style={symbolStyles.square}>
+            <Text style={styles.cellText}>{score}</Text>
+          </View>
+        );
+      } else if (diff === 2) {
+        // Double bogey — solid square
+        inner = (
+          <View style={symbolStyles.squareSolid}>
+            <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+          </View>
+        );
+      } else {
+        // Triple bogey+ — solid square with frame
+        inner = (
+          <View style={symbolStyles.squareFrame}>
+            <View style={symbolStyles.squareSolid}>
+              <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+            </View>
+          </View>
+        );
+      }
+
+      return (
+        <View
+          key={key}
+          style={[
+            styles.dataCell,
+            highlight
+              ? { backgroundColor: HIGHLIGHT_BG, borderColor: HIGHLIGHT_BORDER }
+              : undefined,
+          ]}
+        >
+          {inner}
+        </View>
+      );
+    };
+
     // --- Row builders ---
 
     const buildHoleNumberRow = () =>
       columns.map((col) => {
         if (col.type === "hole") {
-          return renderDataCell(String(col.number), col.key);
+          const hl = col.number === currentHole;
+          return renderDataCell(
+            String(col.number),
+            col.key,
+            hl ? HIGHLIGHT_BG : undefined,
+            undefined,
+            hl ? HIGHLIGHT_BORDER : undefined,
+          );
         }
         if (col.type === "out") {
           return renderDataCell("OUT", "out", "#fafafa");
@@ -192,11 +307,13 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       columns.map((col) => {
         if (col.type === "hole") {
           const length = teeboxData.holes[col.key]?.length ?? "";
+          const hl = col.number === currentHole;
           return renderDataCell(
             length,
             `tb-${col.key}`,
             teeboxColor,
             teeboxTextColor,
+            hl ? HIGHLIGHT_BORDER : undefined,
           );
         }
         if (col.type === "out") {
@@ -213,7 +330,14 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       columns.map((col) => {
         if (col.type === "hole") {
           const par = teeboxData.holes[col.key]?.par ?? "";
-          return renderDataCell(par, `par-${col.key}`, "#fafafa");
+          const hl = col.number === currentHole;
+          return renderDataCell(
+            par,
+            `par-${col.key}`,
+            hl ? HIGHLIGHT_BG : "#fafafa",
+            undefined,
+            hl ? HIGHLIGHT_BORDER : undefined,
+          );
         }
         if (col.type === "out") {
           const total = sumField(teeboxData.holes, front, "par");
@@ -229,7 +353,14 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       return columns.map((col) => {
         if (col.type === "hole") {
           const score = holes[col.key]?.score ?? "";
-          const cell = renderDataCell(score || " ", `${player.id}-${col.key}`);
+          const par = teeboxData.holes[col.key]?.par ?? "";
+          const hl = col.number === currentHole;
+          const cell = renderScoreCell(
+            score,
+            par,
+            `${player.id}-${col.key}`,
+            hl,
+          );
           if (onCellPress) {
             return (
               <Pressable
@@ -360,5 +491,51 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 4,
     backgroundColor: "#16a34a",
+  },
+});
+
+const symbolStyles = StyleSheet.create({
+  circle: {
+    width: SYMBOL_SIZE,
+    height: SYMBOL_SIZE,
+    borderRadius: SYMBOL_SIZE / 2,
+    borderWidth: 2,
+    borderColor: SYMBOL_COLOR,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  circleSolid: {
+    width: SYMBOL_SIZE,
+    height: SYMBOL_SIZE,
+    borderRadius: SYMBOL_SIZE / 2,
+    backgroundColor: SYMBOL_COLOR,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  circleFrame: {
+    borderWidth: 2,
+    borderColor: SYMBOL_COLOR,
+    borderRadius: (SYMBOL_SIZE + 8) / 2,
+    padding: 2,
+  },
+  square: {
+    width: SYMBOL_SIZE,
+    height: SYMBOL_SIZE,
+    borderWidth: 2,
+    borderColor: SYMBOL_COLOR,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  squareSolid: {
+    width: SYMBOL_SIZE,
+    height: SYMBOL_SIZE,
+    backgroundColor: SYMBOL_COLOR,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  squareFrame: {
+    borderWidth: 2,
+    borderColor: SYMBOL_COLOR,
+    padding: 2,
   },
 });

@@ -324,6 +324,7 @@ export default function GameplayScreen() {
             players={scorecardPlayers}
             onCellPress={handleCellPress}
             currentUserId={user?.id}
+            currentHole={getCurrentHole(players, user?.id ?? "")}
           />
         </View>
         {isCreator && (

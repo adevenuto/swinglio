@@ -32,98 +32,112 @@ export default function EditorScreen() {
         className="flex-1"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="items-center px-8 pt-12">
-          <View className="w-full max-w-md">
-            <Text className="mb-4 text-3xl font-bold text-center">
-              Course Editor
+        <View className="px-4 pt-8">
+          {/* Create Section */}
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: "#d4d4d4",
+              borderRadius: 8,
+              backgroundColor: "#fff",
+              padding: 16,
+              marginBottom: 24,
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{ color: "#1a1a1a", fontWeight: "600", marginBottom: 4 }}
+            >
+              Create New Course
             </Text>
-
+            <Text
+              variant="bodySmall"
+              style={{ color: "#555", marginBottom: 12 }}
+            >
+              Add a course that doesn't exist yet
+            </Text>
             <Button
               mode="outlined"
               onPress={() => router.push("/course-editor")}
-              style={{ marginBottom: 16 }}
             >
               Create Course
             </Button>
-
-            <Searchbar
-              placeholder="Search courses..."
-              onChangeText={search}
-              value={query}
-              loading={isSearching}
-              mode="bar"
-              style={{
-                backgroundColor: "transparent",
-                borderWidth: 1,
-                borderColor: "#d4d4d4",
-                borderRadius: 8,
-                marginBottom: 16,
-              }}
-              inputStyle={{ color: "#1a1a1a" }}
-            />
-
-            {!showResults && (
-              <View className="items-center py-8">
-                <Text
-                  variant="bodyMedium"
-                  style={{ color: "#999", textAlign: "center" }}
-                >
-                  Search for a course to edit
-                </Text>
-              </View>
-            )}
-
-            {showResults && results.length === 0 && !isSearching && (
-              <View className="items-center py-4">
-                <Text variant="bodyMedium" style={{ color: "#999" }}>
-                  No courses found
-                </Text>
-              </View>
-            )}
-
-            {showResults &&
-              results.map((course) => (
-                <View
-                  key={course.id}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#d4d4d4",
-                    backgroundColor: "#fff",
-                    borderRadius: 8,
-                    padding: 12,
-                    marginBottom: 8,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      variant="bodyLarge"
-                      style={{ color: "#1a1a1a", fontWeight: "600" }}
-                    >
-                      {course.name}
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: "#555" }}>
-                      {[course.street, course.state, course.postal_code]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </Text>
-                  </View>
-                  <Button
-                    mode="outlined"
-                    compact
-                    onPress={() =>
-                      router.push({
-                        pathname: "/course-editor",
-                        params: { courseId: String(course.id) },
-                      })
-                    }
-                  >
-                    Edit
-                  </Button>
-                </View>
-              ))}
           </View>
+
+          {/* Edit Section */}
+          <Text
+            variant="titleMedium"
+            style={{ color: "#1a1a1a", fontWeight: "600", marginBottom: 12 }}
+          >
+            Edit Existing
+          </Text>
+
+          <Searchbar
+            placeholder="Search courses..."
+            onChangeText={search}
+            value={query}
+            loading={isSearching}
+            mode="bar"
+            style={{
+              backgroundColor: "transparent",
+              borderWidth: 1,
+              borderColor: "#d4d4d4",
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+            inputStyle={{ color: "#1a1a1a" }}
+          />
+
+          {showResults && results.length === 0 && !isSearching && (
+            <View className="items-center py-4">
+              <Text variant="bodyMedium" style={{ color: "#999" }}>
+                No courses found
+              </Text>
+            </View>
+          )}
+
+          {showResults &&
+            results.map((course) => (
+              <View
+                key={course.id}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#d4d4d4",
+                  backgroundColor: "#fff",
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    variant="bodyLarge"
+                    style={{ color: "#1a1a1a", fontWeight: "600" }}
+                  >
+                    {course.name}
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: "#555" }}>
+                    {[course.street, course.state, course.postal_code]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </Text>
+                </View>
+                <Button
+                  mode="outlined"
+                  compact
+                  onPress={() =>
+                    router.push({
+                      pathname: "/course-editor",
+                      params: { courseId: String(course.id) },
+                    })
+                  }
+                >
+                  Edit
+                </Button>
+              </View>
+            ))}
         </View>
       </ScrollView>
     </SafeAreaView>

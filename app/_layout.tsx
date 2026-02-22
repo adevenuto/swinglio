@@ -61,12 +61,7 @@ export default function RootLayout() {
               name="gameplay"
               options={{
                 animation: "none",
-                headerShown: true,
-                title: "Round",
-                headerBackTitle: "Dashboard",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
+                headerShown: false,
               }}
             />
             <Stack.Screen

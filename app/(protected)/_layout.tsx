@@ -1,7 +1,7 @@
 import PillTabBar from "@/components/PillTabBar";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/contexts/auth-context";
+import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { usePendingFriendCount } from "@/hooks/use-friends";
 import { on } from "@/lib/events";
 import { Redirect, Tabs, useFocusEffect } from "expo-router";
@@ -12,11 +12,15 @@ export default function ProtectedLayout() {
   const { user, isLoading, isEditor } = useAuth();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
+  const { activeRounds, refresh: refreshActiveRounds } = useActiveRounds(
+    user?.id ?? "",
+  );
 
   useFocusEffect(
     useCallback(() => {
       refreshPendingCount();
-    }, [refreshPendingCount]),
+      refreshActiveRounds();
+    }, [refreshPendingCount, refreshActiveRounds]),
   );
 
   useEffect(() => {
@@ -48,8 +52,10 @@ export default function ProtectedLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="sports-golf" size={28} color={color} />
+            <MaterialIcons name="sports-golf" size={30} color={color} />
           ),
+          tabBarBadge:
+            activeRounds.length > 0 ? activeRounds.length : undefined,
         }}
       />
       <Tabs.Screen
@@ -57,7 +63,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Friends",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.2.fill" color={color} />
+            <MaterialIcons name="group" size={30} color={color} />
           ),
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
@@ -67,7 +73,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
+            <MaterialIcons name="person" size={30} color={color} />
           ),
         }}
       />
@@ -76,8 +82,9 @@ export default function ProtectedLayout() {
         options={{
           title: "Editor",
           href: isEditor ? undefined : null,
+          tabBarItemStyle: isEditor ? undefined : { display: "none" },
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={24} name="pencil" color={color} />
+            <MaterialIcons name="edit" size={28} color={color} />
           ),
         }}
       />

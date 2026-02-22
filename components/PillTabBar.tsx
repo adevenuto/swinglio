@@ -14,8 +14,9 @@ export default function PillTabBar({
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
 
-          // Skip hidden tabs (e.g. editor for non-editors via href: null)
-          if ((options as { href?: string | null }).href === null) return null;
+          // Skip hidden tabs (e.g. editor for non-editors)
+          const itemStyle = options.tabBarItemStyle as { display?: string } | undefined;
+          if (itemStyle?.display === "none") return null;
 
           const isFocused = state.index === index;
 
@@ -53,7 +54,7 @@ export default function PillTabBar({
                 size: 24,
               })}
               {badge != null && (
-                <View style={styles.badge}>
+                <View style={[styles.badge, route.name === "dashboard" && styles.badgeGreen]}>
                   <Text style={styles.badgeText}>{badge}</Text>
                 </View>
               )}
@@ -76,10 +77,10 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
-    borderRadius: 32,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    gap: 4,
+    borderRadius: 36,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    gap: 8,
     borderWidth: 1,
     borderColor: "#e5e5e5",
     shadowColor: "#000",
@@ -89,14 +90,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   tab: {
-    width: 56,
-    height: 44,
-    borderRadius: 22,
+    width: 62,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#404040",
   },
   badge: {
     position: "absolute",
@@ -109,6 +110,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 4,
+  },
+  badgeGreen: {
+    backgroundColor: "#22c55e",
   },
   badgeText: {
     color: "#fff",

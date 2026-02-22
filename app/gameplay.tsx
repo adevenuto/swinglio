@@ -5,10 +5,25 @@ import Scorecard, {
 import ScoreEntryModal from "@/components/ScoreEntryModal";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, RefreshControl, ScrollView, View } from "react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Alert,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  View,
+} from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
 type RoundData = {
@@ -33,13 +48,14 @@ type PlayerScore = {
     name: string;
     holes: Record<string, { par: string; length: string; score: string }>;
   };
-  profiles: { first_name: string | null; last_name: string | null; display_name: string | null };
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    display_name: string | null;
+  };
 };
 
-function getCurrentHole(
-  players: PlayerScore[],
-  userId: string,
-): number | null {
+function getCurrentHole(players: PlayerScore[], userId: string): number | null {
   const me = players.find((p) => p.golfer_id === userId);
   if (!me?.score_details?.holes) return null;
   const holeCount = Object.keys(me.score_details.holes).length;
@@ -61,6 +77,18 @@ export default function GameplayScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCreator, setIsCreator] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Fetch user avatar
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => setAvatarUrl(data?.avatar_url ?? null));
+  }, [user?.id]);
 
   // Score entry modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -74,7 +102,9 @@ export default function GameplayScreen() {
 
     const { data: roundData } = await supabase
       .from("rounds")
-      .select("id, creator_id, course_id, status, created_at, teebox_data, courses(name)")
+      .select(
+        "id, creator_id, course_id, status, created_at, teebox_data, courses(name)",
+      )
       .eq("id", roundId)
       .single();
 
@@ -85,7 +115,9 @@ export default function GameplayScreen() {
 
     const { data: scoreData } = await supabase
       .from("scores")
-      .select("id, golfer_id, score_details, profiles(first_name, last_name, display_name)")
+      .select(
+        "id, golfer_id, score_details, profiles(first_name, last_name, display_name)",
+      )
       .eq("round_id", roundId);
 
     if (scoreData) setPlayers(scoreData as unknown as PlayerScore[]);
@@ -139,9 +171,7 @@ export default function GameplayScreen() {
       const prevPlayers = players;
       setPlayers((prev) =>
         prev.map((p) =>
-          p.id === player.id
-            ? { ...p, score_details: updatedScoreDetails }
-            : p,
+          p.id === player.id ? { ...p, score_details: updatedScoreDetails } : p,
         ),
       );
       setModalVisible(false);
@@ -159,9 +189,7 @@ export default function GameplayScreen() {
 
       // Auto-scroll to next empty hole
       const updatedPlayers = prevPlayers.map((p) =>
-        p.id === player.id
-          ? { ...p, score_details: updatedScoreDetails }
-          : p,
+        p.id === player.id ? { ...p, score_details: updatedScoreDetails } : p,
       );
       if (user?.id) {
         const nextHole = getCurrentHole(updatedPlayers, user.id);
@@ -202,7 +230,13 @@ export default function GameplayScreen() {
   // Derive modal props from selected cell
   const modalProps = useMemo(() => {
     if (!selectedCell) {
-      return { holeNumber: 0, par: "", yardage: "", playerName: "", currentScore: "" };
+      return {
+        holeNumber: 0,
+        par: "",
+        yardage: "",
+        playerName: "",
+        currentScore: "",
+      };
     }
     const { player, holeKey } = selectedCell;
     const holeNumber = parseInt(holeKey.replace("hole-", ""), 10);
@@ -244,9 +278,59 @@ export default function GameplayScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-4 pt-6 pb-4">
+    <SafeAreaView
+      edges={["top"]}
+      style={{ flex: 1, backgroundColor: "#fff", paddingTop: 20 }}
+    >
+      {/* Nav header */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 20,
+        }}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <MaterialIcons name="chevron-left" size={28} color="#1a1a1a" />
+          <Text style={{ fontSize: 17, color: "#1a1a1a" }}>Dashboard</Text>
+        </Pressable>
+        {avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: "50%",
+              backgroundColor: "#e5e5e5",
+            }}
+          />
+        ) : (
+          <View
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: "50%",
+              backgroundColor: "#e5e5e5",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <MaterialIcons name="person" size={22} color="#999" />
+          </View>
+        )}
+      </View>
+
+      {/* Course info card */}
+      <View className="px-4 pb-4">
         <View
           style={{
             padding: 16,
@@ -284,7 +368,9 @@ export default function GameplayScreen() {
                 backgroundColor: "#f0fdf4",
               }}
             >
-              <Text style={{ fontSize: 11, fontWeight: "600", color: "#16a34a" }}>
+              <Text
+                style={{ fontSize: 11, fontWeight: "600", color: "#16a34a" }}
+              >
                 Active
               </Text>
             </View>
@@ -351,6 +437,6 @@ export default function GameplayScreen() {
         playerName={modalProps.playerName}
         currentScore={modalProps.currentScore}
       />
-    </View>
+    </SafeAreaView>
   );
 }

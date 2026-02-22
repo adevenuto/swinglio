@@ -92,7 +92,10 @@ async function getOrCreateState(
   const existing = statesByName.get(key);
   if (existing) return existing;
 
-  // Also check by abbreviation
+  // Also check by abbreviation (handles API returning "AL" instead of "Alabama")
+  for (const s of statesByName.values()) {
+    if (s.abbr.toLowerCase() === key) return s;
+  }
   if (abbr) {
     for (const s of statesByName.values()) {
       if (s.abbr.toLowerCase() === abbr.toLowerCase()) return s;
@@ -141,6 +144,12 @@ function findExistingCourse(
   if (byName) return byName;
 
   return null;
+}
+
+function extractPostalCode(address: string | undefined): string | null {
+  if (!address) return null;
+  const match = address.match(/\b(\d{5}(?:-\d{4})?)\b/);
+  return match ? match[1] : null;
 }
 
 // ---- Tee processing ----
@@ -303,6 +312,7 @@ async function main() {
             name: apiCourse.course_name,
             street: loc.address || null,
             state: state.abbr,
+            postal_code: extractPostalCode(loc.address),
             city_id: city.id,
             state_id: state.id,
             lat: loc.latitude || null,
@@ -320,6 +330,7 @@ async function main() {
                 name = ${courseData.name},
                 street = ${courseData.street},
                 state = ${courseData.state},
+                postal_code = ${courseData.postal_code},
                 city_id = ${courseData.city_id},
                 state_id = ${courseData.state_id},
                 lat = ${courseData.lat},
@@ -349,7 +360,7 @@ async function main() {
             // Insert new course
             const [row] = await sql`
               INSERT INTO courses (name, street, state, postal_code, city_id, state_id, lat, lng, layout_data, api_course_id, enriched_at)
-              VALUES (${courseData.name}, ${courseData.street}, ${courseData.state}, ${null}, ${courseData.city_id}, ${courseData.state_id}, ${courseData.lat}, ${courseData.lng}, ${courseData.layout_data}, ${courseData.api_course_id}, now())
+              VALUES (${courseData.name}, ${courseData.street}, ${courseData.state}, ${courseData.postal_code}, ${courseData.city_id}, ${courseData.state_id}, ${courseData.lat}, ${courseData.lng}, ${courseData.layout_data}, ${courseData.api_course_id}, now())
               RETURNING id
             `;
 

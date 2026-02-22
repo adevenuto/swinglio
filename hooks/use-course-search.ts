@@ -23,7 +23,7 @@ export type Teebox = {
   slope?: number;
   courseRating?: number;
   totalYardage?: number;
-  holes: Record<string, { par: string; length: string }>;
+  holes: Record<string, { par: string; length: string; handicap?: number }>;
 };
 
 export type LayoutData = {

@@ -53,9 +53,12 @@ export default function Dashboard() {
             <Button
               mode="outlined"
               onPress={() => router.push("/start-round")}
+              disabled={activeRounds.length > 0}
               style={{ marginTop: 16 }}
             >
-              Start Round
+              {activeRounds.length > 0
+                ? "Finish Active Round First"
+                : "Start Round"}
             </Button>
 
             <ActiveRoundCard rounds={activeRounds} />

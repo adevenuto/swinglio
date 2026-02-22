@@ -11,7 +11,7 @@ export type ScorecardPlayer = {
   first_name: string;
   score_details: {
     name: string;
-    holes: Record<string, { par: string; length: string; score: string }>;
+    holes: Record<string, { par: string; length: string; score: string; handicap?: number }>;
     inProxs?: boolean;
     inSkins?: boolean;
   } | null;

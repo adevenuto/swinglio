@@ -19,7 +19,7 @@ import {
   TextInput,
 } from "react-native-paper";
 
-type HoleData = { par: string; length: string };
+type HoleData = { par: string; length: string; handicap?: number };
 
 const TEEBOX_COLORS = [
   "#000000", // Black
@@ -162,17 +162,23 @@ export default function CourseEditorScreen() {
   const updateHole = (
     teeboxIdx: number,
     holeKey: string,
-    field: "par" | "length",
+    field: "par" | "length" | "handicap",
     value: string,
   ) => {
     setTeeboxes((prev) =>
       prev.map((t, i) => {
         if (i !== teeboxIdx) return t;
+        const current = t.holes[holeKey] ?? { par: "4", length: "" };
         return {
           ...t,
           holes: {
             ...t.holes,
-            [holeKey]: { ...t.holes[holeKey], [field]: value },
+            [holeKey]: {
+              ...current,
+              ...(field === "handicap"
+                ? { handicap: value ? parseInt(value, 10) || undefined : undefined }
+                : { [field]: value }),
+            },
           },
         };
       }),
@@ -694,6 +700,12 @@ export default function CourseEditorScreen() {
                 >
                   Yardage
                 </Text>
+                <Text
+                  variant="labelSmall"
+                  style={{ flex: 1, color: "#555", fontWeight: "600" }}
+                >
+                  Hdcp
+                </Text>
               </View>
 
               {/* Holes grid rows */}
@@ -738,6 +750,16 @@ export default function CourseEditorScreen() {
                       value={hole.length}
                       onChangeText={(v) =>
                         updateHole(selectedTeeboxIndex, holeKey, "length", v)
+                      }
+                      keyboardType="number-pad"
+                      style={{ flex: 1, marginRight: 12 }}
+                      dense
+                    />
+                    <TextInput
+                      mode="outlined"
+                      value={hole.handicap != null ? String(hole.handicap) : ""}
+                      onChangeText={(v) =>
+                        updateHole(selectedTeeboxIndex, holeKey, "handicap", v)
                       }
                       keyboardType="number-pad"
                       style={{ flex: 1 }}

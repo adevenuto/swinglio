@@ -11,11 +11,18 @@ export type EnrichmentResult = {
   source: "golfcourseapi" | "google" | "none";
 };
 
+export type HoleEnrichment = {
+  par: number;
+  yardage: number;
+  handicap: number;
+};
+
 export type TeeboxEnrichment = {
   name: string;
   slope?: number;
   courseRating?: number;
   totalYardage?: number;
+  holes?: HoleEnrichment[];
 };
 
 export type CourseInput = {
@@ -140,6 +147,7 @@ async function searchGolfCourseApi(
         slope: t.slope_rating,
         courseRating: t.course_rating,
         totalYardage: t.total_yards,
+        holes: t.holes,
       });
     }
 
@@ -247,6 +255,16 @@ export function applyTeeboxEnrichments(
           teebox.courseRating = match.courseRating;
         if (match.totalYardage !== undefined)
           teebox.totalYardage = match.totalYardage;
+
+        // Merge per-hole handicap data
+        if (match.holes?.length && teebox.holes) {
+          for (let h = 0; h < match.holes.length; h++) {
+            const holeKey = `hole-${h + 1}`;
+            if (teebox.holes[holeKey] && match.holes[h].handicap != null) {
+              teebox.holes[holeKey].handicap = match.holes[h].handicap;
+            }
+          }
+        }
       }
     }
 
@@ -254,6 +272,53 @@ export function applyTeeboxEnrichments(
   } catch {
     return existingLayoutData;
   }
+}
+
+// ---- Build layout_data from API (full replace, not merge) ----
+
+export function buildLayoutFromApi(
+  enrichments: TeeboxEnrichment[],
+  existingLayoutData?: string | null,
+): string {
+  // Parse existing layout to preserve teebox colors (local-only field)
+  const colorMap: Record<string, string> = {};
+  if (existingLayoutData) {
+    try {
+      const existing = JSON.parse(existingLayoutData);
+      for (const t of existing.teeboxes || []) {
+        if (t.color) colorMap[t.name.toLowerCase()] = t.color;
+      }
+    } catch {}
+  }
+
+  const teeboxes = enrichments.map((e, i) => {
+    const holes: Record<
+      string,
+      { par: string; length: string; handicap?: number }
+    > = {};
+    if (e.holes) {
+      for (let h = 0; h < e.holes.length; h++) {
+        holes[`hole-${h + 1}`] = {
+          par: String(e.holes[h].par),
+          length: String(e.holes[h].yardage),
+          handicap: e.holes[h].handicap,
+        };
+      }
+    }
+    const color = colorMap[e.name.toLowerCase()];
+    return {
+      order: i,
+      name: e.name,
+      ...(color && { color }),
+      slope: e.slope,
+      courseRating: e.courseRating,
+      totalYardage: e.totalYardage,
+      holes,
+    };
+  });
+
+  const holeCount = enrichments[0]?.holes?.length ?? 18;
+  return JSON.stringify({ teeboxes, hole_count: holeCount });
 }
 
 function computeTotalYardage(

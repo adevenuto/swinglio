@@ -15,6 +15,7 @@ export const courses = pgTable('courses', {
   lng: doublePrecision('lng'),
   phone: varchar('phone', { length: 50 }),
   website: varchar('website', { length: 500 }),
+  apiCourseId: integer('api_course_id'),
   enrichedAt: timestamp('enriched_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),

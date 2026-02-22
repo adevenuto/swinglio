@@ -22,8 +22,10 @@ import {
 import "../global.css";
 
 function buildScoreDetails(teebox: Teebox) {
-  const holes: Record<string, { par: string; length: string; score: string }> =
-    {};
+  const holes: Record<
+    string,
+    { par: string; length: string; score: string; handicap?: number }
+  > = {};
   for (const [key, value] of Object.entries(teebox.holes)) {
     holes[key] = { ...value, score: "" };
   }

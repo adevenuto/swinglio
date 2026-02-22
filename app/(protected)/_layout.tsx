@@ -1,8 +1,7 @@
-import { HapticTab } from "@/components/haptic-tab";
+import PillTabBar from "@/components/PillTabBar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/contexts/auth-context";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePendingFriendCount } from "@/hooks/use-friends";
 import { on } from "@/lib/events";
 import { Redirect, Tabs, useFocusEffect } from "expo-router";
@@ -11,7 +10,6 @@ import { ActivityIndicator, View } from "react-native";
 
 export default function ProtectedLayout() {
   const { user, isLoading, isEditor } = useAuth();
-  const colorScheme = useColorScheme();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
 
@@ -27,7 +25,7 @@ export default function ProtectedLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
+      <View className="items-center justify-center flex-1">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -40,10 +38,9 @@ export default function ProtectedLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <PillTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
       }}
     >
       <Tabs.Screen
@@ -51,7 +48,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <MaterialIcons name="sports-golf" size={28} color={color} />
           ),
         }}
       />
@@ -80,7 +77,7 @@ export default function ProtectedLayout() {
           title: "Editor",
           href: isEditor ? undefined : null,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="gearshape.fill" color={color} />
+            <IconSymbol size={24} name="pencil" color={color} />
           ),
         }}
       />

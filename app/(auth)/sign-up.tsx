@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/auth-context";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -127,11 +128,13 @@ export default function SignUp() {
         </View>
 
         <Pressable
-          className="border border-gray-300 rounded-lg py-3 mb-6"
+          className="border border-gray-300 rounded-lg py-3 mb-6 flex-row items-center justify-center"
+          style={{ gap: 8 }}
           onPress={handleGoogleSignIn}
           disabled={loading}
         >
-          <Text className="text-gray-700 text-center font-semibold text-base">
+          <AntDesign name="google" size={20} color="#4285F4" />
+          <Text className="text-gray-700 font-semibold text-base">
             Sign up with Google
           </Text>
         </Pressable>

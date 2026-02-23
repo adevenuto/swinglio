@@ -5,6 +5,7 @@ import {
   RateLimitError,
   buildLayoutFromApi,
   findBestMatch,
+  isDuplicated9Hole,
 } from "./lib/enrich-course";
 
 // Imports all courses from the Golf Course API via pagination.
@@ -166,18 +167,22 @@ function extractTeeboxes(apiCourse: ApiCourse): TeeboxEnrichment[] {
     const key = t.tee_name.toLowerCase();
     if (seenNames.has(key)) continue;
     seenNames.add(key);
+    const mappedHoles = t.holes?.length
+      ? t.holes.map((h) => ({
+          par: h.par,
+          yardage: h.yardage,
+          handicap: h.handicap,
+        }))
+      : undefined;
+    const is9Duped = mappedHoles ? isDuplicated9Hole(mappedHoles) : false;
     result.push({
       name: t.tee_name,
       slope: t.slope_rating,
       courseRating: t.course_rating,
-      totalYardage: t.total_yards,
-      holes: t.holes?.length
-        ? t.holes.map((h) => ({
-            par: h.par,
-            yardage: h.yardage,
-            handicap: h.handicap,
-          }))
-        : undefined,
+      totalYardage: is9Duped
+        ? Math.round(t.total_yards / 2)
+        : t.total_yards,
+      holes: is9Duped ? mappedHoles!.slice(0, 9) : mappedHoles,
     });
   }
 

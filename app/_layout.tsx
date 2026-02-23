@@ -35,7 +35,7 @@ export default function RootLayout() {
                 title: "Modal",
               }}
             />
-<Stack.Screen
+            <Stack.Screen
               name="player-scores"
               options={{
                 presentation: "modal",

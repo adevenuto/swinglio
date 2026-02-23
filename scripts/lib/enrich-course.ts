@@ -142,12 +142,16 @@ async function searchGolfCourseApi(
       const key = t.tee_name.toLowerCase();
       if (seenNames.has(key)) continue;
       seenNames.add(key);
+      const rawHoles = t.holes ?? [];
+      const is9Duped = isDuplicated9Hole(rawHoles);
       uniqueTees.push({
         name: t.tee_name,
         slope: t.slope_rating,
         courseRating: t.course_rating,
-        totalYardage: t.total_yards,
-        holes: t.holes,
+        totalYardage: is9Duped
+          ? Math.round(t.total_yards / 2)
+          : t.total_yards,
+        holes: is9Duped ? rawHoles.slice(0, 9) : rawHoles,
       });
     }
 
@@ -198,6 +202,28 @@ async function geocodeWithGoogle(
   } catch {
     return null;
   }
+}
+
+// ---- 9-hole duplication detection ----
+
+/**
+ * Detects if an 18-hole array is actually a 9-hole course with front 9
+ * duplicated into the back 9. The Golf Course API does this for 9-hole
+ * courses — holes 10-18 have identical par + yardage to holes 1-9.
+ */
+export function isDuplicated9Hole(
+  holes: { par: number; yardage: number }[],
+): boolean {
+  if (holes.length !== 18) return false;
+  for (let i = 0; i < 9; i++) {
+    if (
+      holes[i].par !== holes[i + 9].par ||
+      holes[i].yardage !== holes[i + 9].yardage
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // ---- Teebox enrichment merger ----

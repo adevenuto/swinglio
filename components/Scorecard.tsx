@@ -115,6 +115,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
 
     const teeboxColor = teeboxData.color || FALLBACK_TEEBOX_COLOR;
     const teeboxTextColor = getContrastColor(teeboxColor);
+    const secondaryColor = teeboxData.secondaryColor || null;
 
     useImperativeHandle(ref, () => ({
       scrollToHole: (holeNumber: number) => {
@@ -391,7 +392,31 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         {/* Fixed left column (sticky) */}
         <View style={styles.fixedColumn}>
           {renderFixedCell("Hole")}
-          {renderFixedCell(teeboxData.name, teeboxColor, teeboxTextColor)}
+          <View
+            style={[styles.fixedCell, { backgroundColor: teeboxColor }]}
+          >
+            {secondaryColor && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: 0,
+                  height: 0,
+                  borderTopWidth: 12,
+                  borderRightWidth: 12,
+                  borderTopColor: secondaryColor,
+                  borderRightColor: "transparent",
+                }}
+              />
+            )}
+            <Text
+              style={[styles.cellText, { color: teeboxTextColor }]}
+              numberOfLines={1}
+            >
+              {teeboxData.name}
+            </Text>
+          </View>
           {renderFixedCell("Par", "#fafafa")}
           {players.map((p) => {
             const isCurrentUser = p.golfer_id === currentUserId;

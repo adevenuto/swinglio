@@ -2,14 +2,19 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+export const PILL_TAB_BAR_OFFSET = 120;
 
 export default function PillTabBar({
   state,
   descriptors,
   navigation,
 }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.outer}>
+    <View style={[styles.outer, { bottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.pill}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
@@ -69,7 +74,6 @@ export default function PillTabBar({
 const styles = StyleSheet.create({
   outer: {
     position: "absolute",
-    bottom: 32,
     alignSelf: "center",
     width: "100%",
     alignItems: "center",

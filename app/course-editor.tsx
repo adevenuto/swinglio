@@ -31,6 +31,10 @@ const TEEBOX_COLORS = [
   "#6A1B9A", // Purple
   "#FF8F00", // Orange
   "#795548", // Brown
+  "#FFEB3B", // Yellow
+  "#9E9E9E", // Silver
+  "#D2B48C", // Tan
+  "#00897B", // Teal
 ];
 
 export default function CourseEditorScreen() {
@@ -376,6 +380,7 @@ export default function CourseEditorScreen() {
             mode="outlined"
             value={street}
             onChangeText={setStreet}
+            multiline
             style={{ marginBottom: 12 }}
           />
 
@@ -396,7 +401,8 @@ export default function CourseEditorScreen() {
             inputStyle={{ color: "#1a1a1a", fontSize: 14 }}
           />
           {showCityResults && cityResults.length > 0 && (
-            <View
+            <ScrollView
+              nestedScrollEnabled
               style={{
                 borderWidth: 1,
                 borderTopWidth: 0,
@@ -425,7 +431,7 @@ export default function CourseEditorScreen() {
                   </Text>
                 </View>
               ))}
-            </View>
+            </ScrollView>
           )}
 
           <TextInput
@@ -607,6 +613,72 @@ export default function CourseEditorScreen() {
                 })}
               </View>
 
+              {/* Secondary color (optional) */}
+              {selectedTeebox.color && (
+                <>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text variant="labelMedium" style={{ color: "#555" }}>
+                      Secondary Color
+                    </Text>
+                    {selectedTeebox.secondaryColor && (
+                      <Pressable
+                        onPress={() =>
+                          updateTeebox(selectedTeeboxIndex, {
+                            secondaryColor: undefined,
+                          })
+                        }
+                      >
+                        <Text
+                          variant="labelSmall"
+                          style={{ color: "#C62828" }}
+                        >
+                          Clear
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 8,
+                      flexWrap: "wrap",
+                      marginBottom: 12,
+                    }}
+                  >
+                    {TEEBOX_COLORS.map((color) => {
+                      const isSelected =
+                        selectedTeebox.secondaryColor?.toLowerCase() ===
+                        color.toLowerCase();
+                      return (
+                        <Pressable
+                          key={`sec-${color}`}
+                          onPress={() =>
+                            updateTeebox(selectedTeeboxIndex, {
+                              secondaryColor: color,
+                            })
+                          }
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: color,
+                            borderWidth: isSelected ? 2 : 1,
+                            borderColor: isSelected ? "#1a1a1a" : "#d4d4d4",
+                          }}
+                        />
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+
               <View
                 style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}
               >
@@ -722,7 +794,7 @@ export default function CourseEditorScreen() {
                       flexDirection: "row",
                       alignItems: "center",
                       paddingHorizontal: 4,
-                      marginBottom: 6,
+                      marginBottom: 12,
                     }}
                   >
                     <Text

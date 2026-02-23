@@ -5,6 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { PILL_TAB_BAR_OFFSET } from "@/components/PillTabBar";
 import { ActivityIndicator, Button, Snackbar, Text as PaperText, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
@@ -235,6 +236,7 @@ export default function Profile() {
       <ScrollView
         className="flex-1"
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: PILL_TAB_BAR_OFFSET }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

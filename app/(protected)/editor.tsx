@@ -1,3 +1,4 @@
+import { PILL_TAB_BAR_OFFSET } from "@/components/PillTabBar";
 import { useAuth } from "@/contexts/auth-context";
 import { useCourseSearch } from "@/hooks/use-course-search";
 import { useRouter } from "expo-router";
@@ -31,6 +32,7 @@ export default function EditorScreen() {
       <ScrollView
         className="flex-1"
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: PILL_TAB_BAR_OFFSET }}
       >
         <View className="px-4 pt-8">
           {/* Create Section */}

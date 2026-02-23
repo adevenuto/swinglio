@@ -20,6 +20,7 @@ export type Teebox = {
   order: number;
   name: string;
   color?: string;
+  secondaryColor?: string;
   slope?: number;
   courseRating?: number;
   totalYardage?: number;

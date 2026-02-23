@@ -6,12 +6,20 @@ import {
   parseTeeboxes,
   useCourseSearch,
 } from "@/hooks/use-course-search";
+import { useNearbyCourses } from "@/hooks/use-nearby-courses";
 import { FriendWithProfile, useFriends } from "@/hooks/use-friends";
 import { supabase } from "@/lib/supabase";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Pressable, ScrollView, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import {
   Button,
   Chip,
@@ -44,6 +52,12 @@ export default function StartRoundScreen() {
     search: searchCourses,
     clearSearch: clearCourseSearch,
   } = useCourseSearch();
+
+  const {
+    courses: nearbyCourses,
+    isLoading: nearbyLoading,
+    locationDenied,
+  } = useNearbyCourses(10);
 
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [teeboxes, setTeeboxes] = useState<Teebox[]>([]);
@@ -183,33 +197,81 @@ export default function StartRoundScreen() {
             inputStyle={{ color: "#1a1a1a" }}
           />
         </View>
-        <FlatList
-          data={courseResults}
-          keyExtractor={(item) => item.id.toString()}
-          className="mt-2 px-4"
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <List.Item
-              title={item.name}
-              titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
-              description={
-                [item.street, item.state, item.postal_code]
-                  .filter(Boolean)
-                  .join(", ") || undefined
-              }
-              descriptionStyle={{ color: "#555" }}
-              onPress={() => handleSelectCourse(item)}
-              left={(props) => <List.Icon {...props} icon="golf" />}
-            />
-          )}
-          ListEmptyComponent={
-            courseQuery.length >= 2 && !courseSearching ? (
+        {courseQuery.length >= 2 ? (
+          <FlatList
+            data={courseResults}
+            keyExtractor={(item) => item.id.toString()}
+            className="mt-2 px-4"
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <List.Item
+                title={item.name}
+                titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                description={
+                  [item.street, item.state, item.postal_code]
+                    .filter(Boolean)
+                    .join(", ") || undefined
+                }
+                descriptionStyle={{ color: "#555" }}
+                onPress={() => handleSelectCourse(item)}
+                left={(props) => <List.Icon {...props} icon="golf" />}
+              />
+            )}
+            ListEmptyComponent={
+              !courseSearching ? (
+                <View className="items-center py-8">
+                  <Text variant="bodyMedium">No courses found</Text>
+                </View>
+              ) : null
+            }
+          />
+        ) : !locationDenied ? (
+          <ScrollView className="mt-4 px-4">
+            <Text
+              variant="titleSmall"
+              style={{ color: "#111827", marginBottom: 8 }}
+            >
+              Nearby
+            </Text>
+            {nearbyLoading ? (
+              <ActivityIndicator
+                size="small"
+                color="#1a1a1a"
+                style={{ marginTop: 24 }}
+              />
+            ) : nearbyCourses.length > 0 ? (
+              nearbyCourses.map((item) => (
+                <List.Item
+                  key={item.id}
+                  title={item.name}
+                  titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                  description={
+                    [
+                      item.street,
+                      item.state,
+                      item.distance_miles != null
+                        ? `${item.distance_miles.toFixed(1)} mi`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join("  ·  ") || undefined
+                  }
+                  descriptionStyle={{ color: "#555" }}
+                  onPress={() => handleSelectCourse(item)}
+                  left={(props) => (
+                    <List.Icon {...props} icon="map-marker" />
+                  )}
+                />
+              ))
+            ) : (
               <View className="items-center py-8">
-                <Text variant="bodyMedium">No courses found</Text>
+                <Text variant="bodyMedium" style={{ color: "#999" }}>
+                  No nearby courses found
+                </Text>
               </View>
-            ) : null
-          }
-        />
+            )}
+          </ScrollView>
+        ) : null}
       </View>
     );
   }

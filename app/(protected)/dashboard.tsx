@@ -2,7 +2,6 @@ import ActiveRoundCard from "@/components/ActiveRoundCard";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { PILL_TAB_BAR_OFFSET } from "@/components/PillTabBar";
 import { Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
@@ -48,6 +48,7 @@ export default function Dashboard() {
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <ScrollView
         className="flex-1"
+        contentContainerStyle={{ paddingBottom: PILL_TAB_BAR_OFFSET }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -61,7 +62,12 @@ export default function Dashboard() {
           <View className="w-full max-w-md">
             <Text
               variant="headlineSmall"
-              style={{ fontWeight: "700", color: "#1a1a1a", textAlign: "center", marginBottom: 4 }}
+              style={{
+                fontWeight: "700",
+                color: "#1a1a1a",
+                textAlign: "center",
+                marginBottom: 4,
+              }}
             >
               Dashboard
             </Text>
@@ -78,7 +84,7 @@ export default function Dashboard() {
                 onPress={() => router.push("/start-round")}
                 style={{ marginBottom: 16 }}
               >
-                Start Round
+                Start A Round
               </Button>
             )}
 
@@ -90,16 +96,16 @@ export default function Dashboard() {
                 variant="titleSmall"
                 style={{ marginBottom: 8, color: "#111827" }}
               >
-                Recent Rounds
+                Recent Activity
               </Text>
 
               {recentRounds.length === 0 ? (
-                <View style={{ alignItems: "center", paddingVertical: 32 }}>
-                  <MaterialIcons
+                <View style={{ alignItems: "center", paddingVertical: 24 }}>
+                  {/* <MaterialIcons
                     name="golf-course"
                     size={48}
                     color="#d4d4d4"
-                  />
+                  /> */}
                   <Text
                     style={{
                       color: "#999",
@@ -148,10 +154,7 @@ export default function Dashboard() {
                       >
                         {round.courses?.name || "Unknown Course"}
                       </Text>
-                      <Text
-                        variant="bodySmall"
-                        style={{ color: "#999" }}
-                      >
+                      <Text variant="bodySmall" style={{ color: "#999" }}>
                         {formatDate(round.created_at)}
                       </Text>
                     </View>

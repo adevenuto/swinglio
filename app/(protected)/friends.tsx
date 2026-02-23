@@ -15,6 +15,7 @@ import {
   ScrollView,
   View,
 } from "react-native";
+import { PILL_TAB_BAR_OFFSET } from "@/components/PillTabBar";
 import { Button, Searchbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
@@ -174,6 +175,7 @@ export default function FriendsScreen() {
       <ScrollView
         className="flex-1"
         keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: PILL_TAB_BAR_OFFSET }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

@@ -1,5 +1,6 @@
 import { Teebox } from "@/hooks/use-course-search";
 import { getContrastColor } from "@/lib/color-contrast";
+import { ScoreDetails } from "@/types/scoring";
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -9,18 +10,13 @@ export type ScorecardPlayer = {
   id: number;
   golfer_id: string;
   first_name: string;
-  score_details: {
-    name: string;
-    holes: Record<string, { par: string; length: string; score: string; handicap?: number }>;
-    inProxs?: boolean;
-    inSkins?: boolean;
-  } | null;
+  score_details: ScoreDetails | null;
 };
 
 type ScorecardProps = {
   teeboxData: Teebox;
   players: ScorecardPlayer[];
-  onCellPress?: (player: ScorecardPlayer, holeKey: string) => void;
+  onHolePress?: (holeNumber: number) => void;
   currentUserId?: string;
   currentHole?: number | null;
 };
@@ -102,7 +98,7 @@ function sumField(
 // --- Component ---
 
 const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
-  ({ teeboxData, players, onCellPress, currentUserId, currentHole }, ref) => {
+  ({ teeboxData, players, onHolePress, currentUserId, currentHole }, ref) => {
     const scrollRef = useRef<ScrollView>(null);
 
     const holeCount = useMemo(
@@ -290,13 +286,27 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       columns.map((col) => {
         if (col.type === "hole") {
           const hl = col.number === currentHole;
-          return renderDataCell(
+          const cell = renderDataCell(
             String(col.number),
             col.key,
             hl ? HIGHLIGHT_BG : undefined,
             undefined,
             hl ? HIGHLIGHT_BORDER : undefined,
           );
+          if (onHolePress) {
+            return (
+              <Pressable
+                key={`hn-${col.key}`}
+                onPress={() => onHolePress(col.number)}
+                style={({ pressed }) =>
+                  pressed ? { opacity: 0.5 } : undefined
+                }
+              >
+                {cell}
+              </Pressable>
+            );
+          }
+          return cell;
         }
         if (col.type === "out") {
           return renderDataCell("OUT", "out", "#fafafa");
@@ -356,26 +366,12 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
           const score = holes[col.key]?.score ?? "";
           const par = teeboxData.holes[col.key]?.par ?? "";
           const hl = col.number === currentHole;
-          const cell = renderScoreCell(
+          return renderScoreCell(
             score,
             par,
             `${player.id}-${col.key}`,
             hl,
           );
-          if (onCellPress) {
-            return (
-              <Pressable
-                key={`${player.id}-${col.key}`}
-                onPress={() => onCellPress(player, col.key)}
-                style={({ pressed }) =>
-                  pressed ? { opacity: 0.5 } : undefined
-                }
-              >
-                {cell}
-              </Pressable>
-            );
-          }
-          return cell;
         }
         if (col.type === "out") {
           const total = sumField(holes, front, "score");

@@ -27,15 +27,13 @@ import {
   Searchbar,
   Text,
 } from "react-native-paper";
+import { createDefaultHoleStats, HoleData, ScoreDetails } from "@/types/scoring";
 import "../global.css";
 
-function buildScoreDetails(teebox: Teebox) {
-  const holes: Record<
-    string,
-    { par: string; length: string; score: string; handicap?: number }
-  > = {};
+function buildScoreDetails(teebox: Teebox): ScoreDetails {
+  const holes: Record<string, HoleData> = {};
   for (const [key, value] of Object.entries(teebox.holes)) {
-    holes[key] = { ...value, score: "" };
+    holes[key] = { ...value, score: "", stats: createDefaultHoleStats() };
   }
   return { name: teebox.name, holes };
 }

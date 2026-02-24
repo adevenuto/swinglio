@@ -1,5 +1,6 @@
 import ScreenHeader from "@/components/ScreenHeader";
 import UserAvatar from "@/components/UserAvatar";
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import {
   FriendWithProfile,
@@ -14,6 +15,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
@@ -179,8 +181,8 @@ export default function FriendsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3b82f6"
-            colors={["#3b82f6"]}
+            tintColor={Color.info}
+            colors={[Color.info]}
           />
         }
       >
@@ -195,24 +197,18 @@ export default function FriendsScreen() {
               value={query}
               loading={isSearching}
               mode="bar"
-              style={{
-                backgroundColor: "transparent",
-                borderWidth: 1,
-                borderColor: "#d4d4d4",
-                borderRadius: 8,
-                marginBottom: 16,
-              }}
-              inputStyle={{ color: "#1a1a1a" }}
+              style={styles.searchbar}
+              inputStyle={{ color: Color.neutral900 }}
             />
 
             {/* Search results */}
             {showSearchResults && (
-              <View style={{ marginBottom: 16 }}>
+              <View style={{ marginBottom: Space.lg }}>
                 {filteredResults.length === 0 && !isSearching ? (
                   <View className="items-center py-4">
                     <Text
                       variant="bodyMedium"
-                      style={{ color: "#999" }}
+                      style={{ color: Color.neutral400 }}
                     >
                       No players found
                     </Text>
@@ -226,54 +222,35 @@ export default function FriendsScreen() {
                     return (
                       <View
                         key={player.id}
-                        style={{
-                          borderWidth: 1,
-                          borderColor: "#d4d4d4",
-                          backgroundColor: "#fff",
-                          borderRadius: 8,
-                          padding: 12,
-                          marginBottom: 8,
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
+                        style={styles.card}
                       >
                         <UserAvatar
                           avatarUrl={player.avatar_url}
                           firstName={player.first_name}
                           size={40}
                         />
-                        <View style={{ flex: 1, marginLeft: 12 }}>
+                        <View style={{ flex: 1, marginLeft: Space.md }}>
                           <Text
                             variant="bodyLarge"
-                            style={{
-                              color: "#1a1a1a",
-                              fontWeight: "600",
-                              textTransform: "capitalize",
-                            }}
+                            style={styles.playerName}
                           >
                             {name}
                           </Text>
                           {player.email && (
                             <Text
                               variant="bodySmall"
-                              style={{ color: "#555" }}
+                              style={{ color: Color.neutral500 }}
                             >
                               {player.email}
                             </Text>
                           )}
                         </View>
-                        <View
-                          style={{
-                            justifyContent: "center",
-                            alignItems: "center",
-                            minWidth: 90,
-                          }}
-                        >
+                        <View style={styles.actionColumn}>
                           {relationship === "accepted" && (
                             <Text
                               variant="bodyMedium"
                               style={{
-                                color: "#16a34a",
+                                color: Color.primary,
                                 fontWeight: "600",
                               }}
                             >
@@ -283,7 +260,7 @@ export default function FriendsScreen() {
                           {relationship === "pending_sent" && (
                             <Text
                               variant="bodySmall"
-                              style={{ color: "#999" }}
+                              style={{ color: Color.neutral400 }}
                             >
                               Invite Sent
                             </Text>
@@ -317,50 +294,34 @@ export default function FriendsScreen() {
 
             {/* Pending received invites */}
             {pendingReceived.length > 0 && (
-              <View style={{ marginBottom: 16 }}>
-                <Text
-                  variant="titleSmall"
-                  style={{ color: "#111827", marginBottom: 8 }}
-                >
+              <View style={{ marginBottom: Space.lg }}>
+                <Text style={styles.sectionLabel}>
                   Friend Requests ({pendingReceived.length})
                 </Text>
                 {pendingReceived.map((fr) => (
                   <View
                     key={fr.id}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#d4d4d4",
-                      backgroundColor: "#fff",
-                      borderRadius: 8,
-                      padding: 12,
-                      marginBottom: 8,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
+                    style={styles.card}
                   >
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
-                    <View style={{ flex: 1, marginLeft: 12 }}>
+                    <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text
                         variant="bodyLarge"
-                        style={{
-                          color: "#1a1a1a",
-                          fontWeight: "600",
-                          textTransform: "capitalize",
-                        }}
+                        style={styles.playerName}
                       >
                         {getName(fr)}
                       </Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: "#555" }}>
+                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
                           {fr.profile.email}
                         </Text>
                       )}
                     </View>
-                    <View style={{ flexDirection: "row", gap: 8 }}>
+                    <View style={{ flexDirection: "row", gap: Space.sm }}>
                       <Button
                         mode="outlined"
                         compact
@@ -373,7 +334,7 @@ export default function FriendsScreen() {
                         onPress={() => handleDecline(fr)}
                         style={{ justifyContent: "center" }}
                       >
-                        <Text style={{ color: "#dc2626", fontWeight: "600" }}>
+                        <Text style={{ color: Color.danger, fontWeight: "600" }}>
                           Decline
                         </Text>
                       </Pressable>
@@ -385,45 +346,29 @@ export default function FriendsScreen() {
 
             {/* Friends list */}
             {friends.length > 0 && (
-              <View style={{ marginBottom: 16 }}>
-                <Text
-                  variant="titleSmall"
-                  style={{ color: "#111827", marginBottom: 8 }}
-                >
+              <View style={{ marginBottom: Space.lg }}>
+                <Text style={styles.sectionLabel}>
                   Friends ({friends.length})
                 </Text>
                 {friends.map((fr) => (
                   <View
                     key={fr.id}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#d4d4d4",
-                      backgroundColor: "#fff",
-                      borderRadius: 8,
-                      padding: 12,
-                      marginBottom: 8,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
+                    style={styles.card}
                   >
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
-                    <View style={{ flex: 1, marginLeft: 12 }}>
+                    <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text
                         variant="bodyLarge"
-                        style={{
-                          color: "#1a1a1a",
-                          fontWeight: "600",
-                          textTransform: "capitalize",
-                        }}
+                        style={styles.playerName}
                       >
                         {getName(fr)}
                       </Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: "#555" }}>
+                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
                           {fr.profile.email}
                         </Text>
                       )}
@@ -432,7 +377,7 @@ export default function FriendsScreen() {
                       hitSlop={16}
                       onPress={() => handleRemoveFriend(fr)}
                     >
-                      <Text style={{ color: "#dc2626", fontSize: 13 }}>
+                      <Text style={{ color: Color.danger, fontSize: 13 }}>
                         Disconnect
                       </Text>
                     </Pressable>
@@ -443,52 +388,36 @@ export default function FriendsScreen() {
 
             {/* Sent requests */}
             {pendingSent.length > 0 && (
-              <View style={{ marginBottom: 16 }}>
-                <Text
-                  variant="titleSmall"
-                  style={{ color: "#111827", marginBottom: 8 }}
-                >
+              <View style={{ marginBottom: Space.lg }}>
+                <Text style={styles.sectionLabel}>
                   Sent Requests ({pendingSent.length})
                 </Text>
                 {pendingSent.map((fr) => (
                   <View
                     key={fr.id}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#d4d4d4",
-                      backgroundColor: "#fff",
-                      borderRadius: 8,
-                      padding: 12,
-                      marginBottom: 8,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
+                    style={styles.card}
                   >
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
-                    <View style={{ flex: 1, marginLeft: 12 }}>
+                    <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text
                         variant="bodyLarge"
-                        style={{
-                          color: "#1a1a1a",
-                          fontWeight: "600",
-                          textTransform: "capitalize",
-                        }}
+                        style={styles.playerName}
                       >
                         {getName(fr)}
                       </Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: "#555" }}>
+                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
                           {fr.profile.email}
                         </Text>
                       )}
                     </View>
                     <Text
                       variant="bodySmall"
-                      style={{ color: "#999" }}
+                      style={{ color: Color.neutral400 }}
                     >
                       Invite Sent
                     </Text>
@@ -502,7 +431,7 @@ export default function FriendsScreen() {
               <View className="items-center py-8">
                 <Text
                   variant="bodyMedium"
-                  style={{ color: "#999", textAlign: "center" }}
+                  style={{ color: Color.neutral400, textAlign: "center" }}
                 >
                   Search for players above to add friends
                 </Text>
@@ -514,3 +443,42 @@ export default function FriendsScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.sm,
+    textTransform: "uppercase",
+  },
+  searchbar: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.full,
+    marginBottom: Space.lg,
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    padding: Space.md,
+    marginBottom: Space.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    ...Shadow.sm,
+  },
+  playerName: {
+    color: Color.neutral900,
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
+  actionColumn: {
+    justifyContent: "center",
+    alignItems: "center",
+    minWidth: 90,
+  },
+});

@@ -1,4 +1,5 @@
 import UserAvatar from "@/components/UserAvatar";
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import {
   Course,
@@ -18,6 +19,7 @@ import {
   FlatList,
   Pressable,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import {
@@ -174,10 +176,7 @@ export default function StartRoundScreen() {
     return (
       <View className="flex-1 bg-white">
         <View className="px-4 pt-4">
-          <Text
-            variant="titleSmall"
-            style={{ color: "#111827", marginBottom: 12 }}
-          >
+          <Text style={styles.sectionLabel}>
             Search for a Course
           </Text>
           <Searchbar
@@ -186,13 +185,8 @@ export default function StartRoundScreen() {
             value={courseQuery}
             loading={courseSearching}
             mode="bar"
-            style={{
-              backgroundColor: "transparent",
-              borderWidth: 1,
-              borderColor: "#d4d4d4",
-              borderRadius: 8,
-            }}
-            inputStyle={{ color: "#1a1a1a" }}
+            style={styles.searchbar}
+            inputStyle={{ color: Color.neutral900 }}
           />
         </View>
         {courseQuery.length >= 2 ? (
@@ -204,13 +198,13 @@ export default function StartRoundScreen() {
             renderItem={({ item }) => (
               <List.Item
                 title={item.name}
-                titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                titleStyle={{ color: Color.neutral900, fontWeight: "600" }}
                 description={
                   [item.street, item.state, item.postal_code]
                     .filter(Boolean)
                     .join(", ") || undefined
                 }
-                descriptionStyle={{ color: "#555" }}
+                descriptionStyle={{ color: Color.neutral500 }}
                 onPress={() => handleSelectCourse(item)}
                 left={(props) => <List.Icon {...props} icon="golf" />}
               />
@@ -225,24 +219,21 @@ export default function StartRoundScreen() {
           />
         ) : !locationDenied ? (
           <ScrollView className="mt-4 px-4">
-            <Text
-              variant="titleSmall"
-              style={{ color: "#111827", marginBottom: 8 }}
-            >
+            <Text style={styles.sectionLabel}>
               Nearby
             </Text>
             {nearbyLoading ? (
               <ActivityIndicator
                 size="small"
-                color="#1a1a1a"
-                style={{ marginTop: 24 }}
+                color={Color.neutral900}
+                style={{ marginTop: Space.xl }}
               />
             ) : nearbyCourses.length > 0 ? (
               nearbyCourses.map((item) => (
                 <List.Item
                   key={item.id}
                   title={item.name}
-                  titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+                  titleStyle={{ color: Color.neutral900, fontWeight: "600" }}
                   description={
                     [
                       item.street,
@@ -254,7 +245,7 @@ export default function StartRoundScreen() {
                       .filter(Boolean)
                       .join("  ·  ") || undefined
                   }
-                  descriptionStyle={{ color: "#555" }}
+                  descriptionStyle={{ color: Color.neutral500 }}
                   onPress={() => handleSelectCourse(item)}
                   left={(props) => (
                     <List.Icon {...props} icon="map-marker" />
@@ -263,7 +254,7 @@ export default function StartRoundScreen() {
               ))
             ) : (
               <View className="items-center py-8">
-                <Text variant="bodyMedium" style={{ color: "#999" }}>
+                <Text variant="bodyMedium" style={{ color: Color.neutral400 }}>
                   No nearby courses found
                 </Text>
               </View>
@@ -279,30 +270,11 @@ export default function StartRoundScreen() {
     return (
       <View className="flex-1 bg-white">
         <View className="px-4 pt-4">
-          <View
-            style={{
-              padding: 16,
-              borderWidth: 1,
-              borderColor: "#d4d4d4",
-              borderRadius: 8,
-              backgroundColor: "#fff",
-              marginBottom: 16,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+          <View style={styles.courseCard}>
+            <View style={styles.cardRow}>
               <Text
                 variant="titleMedium"
-                style={{
-                  fontWeight: "700",
-                  color: "#1a1a1a",
-                  textTransform: "capitalize",
-                }}
+                style={styles.courseName}
               >
                 {selectedCourse.name}
               </Text>
@@ -312,13 +284,10 @@ export default function StartRoundScreen() {
             </View>
           </View>
 
-          <Text
-            variant="titleSmall"
-            style={{ color: "#111827", marginBottom: 12 }}
-          >
+          <Text style={styles.sectionLabel}>
             Select Tee Box
           </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: Space.sm }}>
             {teeboxes.map((tb) => (
               <Chip
                 key={tb.name}
@@ -339,37 +308,19 @@ export default function StartRoundScreen() {
     <View className="flex-1 bg-white">
       {/* Header: Course + Teebox */}
       <View className="px-4 pt-4 pb-2">
-        <View
-          style={{
-            padding: 16,
-            borderWidth: 1,
-            borderColor: "#d4d4d4",
-            borderRadius: 8,
-            backgroundColor: "#fff",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+        <View style={styles.courseCard}>
+          <View style={styles.cardRow}>
             <View style={{ flex: 1 }}>
               <Text
                 variant="titleMedium"
-                style={{
-                  fontWeight: "700",
-                  color: "#1a1a1a",
-                  textTransform: "capitalize",
-                }}
+                style={styles.courseName}
               >
                 {selectedCourse.name}
               </Text>
               <Text
                 variant="bodyMedium"
                 style={{
-                  color: "#555",
+                  color: Color.neutral500,
                   marginTop: 2,
                   textTransform: "capitalize",
                 }}
@@ -386,43 +337,28 @@ export default function StartRoundScreen() {
 
       {/* Friends selection */}
       <View className="px-4 pb-2">
-        <Text
-          variant="titleSmall"
-          style={{ color: "#111827", marginBottom: 8 }}
-        >
+        <Text style={styles.sectionLabel}>
           Select Players ({totalPlayers})
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-4">
         {/* Current user (always included) */}
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: "#d4d4d4",
-            backgroundColor: "#fff",
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 8,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <View style={styles.playerCard}>
           <View
             style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
           >
             <Text
               variant="bodyLarge"
               style={{
-                color: "#1a1a1a",
+                color: Color.neutral900,
                 fontWeight: "600",
               }}
             >
               You
             </Text>
           </View>
-          <FontAwesome5 name="check-circle" size={20} color="#16a34a" />
+          <FontAwesome5 name="check-circle" size={20} color={Color.primary} />
         </View>
 
         {/* Friends list */}
@@ -434,24 +370,17 @@ export default function StartRoundScreen() {
               onPress={() => toggleFriend(friend.profile.id)}
             >
               <View
-                style={{
-                  borderWidth: 1,
-                  borderColor: isSelected ? "#16a34a" : "#d4d4d4",
-                  backgroundColor: isSelected ? "#f0fdf4" : "#fff",
-                  borderRadius: 8,
-                  padding: 16,
-                  marginBottom: 8,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
+                style={[
+                  styles.playerCard,
+                  isSelected && styles.playerCardSelected,
+                ]}
               >
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
                     flex: 1,
-                    gap: 12,
+                    gap: Space.md,
                   }}
                 >
                   <UserAvatar
@@ -463,7 +392,7 @@ export default function StartRoundScreen() {
                     <Text
                       variant="bodyLarge"
                       style={{
-                        color: "#1a1a1a",
+                        color: Color.neutral900,
                         fontWeight: "600",
                         textTransform: "capitalize",
                       }}
@@ -471,7 +400,7 @@ export default function StartRoundScreen() {
                       {getFriendName(friend)}
                     </Text>
                     {friend.profile.email && (
-                      <Text variant="bodySmall" style={{ color: "#555" }}>
+                      <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
                         {friend.profile.email}
                       </Text>
                     )}
@@ -481,10 +410,10 @@ export default function StartRoundScreen() {
                   <FontAwesome5
                     name="check-circle"
                     size={20}
-                    color="#16a34a"
+                    color={Color.primary}
                   />
                 ) : (
-                  <FontAwesome5 name="circle" size={20} color="#d4d4d4" />
+                  <FontAwesome5 name="circle" size={20} color={Color.neutral300} />
                 )}
               </View>
             </Pressable>
@@ -496,7 +425,7 @@ export default function StartRoundScreen() {
           <View className="items-center py-8">
             <Text
               variant="bodyMedium"
-              style={{ color: "#999", textAlign: "center" }}
+              style={{ color: Color.neutral400, textAlign: "center" }}
             >
               No friends yet. Add friends from the Friends tab to play
               together!
@@ -508,13 +437,16 @@ export default function StartRoundScreen() {
       {/* Sticky Footer */}
       <View
         className="px-4 pt-4 pb-14"
-        style={{ borderTopWidth: 1, borderTopColor: "#e5e5e5" }}
+        style={{ borderTopWidth: 1, borderTopColor: Color.neutral200 }}
       >
         <Button
-          mode="outlined"
+          mode="contained"
+          buttonColor={Color.primary}
+          textColor={Color.white}
           onPress={handleStartRound}
           loading={isStarting}
           disabled={isStarting}
+          style={{ borderRadius: Radius.lg }}
         >
           Start Round ({totalPlayers}{" "}
           {totalPlayers === 1 ? "player" : "players"})
@@ -523,3 +455,55 @@ export default function StartRoundScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.md,
+    textTransform: "uppercase",
+  },
+  searchbar: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.full,
+  },
+  courseCard: {
+    padding: Space.lg,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    marginBottom: Space.lg,
+    ...Shadow.sm,
+  },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  courseName: {
+    fontWeight: "700",
+    color: Color.neutral900,
+    textTransform: "capitalize",
+  },
+  playerCard: {
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    marginBottom: Space.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    ...Shadow.sm,
+  },
+  playerCardSelected: {
+    borderColor: Color.primary,
+    backgroundColor: Color.primaryLight,
+  },
+});

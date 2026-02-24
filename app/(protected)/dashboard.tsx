@@ -1,13 +1,16 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
 import ScreenHeader from "@/components/ScreenHeader";
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
+import { supabase } from "@/lib/supabase";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   RefreshControl,
   ScrollView,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -24,6 +27,7 @@ export default function Dashboard() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [firstName, setFirstName] = useState<string | null>(null);
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
   );
@@ -31,18 +35,31 @@ export default function Dashboard() {
     user?.id ?? "",
   );
 
+  const fetchProfile = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("first_name, display_name")
+      .eq("id", user.id)
+      .single();
+    if (data) {
+      setFirstName(data.first_name || data.display_name || null);
+    }
+  }, [user?.id]);
+
   useFocusEffect(
     useCallback(() => {
+      fetchProfile();
       refreshRounds();
       refreshRecent();
-    }, [refreshRounds, refreshRecent]),
+    }, [fetchProfile, refreshRounds, refreshRecent]),
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshUser(), refreshRounds(), refreshRecent()]);
+    await Promise.all([refreshUser(), fetchProfile(), refreshRounds(), refreshRecent()]);
     setRefreshing(false);
-  }, [refreshUser, refreshRounds, refreshRecent]);
+  }, [refreshUser, fetchProfile, refreshRounds, refreshRecent]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
@@ -52,20 +69,30 @@ export default function Dashboard() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3b82f6"
-            colors={["#3b82f6"]}
+            tintColor={Color.info}
+            colors={[Color.info]}
           />
         }
       >
         <ScreenHeader title="Dashboard" />
         <View className="items-center px-8">
+          <View className="w-full max-w-md" style={{ marginBottom: Space.lg }}>
+            <Text
+              variant="headlineMedium"
+              style={{ fontWeight: "700", color: Color.neutral900 }}
+            >
+              {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+            </Text>
+          </View>
           <View className="w-full max-w-md">
 
             {activeRounds.length === 0 && (
               <Button
-                mode="outlined"
+                mode="contained"
+                buttonColor={Color.primary}
+                textColor={Color.white}
                 onPress={() => router.push("/start-round")}
-                style={{ marginBottom: 16 }}
+                style={styles.ctaButton}
               >
                 Start A Round
               </Button>
@@ -74,28 +101,15 @@ export default function Dashboard() {
             <ActiveRoundCard rounds={activeRounds} />
 
             {/* Recent Rounds */}
-            <View style={{ marginTop: 24 }}>
-              <Text
-                variant="titleSmall"
-                style={{ marginBottom: 8, color: "#111827" }}
-              >
+            <View style={{ marginTop: Space.xl }}>
+              <Text style={styles.sectionLabel}>
                 Recent Activity
               </Text>
 
               {recentRounds.length === 0 ? (
-                <View style={{ alignItems: "center", paddingVertical: 24 }}>
-                  {/* <MaterialIcons
-                    name="golf-course"
-                    size={48}
-                    color="#d4d4d4"
-                  /> */}
+                <View style={{ alignItems: "center", paddingVertical: Space.xl }}>
                   <Text
-                    style={{
-                      color: "#999",
-                      marginTop: 12,
-                      fontSize: 15,
-                      textAlign: "center",
-                    }}
+                    style={styles.emptyText}
                   >
                     No rounds played yet {"\u2014"} time to hit the links!
                   </Text>
@@ -110,44 +124,22 @@ export default function Dashboard() {
                         params: { roundId: round.id },
                       })
                     }
-                    style={{
-                      padding: 16,
-                      borderWidth: 1,
-                      borderColor: "#d4d4d4",
-                      backgroundColor: "#fff",
-                      borderRadius: 8,
-                      marginBottom: 8,
-                    }}
+                    style={styles.card}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
+                    <View style={styles.cardRow}>
                       <Text
                         variant="titleMedium"
-                        style={{
-                          fontWeight: "700",
-                          color: "#1a1a1a",
-                          flex: 1,
-                          textTransform: "capitalize",
-                        }}
+                        style={styles.courseName}
                       >
                         {round.courses?.name || "Unknown Course"}
                       </Text>
-                      <Text variant="bodySmall" style={{ color: "#999" }}>
+                      <Text variant="bodySmall" style={{ color: Color.neutral400 }}>
                         {formatDate(round.created_at)}
                       </Text>
                     </View>
                     <Text
                       variant="bodyMedium"
-                      style={{
-                        color: "#555",
-                        marginTop: 4,
-                        textTransform: "capitalize",
-                      }}
+                      style={styles.cardSubtitle}
                     >
                       {(round.teebox_data as any)?.name
                         ? `${(round.teebox_data as any).name} tees`
@@ -163,3 +155,49 @@ export default function Dashboard() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.sm,
+    textTransform: "uppercase",
+  },
+  ctaButton: {
+    marginBottom: Space.lg,
+    borderRadius: Radius.lg,
+  },
+  card: {
+    padding: Space.lg,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    marginBottom: Space.sm,
+    ...Shadow.sm,
+  },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  courseName: {
+    fontWeight: "700",
+    color: Color.neutral900,
+    flex: 1,
+    textTransform: "capitalize",
+  },
+  cardSubtitle: {
+    color: Color.neutral500,
+    marginTop: Space.xs,
+    textTransform: "capitalize",
+  },
+  emptyText: {
+    color: Color.neutral400,
+    marginTop: Space.md,
+    fontSize: 15,
+    textAlign: "center",
+  },
+});

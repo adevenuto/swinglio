@@ -1,3 +1,4 @@
+import { Color, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -43,7 +44,7 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
             onPress={() => setMenuVisible(true)}
             style={styles.menuButton}
           >
-            <MaterialIcons name="menu" size={26} color="#1a1a1a" />
+            <MaterialIcons name="menu" size={26} color={Color.neutral900} />
           </Pressable>
         }
         anchorPosition="bottom"
@@ -80,7 +81,7 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
           onPress={handleSignOut}
           title="Sign Out"
           leadingIcon="logout"
-          titleStyle={{ color: "#dc2626" }}
+          titleStyle={{ color: Color.danger }}
         />
       </Menu>
     </View>
@@ -92,17 +93,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
   },
   title: {
     fontWeight: "700",
-    color: "#1a1a1a",
+    color: Color.neutral900,
   },
   menuButton: {
-    padding: 4,
+    padding: Space.xs,
   },
   menuContent: {
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
   },
 });

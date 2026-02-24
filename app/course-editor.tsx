@@ -1,3 +1,4 @@
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { parseTeeboxes, Teebox } from "@/hooks/use-course-search";
 import { CityResult, useCourses } from "@/hooks/use-courses";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
@@ -8,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import {
@@ -349,22 +351,11 @@ export default function CourseEditorScreen() {
       <ScrollView
         className="flex-1"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
+        contentContainerStyle={{ padding: Space.lg, paddingBottom: 60 }}
       >
         {/* Section 1: Course Details */}
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: "#d4d4d4",
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <Text
-            variant="titleMedium"
-            style={{ color: "#1a1a1a", fontWeight: "600", marginBottom: 16 }}
-          >
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>
             Course Details
           </Text>
 
@@ -373,7 +364,7 @@ export default function CourseEditorScreen() {
             mode="outlined"
             value={name}
             onChangeText={setName}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: Space.md }}
           />
           <TextInput
             label="Street"
@@ -381,7 +372,7 @@ export default function CourseEditorScreen() {
             value={street}
             onChangeText={setStreet}
             multiline
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: Space.md }}
           />
 
           {/* City search */}
@@ -390,42 +381,32 @@ export default function CourseEditorScreen() {
             value={cityQuery}
             onChangeText={handleCitySearch}
             mode="bar"
-            style={{
-              backgroundColor: "transparent",
-              borderWidth: 1,
-              borderColor: "#d4d4d4",
-              borderRadius: 8,
-              marginBottom: showCityResults && cityResults.length > 0 ? 0 : 12,
-              height: 48,
-            }}
-            inputStyle={{ color: "#1a1a1a", fontSize: 14 }}
+            style={[
+              styles.citySearchbar,
+              {
+                marginBottom: showCityResults && cityResults.length > 0 ? 0 : Space.md,
+              },
+            ]}
+            inputStyle={{ color: Color.neutral900, fontSize: 14 }}
           />
           {showCityResults && cityResults.length > 0 && (
             <ScrollView
               nestedScrollEnabled
-              style={{
-                borderWidth: 1,
-                borderTopWidth: 0,
-                borderColor: "#d4d4d4",
-                borderBottomLeftRadius: 8,
-                borderBottomRightRadius: 8,
-                marginBottom: 12,
-                maxHeight: 160,
-              }}
+              style={styles.cityDropdown}
             >
               {cityResults.map((city) => (
                 <View
                   key={city.id}
                   style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 12,
+                    paddingVertical: Space.sm,
+                    paddingHorizontal: Space.md,
                     borderBottomWidth: 1,
-                    borderBottomColor: "#f0f0f0",
+                    borderBottomColor: Color.neutral100,
                   }}
                 >
                   <Text
                     onPress={() => selectCity(city)}
-                    style={{ color: "#1a1a1a" }}
+                    style={{ color: Color.neutral900 }}
                   >
                     {city.name}, {city.state_abbr}
                   </Text>
@@ -439,7 +420,7 @@ export default function CourseEditorScreen() {
             mode="outlined"
             value={stateAbbr}
             editable={false}
-            style={{ marginBottom: 12, backgroundColor: "#f9fafb" }}
+            style={{ marginBottom: Space.md, backgroundColor: Color.neutral50 }}
           />
 
           <TextInput
@@ -448,10 +429,10 @@ export default function CourseEditorScreen() {
             value={postalCode}
             onChangeText={setPostalCode}
             keyboardType="number-pad"
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: Space.md }}
           />
 
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}>
             <TextInput
               label="Phone"
               mode="outlined"
@@ -470,7 +451,7 @@ export default function CourseEditorScreen() {
             />
           </View>
 
-          <View style={{ flexDirection: "row", gap: 12 }}>
+          <View style={{ flexDirection: "row", gap: Space.md }}>
             <TextInput
               label="Latitude"
               mode="outlined"
@@ -491,19 +472,8 @@ export default function CourseEditorScreen() {
         </View>
 
         {/* Section 2: Layout Data - Teeboxes + Holes */}
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: "#d4d4d4",
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
-          }}
-        >
-          <Text
-            variant="titleMedium"
-            style={{ color: "#1a1a1a", fontWeight: "600", marginBottom: 16 }}
-          >
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>
             Teeboxes & Holes
           </Text>
 
@@ -511,9 +481,9 @@ export default function CourseEditorScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 16 }}
+            style={{ marginBottom: Space.lg }}
           >
-            <View style={{ flexDirection: "row", gap: 8 }}>
+            <View style={{ flexDirection: "row", gap: Space.sm }}>
               {teeboxes.map((t, i) => (
                 <Chip
                   key={i}
@@ -524,7 +494,7 @@ export default function CourseEditorScreen() {
                     t.color
                       ? {
                           borderColor:
-                            i === selectedTeeboxIndex ? t.color : "#d4d4d4",
+                            i === selectedTeeboxIndex ? t.color : Color.neutral300,
                         }
                       : undefined
                   }
@@ -542,7 +512,7 @@ export default function CourseEditorScreen() {
           {selectedTeebox && (
             <>
               <View
-                style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}
+                style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}
               >
                 <TextInput
                   label="Tee Name"
@@ -568,14 +538,14 @@ export default function CourseEditorScreen() {
                     <View
                       style={{
                         position: "absolute",
-                        right: 12,
+                        right: Space.md,
                         top: 14,
                         width: 20,
                         height: 20,
-                        borderRadius: 4,
+                        borderRadius: Radius.sm,
                         backgroundColor: selectedTeebox.color,
                         borderWidth: 1,
-                        borderColor: "#d4d4d4",
+                        borderColor: Color.neutral300,
                       }}
                     />
                   )}
@@ -586,9 +556,9 @@ export default function CourseEditorScreen() {
               <View
                 style={{
                   flexDirection: "row",
-                  gap: 8,
+                  gap: Space.sm,
                   flexWrap: "wrap",
-                  marginBottom: 12,
+                  marginBottom: Space.md,
                 }}
               >
                 {TEEBOX_COLORS.map((color) => {
@@ -606,7 +576,7 @@ export default function CourseEditorScreen() {
                         borderRadius: 16,
                         backgroundColor: color,
                         borderWidth: isSelected ? 2 : 1,
-                        borderColor: isSelected ? "#1a1a1a" : "#d4d4d4",
+                        borderColor: isSelected ? Color.neutral900 : Color.neutral300,
                       }}
                     />
                   );
@@ -620,11 +590,11 @@ export default function CourseEditorScreen() {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 8,
-                      marginBottom: 8,
+                      gap: Space.sm,
+                      marginBottom: Space.sm,
                     }}
                   >
-                    <Text variant="labelMedium" style={{ color: "#555" }}>
+                    <Text variant="labelMedium" style={{ color: Color.neutral500 }}>
                       Secondary Color
                     </Text>
                     {selectedTeebox.secondaryColor && (
@@ -637,7 +607,7 @@ export default function CourseEditorScreen() {
                       >
                         <Text
                           variant="labelSmall"
-                          style={{ color: "#C62828" }}
+                          style={{ color: Color.danger }}
                         >
                           Clear
                         </Text>
@@ -647,9 +617,9 @@ export default function CourseEditorScreen() {
                   <View
                     style={{
                       flexDirection: "row",
-                      gap: 8,
+                      gap: Space.sm,
                       flexWrap: "wrap",
-                      marginBottom: 12,
+                      marginBottom: Space.md,
                     }}
                   >
                     {TEEBOX_COLORS.map((color) => {
@@ -670,7 +640,7 @@ export default function CourseEditorScreen() {
                             borderRadius: 16,
                             backgroundColor: color,
                             borderWidth: isSelected ? 2 : 1,
-                            borderColor: isSelected ? "#1a1a1a" : "#d4d4d4",
+                            borderColor: isSelected ? Color.neutral900 : Color.neutral300,
                           }}
                         />
                       );
@@ -680,7 +650,7 @@ export default function CourseEditorScreen() {
               )}
 
               <View
-                style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}
+                style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}
               >
                 <TextInput
                   label="Slope"
@@ -722,12 +692,12 @@ export default function CourseEditorScreen() {
               <View
                 style={{
                   flexDirection: "row",
-                  gap: 8,
-                  marginBottom: 16,
+                  gap: Space.sm,
+                  marginBottom: Space.lg,
                   alignItems: "center",
                 }}
               >
-                <Text variant="bodyMedium" style={{ color: "#555" }}>
+                <Text variant="bodyMedium" style={{ color: Color.neutral500 }}>
                   Holes:
                 </Text>
                 <Chip
@@ -750,31 +720,31 @@ export default function CourseEditorScreen() {
               <View
                 style={{
                   flexDirection: "row",
-                  paddingHorizontal: 4,
-                  marginBottom: 8,
+                  paddingHorizontal: Space.xs,
+                  marginBottom: Space.sm,
                 }}
               >
                 <Text
                   variant="labelSmall"
-                  style={{ width: 40, color: "#555", fontWeight: "600" }}
+                  style={{ width: 40, color: Color.neutral500, fontWeight: "600" }}
                 >
                   Hole
                 </Text>
                 <Text
                   variant="labelSmall"
-                  style={{ flex: 1, color: "#555", fontWeight: "600" }}
+                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
                 >
                   Par
                 </Text>
                 <Text
                   variant="labelSmall"
-                  style={{ flex: 1, color: "#555", fontWeight: "600" }}
+                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
                 >
                   Yardage
                 </Text>
                 <Text
                   variant="labelSmall"
-                  style={{ flex: 1, color: "#555", fontWeight: "600" }}
+                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
                 >
                   Hdcp
                 </Text>
@@ -793,15 +763,15 @@ export default function CourseEditorScreen() {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      paddingHorizontal: 4,
-                      marginBottom: 12,
+                      paddingHorizontal: Space.xs,
+                      marginBottom: Space.md,
                     }}
                   >
                     <Text
                       variant="bodyMedium"
                       style={{
                         width: 40,
-                        color: "#1a1a1a",
+                        color: Color.neutral900,
                         fontWeight: "600",
                       }}
                     >
@@ -814,7 +784,7 @@ export default function CourseEditorScreen() {
                         updateHole(selectedTeeboxIndex, holeKey, "par", v)
                       }
                       keyboardType="number-pad"
-                      style={{ flex: 1, marginRight: 12 }}
+                      style={{ flex: 1, marginRight: Space.md }}
                       dense
                     />
                     <TextInput
@@ -824,7 +794,7 @@ export default function CourseEditorScreen() {
                         updateHole(selectedTeeboxIndex, holeKey, "length", v)
                       }
                       keyboardType="number-pad"
-                      style={{ flex: 1, marginRight: 12 }}
+                      style={{ flex: 1, marginRight: Space.md }}
                       dense
                     />
                     <TextInput
@@ -845,9 +815,9 @@ export default function CourseEditorScreen() {
               {teeboxes.length > 1 && (
                 <Button
                   mode="text"
-                  textColor="#dc2626"
+                  textColor={Color.danger}
                   onPress={() => removeTeebox(selectedTeeboxIndex)}
-                  style={{ marginTop: 12, alignSelf: "flex-start" }}
+                  style={{ marginTop: Space.md, alignSelf: "flex-start" }}
                 >
                   Remove Teebox
                 </Button>
@@ -858,11 +828,13 @@ export default function CourseEditorScreen() {
 
         {/* Section 3: Actions */}
         <Button
-          mode="outlined"
+          mode="contained"
+          buttonColor={Color.primary}
+          textColor={Color.white}
           onPress={handleSave}
           loading={isSaving}
           disabled={isSaving}
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: Space.md, borderRadius: Radius.lg }}
         >
           {isEdit ? "Save Course" : "Create Course"}
         </Button>
@@ -870,9 +842,9 @@ export default function CourseEditorScreen() {
         {isEdit && (
           <Button
             mode="text"
-            textColor="#dc2626"
+            textColor={Color.danger}
             onPress={handleDelete}
-            style={{ marginBottom: 24 }}
+            style={{ marginBottom: Space.xl }}
           >
             Delete Course
           </Button>
@@ -881,6 +853,42 @@ export default function CourseEditorScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.lg,
+    textTransform: "uppercase",
+  },
+  section: {
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.md,
+    padding: Space.lg,
+    marginBottom: Space.lg,
+    backgroundColor: Color.white,
+    ...Shadow.sm,
+  },
+  citySearchbar: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.full,
+    height: 48,
+  },
+  cityDropdown: {
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: Color.neutral300,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+    marginBottom: Space.md,
+    maxHeight: 160,
+  },
+});
 
 function makeEmptyTeebox(order: number, holeCount: number): Teebox {
   const holes: Record<string, HoleData> = {};

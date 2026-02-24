@@ -14,7 +14,7 @@ import React, {
   useState,
 } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Button, Chip, Text } from "react-native-paper";
+import { Chip, Text } from "react-native-paper";
 
 // === Types ===
 
@@ -24,13 +24,11 @@ export type HoleEntryPanelRef = {
 
 type HoleEntryPanelProps = {
   holeNumber: number;
-  holeCount: number;
   par: string;
   yardage: string;
   currentScore: string;
   currentStats: HoleStats | undefined;
   onSave: (data: { score: string; stats: HoleStats }) => void;
-  onNavigate: (holeNumber: number) => void;
 };
 
 // === Helpers ===
@@ -78,13 +76,11 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
   (
     {
       holeNumber,
-      holeCount,
       par,
       yardage,
       currentScore,
       currentStats,
       onSave,
-      onNavigate,
     },
     ref,
   ) => {
@@ -141,17 +137,6 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       [onSave, buildPayload],
     );
 
-    // Navigation handlers
-    const handleNext = () => {
-      onSave(buildPayload());
-      onNavigate(holeNumber + 1);
-    };
-
-    const handlePrev = () => {
-      onSave(buildPayload());
-      onNavigate(holeNumber - 1);
-    };
-
     // Stepper helpers
     const incrementScore = () => setScore((s) => Math.min(s + 1, 15));
     const decrementScore = () => setScore((s) => Math.max(s - 1, 1));
@@ -166,10 +151,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       });
     };
 
-    const handlePenaltyChange = (
-      type: PenaltyEntry["type"],
-      delta: number,
-    ) => {
+    const handlePenaltyChange = (type: PenaltyEntry["type"], delta: number) => {
       setPenalties((prev) => {
         const current = countByType(prev, type);
         const next = Math.max(0, current + delta);
@@ -252,7 +234,10 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
             <Text style={styles.sectionLabel}>Putts</Text>
             {gir !== null && (
               <View
-                style={[styles.girBadge, gir ? styles.girTrue : styles.girFalse]}
+                style={[
+                  styles.girBadge,
+                  gir ? styles.girTrue : styles.girFalse,
+                ]}
               >
                 <Text
                   style={[
@@ -321,30 +306,6 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           ))}
         </View>
 
-        <View style={styles.divider} />
-
-        {/* Navigation */}
-        <View style={styles.navRow}>
-          <Button
-            mode="outlined"
-            onPress={handlePrev}
-            disabled={holeNumber <= 1}
-            icon="chevron-left"
-            style={styles.navButton}
-          >
-            Prev
-          </Button>
-          <Button
-            mode="outlined"
-            onPress={handleNext}
-            disabled={holeNumber >= holeCount}
-            contentStyle={{ flexDirection: "row-reverse" }}
-            icon="chevron-right"
-            style={styles.navButton}
-          >
-            Next
-          </Button>
-        </View>
       </View>
     );
   },
@@ -554,14 +515,5 @@ const styles = StyleSheet.create({
   },
   stepperCountZero: {
     color: "#999",
-  },
-  // Navigation
-  navRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  navButton: {
-    borderColor: "#d4d4d4",
   },
 });

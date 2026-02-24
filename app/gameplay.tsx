@@ -1,6 +1,5 @@
-import HoleEntryPanel, {
-  HoleEntryPanelRef,
-} from "@/components/HoleEntryPanel";
+import HoleEntryPanel, { HoleEntryPanelRef } from "@/components/HoleEntryPanel";
+import HoleNavigation from "@/components/HoleNavigation";
 import Scorecard, {
   ScorecardPlayer,
   ScorecardRef,
@@ -55,10 +54,7 @@ type PlayerScore = {
   };
 };
 
-function getCurrentHole(
-  players: PlayerScore[],
-  userId: string,
-): number | null {
+function getCurrentHole(players: PlayerScore[], userId: string): number | null {
   const me = players.find((p) => p.golfer_id === userId);
   if (!me?.score_details?.holes) return null;
   const holeCount = Object.keys(me.score_details.holes).length;
@@ -199,24 +195,23 @@ export default function GameplayScreen() {
     [myScore, players, activeHoleKey, round],
   );
 
+  // Save current hole (used by HoleNavigation)
+  const saveCurrentHole = useCallback(() => {
+    holeEntryRef.current?.saveCurrentHole();
+  }, []);
+
   // Navigate to a different hole
-  const handleNavigate = useCallback(
-    (holeNumber: number) => {
-      setActiveHole(holeNumber);
-      scorecardRef.current?.scrollToHole(holeNumber);
-    },
-    [],
-  );
+  const handleNavigate = useCallback((holeNumber: number) => {
+    setActiveHole(holeNumber);
+    scorecardRef.current?.scrollToHole(holeNumber);
+  }, []);
 
   // Tapping a hole number on the scorecard — save current, then jump
-  const handleHolePress = useCallback(
-    (holeNumber: number) => {
-      holeEntryRef.current?.saveCurrentHole();
-      setActiveHole(holeNumber);
-      scorecardRef.current?.scrollToHole(holeNumber);
-    },
-    [],
-  );
+  const handleHolePress = useCallback((holeNumber: number) => {
+    holeEntryRef.current?.saveCurrentHole();
+    setActiveHole(holeNumber);
+    scorecardRef.current?.scrollToHole(holeNumber);
+  }, []);
 
   const handleDeleteRound = () => {
     Alert.alert(
@@ -400,6 +395,31 @@ export default function GameplayScreen() {
           />
         }
       >
+        {myScore && teeboxHoleData && (
+          <View className="px-4 pb-4">
+            <HoleEntryPanel
+              ref={holeEntryRef}
+              holeNumber={activeHole}
+              par={teeboxHoleData.par}
+              yardage={teeboxHoleData.length}
+              currentScore={activeHoleData?.score ?? ""}
+              currentStats={activeHoleData?.stats}
+              onSave={handleHoleSave}
+            />
+          </View>
+        )}
+
+        {myScore && teeboxHoleData && (
+          <View className="px-4 pb-4">
+            <HoleNavigation
+              holeNumber={activeHole}
+              holeCount={holeCount}
+              onSave={saveCurrentHole}
+              onNavigate={handleNavigate}
+            />
+          </View>
+        )}
+
         <View className="px-4 pb-4">
           <Scorecard
             ref={scorecardRef}
@@ -410,22 +430,6 @@ export default function GameplayScreen() {
             currentHole={activeHole}
           />
         </View>
-
-        {myScore && teeboxHoleData && (
-          <View className="px-4 pb-4">
-            <HoleEntryPanel
-              ref={holeEntryRef}
-              holeNumber={activeHole}
-              holeCount={holeCount}
-              par={teeboxHoleData.par}
-              yardage={teeboxHoleData.length}
-              currentScore={activeHoleData?.score ?? ""}
-              currentStats={activeHoleData?.stats}
-              onSave={handleHoleSave}
-              onNavigate={handleNavigate}
-            />
-          </View>
-        )}
 
         {isCreator && (
           <Button

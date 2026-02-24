@@ -348,6 +348,9 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
             title="Advanced"
             expanded={advancedExpanded}
             onPress={() => setAdvancedExpanded(!advancedExpanded)}
+            style={styles.accordion}
+            rippleColor="transparent"
+            theme={{ colors: { background: "transparent" } }}
           >
             {/* Bunkers */}
             <View style={styles.section}>
@@ -629,5 +632,9 @@ const styles = StyleSheet.create({
   },
   stepperCountZero: {
     color: Color.neutral400,
+  },
+  accordion: {
+    paddingVertical: Space.xs,
+    borderRadius: Radius.md,
   },
 });

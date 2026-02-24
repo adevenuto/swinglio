@@ -22,66 +22,66 @@ const paperTheme = {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <AuthProvider>
-      <ThemeProvider value={DefaultTheme}>
-        <PaperProvider theme={paperTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(protected)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="modal"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Modal",
-              }}
-            />
-            <Stack.Screen
-              name="player-scores"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Player Scores",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
-              name="start-round"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Start Round",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-            <Stack.Screen
-              name="gameplay"
-              options={{
-                animation: "none",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="course-editor"
-              options={{
-                presentation: "modal",
-                headerShown: true,
-                title: "Course Editor",
-                headerStyle: { backgroundColor: "#fff" },
-                headerTintColor: "#1a1a1a",
-                headerShadowVisible: false,
-              }}
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </PaperProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      <AuthProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <PaperProvider theme={paperTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(protected)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen
+                name="modal"
+                options={{
+                  presentation: "modal",
+                  headerShown: true,
+                  title: "Modal",
+                }}
+              />
+              <Stack.Screen
+                name="player-scores"
+                options={{
+                  presentation: "modal",
+                  headerShown: true,
+                  title: "Player Scores",
+                  headerStyle: { backgroundColor: "#fff" },
+                  headerTintColor: "#1a1a1a",
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen
+                name="start-round"
+                options={{
+                  presentation: "modal",
+                  headerShown: true,
+                  title: "Start Round",
+                  headerStyle: { backgroundColor: "#fff" },
+                  headerTintColor: "#1a1a1a",
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen
+                name="gameplay"
+                options={{
+                  animation: "none",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="course-editor"
+                options={{
+                  presentation: "modal",
+                  headerShown: true,
+                  title: "Course Editor",
+                  headerStyle: { backgroundColor: "#fff" },
+                  headerTintColor: "#1a1a1a",
+                  headerShadowVisible: false,
+                }}
+              />
+            </Stack>
+            <StatusBar style="auto" />
+          </PaperProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

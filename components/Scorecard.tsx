@@ -1,3 +1,4 @@
+import { Color, Radius } from "@/constants/design-tokens";
 import { Teebox } from "@/hooks/use-course-search";
 import { getContrastColor } from "@/lib/color-contrast";
 import { ScoreDetails } from "@/types/scoring";
@@ -471,7 +472,11 @@ export default Scorecard;
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    overflow: "hidden",
   },
   fixedColumn: {
     width: FIXED_COL_WIDTH,

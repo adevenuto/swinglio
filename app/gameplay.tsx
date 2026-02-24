@@ -4,6 +4,8 @@ import Scorecard, {
   ScorecardPlayer,
   ScorecardRef,
 } from "@/components/Scorecard";
+import UserAvatar from "@/components/UserAvatar";
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { HoleStats, ScoreDetails } from "@/types/scoring";
@@ -18,7 +20,6 @@ import React, {
 } from "react";
 import {
   Alert,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -269,7 +270,7 @@ export default function GameplayScreen() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: "#fff", paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: Color.white, paddingTop: 20 }}
     >
       {/* Nav header */}
       <View
@@ -277,9 +278,9 @@ export default function GameplayScreen() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: 20,
+          paddingHorizontal: Space.lg,
+          paddingTop: Space.sm,
+          paddingBottom: Space.lg,
         }}
       >
         <Pressable
@@ -292,44 +293,22 @@ export default function GameplayScreen() {
             alignItems: "center",
           }}
         >
-          <MaterialIcons name="chevron-left" size={28} color="#1a1a1a" />
-          <Text style={{ fontSize: 17, color: "#1a1a1a" }}>Dashboard</Text>
+          <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+          <Text style={{ fontSize: 17, color: Color.neutral900 }}>Dashboard</Text>
         </Pressable>
-        {avatarUrl ? (
-          <Image
-            source={{ uri: avatarUrl }}
-            style={{
-              width: 70,
-              height: 70,
-              borderRadius: 35,
-              backgroundColor: "#e5e5e5",
-            }}
-          />
-        ) : (
-          <View
-            style={{
-              width: 70,
-              height: 70,
-              borderRadius: 35,
-              backgroundColor: "#e5e5e5",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <MaterialIcons name="person" size={22} color="#999" />
-          </View>
-        )}
+        <UserAvatar avatarUrl={avatarUrl} firstName={null} size={40} />
       </View>
 
       {/* Course info card */}
       <View className="px-4 pb-4">
         <View
           style={{
-            padding: 16,
+            padding: Space.lg,
             borderWidth: 1,
-            borderColor: "#d4d4d4",
-            borderRadius: 8,
-            backgroundColor: "#fff",
+            borderColor: Color.neutral300,
+            borderRadius: Radius.md,
+            backgroundColor: Color.white,
+            ...Shadow.sm,
           }}
         >
           <View
@@ -343,7 +322,7 @@ export default function GameplayScreen() {
               variant="titleLarge"
               style={{
                 fontWeight: "700",
-                color: "#1a1a1a",
+                color: Color.neutral900,
                 flex: 1,
                 textTransform: "capitalize",
               }}
@@ -352,30 +331,29 @@ export default function GameplayScreen() {
             </Text>
             <View
               style={{
-                paddingHorizontal: 8,
+                paddingHorizontal: Space.sm,
                 paddingVertical: 2,
-                borderRadius: 4,
+                borderRadius: Radius.sm,
                 borderWidth: 1,
-                borderColor: "#86efac",
-                backgroundColor: "#f0fdf4",
+                borderColor: Color.primaryBorder,
+                backgroundColor: Color.primaryLight,
               }}
             >
               <Text
-                style={{ fontSize: 11, fontWeight: "600", color: "#16a34a" }}
+                style={{ fontSize: 11, fontWeight: "600", color: Color.primary }}
               >
                 Active
               </Text>
             </View>
           </View>
-          <Text
-            variant="bodyMedium"
-            style={{ color: "#555", marginTop: 4, textTransform: "capitalize" }}
-          >
-            {round.courses?.name}
-            {(round.teebox_data as any)?.name
-              ? ` · ${(round.teebox_data as any).name} tees`
-              : ""}
-          </Text>
+          {(round.teebox_data as any)?.name && (
+            <Text
+              variant="bodyMedium"
+              style={{ color: Color.neutral500, marginTop: Space.xs, textTransform: "capitalize" }}
+            >
+              {(round.teebox_data as any).name} tees
+            </Text>
+          )}
         </View>
       </View>
 
@@ -410,7 +388,7 @@ export default function GameplayScreen() {
         )}
 
         {myScore && teeboxHoleData && (
-          <View className="px-4 pb-4">
+          <View className="px-4 pb-6">
             <HoleNavigation
               holeNumber={activeHole}
               holeCount={holeCount}
@@ -421,6 +399,17 @@ export default function GameplayScreen() {
         )}
 
         <View className="px-4 pb-4">
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "700",
+              color: Color.neutral400,
+              letterSpacing: 0.5,
+              marginBottom: Space.sm,
+            }}
+          >
+            SCORECARD
+          </Text>
           <Scorecard
             ref={scorecardRef}
             teeboxData={round.teebox_data}
@@ -437,7 +426,7 @@ export default function GameplayScreen() {
             onPress={handleDeleteRound}
             loading={isDeleting}
             textColor="#dc2626"
-            style={{ marginTop: 8, marginBottom: 16 }}
+            style={{ marginTop: Space.xl, marginBottom: Space.xxl }}
           >
             Delete Round
           </Button>

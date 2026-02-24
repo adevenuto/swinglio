@@ -1,3 +1,4 @@
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import {
   BunkerEntry,
   calculateGIR,
@@ -14,7 +15,7 @@ import React, {
   useState,
 } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Chip, Text } from "react-native-paper";
+import { Chip, IconButton, Text, TouchableRipple } from "react-native-paper";
 
 // === Types ===
 
@@ -29,6 +30,7 @@ type HoleEntryPanelProps = {
   currentScore: string;
   currentStats: HoleStats | undefined;
   onSave: (data: { score: string; stats: HoleStats }) => void;
+  disabled?: boolean;
 };
 
 // === Helpers ===
@@ -70,6 +72,22 @@ function setCountForType<T extends { type: string }>(
   return [...others, ...additions];
 }
 
+function getScoreLabel(diff: number): string {
+  if (diff <= -3) return "Eagle or better";
+  if (diff === -2) return "Eagle";
+  if (diff === -1) return "Birdie";
+  if (diff === 0) return "Par";
+  if (diff === 1) return "Bogey";
+  if (diff === 2) return "Double";
+  return "Triple+";
+}
+
+function getScoreColor(diff: number): string {
+  if (diff < 0) return Color.primary;
+  if (diff === 0) return Color.neutral900;
+  return Color.danger;
+}
+
 // === Component ===
 
 const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
@@ -81,6 +99,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       currentScore,
       currentStats,
       onSave,
+      disabled = false,
     },
     ref,
   ) => {
@@ -110,6 +129,11 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
 
     // GIR auto-calculation
     const gir = calculateGIR(score, putts, parNum);
+
+    // Score-to-par feedback
+    const scoreDiff = score - parNum;
+    const scoreColor = getScoreColor(scoreDiff);
+    const scoreLabel = getScoreLabel(scoreDiff);
 
     // Build save payload
     const buildPayload = useCallback(
@@ -162,11 +186,12 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     };
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, disabled && styles.cardDisabled]}>
         {/* Hole header */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>
-            Hole {holeNumber} · Par {par} · {yardage} yd
+          <Text style={styles.headerLabel}>HOLE {holeNumber}</Text>
+          <Text style={styles.headerSubtext}>
+            PAR {par} · {yardage} YD
           </Text>
         </View>
 
@@ -174,64 +199,75 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
         <View style={styles.scoreRow}>
           <Pressable
             onPress={decrementScore}
+            disabled={disabled}
             style={({ pressed }) => [
-              styles.stepperButton,
-              pressed && styles.stepperPressed,
+              styles.decrementButton,
+              pressed && styles.decrementPressed,
             ]}
           >
-            <Text style={styles.stepperText}>−</Text>
+            <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
+              <View style={[styles.stepper]}>
+                <IconButton size={32} icon="minus" />
+              </View>
+            </TouchableRipple>
           </Pressable>
-          <Text style={styles.scoreValue}>{score}</Text>
+          <View style={styles.scoreCircle}>
+            <Text style={[styles.scoreValue, { color: scoreColor }]}>
+              {score}
+            </Text>
+            <Text style={[styles.scoreLabel, { color: scoreColor }]}>
+              {scoreLabel}
+            </Text>
+          </View>
           <Pressable
             onPress={incrementScore}
+            disabled={disabled}
             style={({ pressed }) => [
-              styles.stepperButton,
-              pressed && styles.stepperPressed,
+              styles.incrementButton,
+              pressed && styles.incrementPressed,
             ]}
           >
-            <Text style={styles.stepperText}>+</Text>
+            <View style={[styles.stepper]}>
+              <IconButton size={32} icon="plus" />
+            </View>
           </Pressable>
         </View>
 
-        <View style={styles.divider} />
-
         {/* Fairway (hidden for par 3s) */}
         {!isPar3 && (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Fairway</Text>
-              <View style={styles.chipRow}>
-                {FAIRWAY_OPTIONS.map((opt) => (
-                  <Chip
-                    key={opt.value}
-                    mode="outlined"
-                    selected={fairway === opt.value}
-                    onPress={() =>
-                      setFairway(fairway === opt.value ? null : opt.value)
-                    }
-                    style={[
-                      styles.chip,
-                      fairway === opt.value && styles.chipSelected,
-                    ]}
-                    textStyle={[
-                      styles.chipText,
-                      fairway === opt.value && styles.chipTextSelected,
-                    ]}
-                    showSelectedCheck={false}
-                  >
-                    {opt.label}
-                  </Chip>
-                ))}
-              </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>FAIRWAY</Text>
+            <View style={styles.chipRow}>
+              {FAIRWAY_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.value}
+                  mode="outlined"
+                  selected={fairway === opt.value}
+                  disabled={disabled}
+                  onPress={() =>
+                    setFairway(fairway === opt.value ? null : opt.value)
+                  }
+                  style={[
+                    styles.chip,
+                    fairway === opt.value && styles.chipSelected,
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    fairway === opt.value && styles.chipTextSelected,
+                  ]}
+                  showSelectedCheck={false}
+                >
+                  {opt.label}
+                </Chip>
+              ))}
             </View>
-            <View style={styles.divider} />
-          </>
+          </View>
         )}
 
         {/* Putts + GIR */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>Putts</Text>
+            <Text style={styles.sectionLabel}>PUTTS</Text>
             {gir !== null && (
               <View
                 style={[
@@ -259,6 +295,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
                   key={n}
                   mode="outlined"
                   selected={selected}
+                  disabled={disabled}
                   onPress={() => setPutts(selected ? null : n)}
                   style={[styles.chip, selected && styles.chipSelected]}
                   textStyle={[
@@ -274,38 +311,35 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           </View>
         </View>
 
-        <View style={styles.divider} />
-
         {/* Bunkers */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Bunkers</Text>
+          <Text style={styles.sectionLabel}>BUNKERS</Text>
           {BUNKER_TYPES.map((bt) => (
             <CountStepperRow
               key={bt.type}
               label={bt.label}
               count={countByType(bunkers, bt.type)}
+              disabled={disabled}
               onIncrement={() => handleBunkerChange(bt.type, 1)}
               onDecrement={() => handleBunkerChange(bt.type, -1)}
             />
           ))}
         </View>
 
-        <View style={styles.divider} />
-
         {/* Penalties */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Penalties</Text>
+          <Text style={styles.sectionLabel}>PENALTIES</Text>
           {PENALTY_TYPES.map((pt) => (
             <CountStepperRow
               key={pt.type}
               label={pt.label}
               count={countByType(penalties, pt.type)}
+              disabled={disabled}
               onIncrement={() => handlePenaltyChange(pt.type, 1)}
               onDecrement={() => handlePenaltyChange(pt.type, -1)}
             />
           ))}
         </View>
-
       </View>
     );
   },
@@ -320,11 +354,13 @@ export default HoleEntryPanel;
 function CountStepperRow({
   label,
   count,
+  disabled,
   onIncrement,
   onDecrement,
 }: {
   label: string;
   count: number;
+  disabled?: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
 }) {
@@ -334,12 +370,17 @@ function CountStepperRow({
       <View style={styles.miniStepperGroup}>
         <Pressable
           onPress={onDecrement}
+          disabled={disabled}
           style={({ pressed }) => [
             styles.miniStepper,
             pressed && styles.stepperPressed,
           ]}
         >
-          <Text style={styles.miniStepperText}>−</Text>
+          <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
+            <View style={[styles.stepper, styles.stepperSmall]}>
+              <IconButton size={20} icon="minus" />
+            </View>
+          </TouchableRipple>
         </Pressable>
         <Text
           style={[styles.stepperCount, count === 0 && styles.stepperCountZero]}
@@ -348,12 +389,17 @@ function CountStepperRow({
         </Text>
         <Pressable
           onPress={onIncrement}
+          disabled={disabled}
           style={({ pressed }) => [
             styles.miniStepper,
             pressed && styles.stepperPressed,
           ]}
         >
-          <Text style={styles.miniStepperText}>+</Text>
+          <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
+            <View style={[styles.stepper, styles.stepperSmall]}>
+              <IconButton size={20} icon="plus" />
+            </View>
+          </TouchableRipple>
         </Pressable>
       </View>
     </View>
@@ -365,155 +411,197 @@ function CountStepperRow({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: "#d4d4d4",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    padding: 16,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    padding: Space.lg,
+    ...Shadow.sm,
+  },
+  cardDisabled: {
+    opacity: 0.5,
   },
   header: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: Space.lg,
   },
-  headerText: {
-    fontSize: 16,
+  headerLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 1.5,
+  },
+  headerSubtext: {
+    fontSize: 15,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Color.neutral900,
+    marginTop: 2,
   },
   // Score stepper
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 24,
-    marginBottom: 16,
+    gap: Space.xxl,
+    marginBottom: Space.lg,
   },
-  stepperButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#1a1a1a",
+  decrementButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: Color.neutral300,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
   },
-  stepperPressed: {
-    backgroundColor: "#f5f5f5",
+  decrementPressed: {
+    backgroundColor: Color.neutral100,
   },
   stepperText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Color.neutral900,
+  },
+  stepper: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: Color.neutral900,
+    borderWidth: 1,
+    borderStyle: "solid",
+    padding: 5,
+    borderRadius: "50%",
+    width: 54,
+    height: 54,
+  },
+  stepperSmall: {
+    width: 30,
+    height: 30,
+  },
+  incrementButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Color.primary,
+  },
+  incrementPressed: {
+    backgroundColor: "#15803d",
+  },
+  scoreCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Color.neutral100,
+    justifyContent: "center",
+    alignItems: "center",
   },
   scoreValue: {
-    fontSize: 40,
+    fontSize: 52,
     fontWeight: "700",
-    color: "#1a1a1a",
-    minWidth: 60,
     textAlign: "center",
   },
-  // Divider
-  divider: {
-    height: 1,
-    backgroundColor: "#d4d4d4",
-    marginVertical: 12,
+  scoreLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    textAlign: "center",
   },
   // Sections
   section: {
-    marginVertical: 4,
+    marginVertical: Space.lg,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: Space.sm,
   },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#555",
-    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.sm,
   },
   // Chips
   chipRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: Space.sm,
   },
   chip: {
-    borderColor: "#d4d4d4",
-    backgroundColor: "#fff",
+    borderColor: Color.neutral300,
+    backgroundColor: Color.white,
   },
   chipSelected: {
-    backgroundColor: "#1a1a1a",
-    borderColor: "#1a1a1a",
+    backgroundColor: Color.primary,
+    borderColor: Color.primary,
   },
   chipText: {
-    color: "#1a1a1a",
+    color: Color.neutral900,
   },
   chipTextSelected: {
-    color: "#fff",
+    color: Color.white,
   },
   // GIR badge
   girBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Space.sm,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: Radius.sm,
   },
   girTrue: {
-    backgroundColor: "#16a34a",
+    backgroundColor: Color.primary,
   },
   girFalse: {
-    backgroundColor: "#e5e5e5",
+    backgroundColor: Color.neutral200,
   },
   girText: {
     fontSize: 11,
     fontWeight: "600",
   },
   girTextTrue: {
-    color: "#fff",
+    color: Color.white,
   },
   girTextFalse: {
-    color: "#555",
+    color: Color.neutral500,
   },
   // Count stepper rows (bunkers, penalties)
   stepperRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    paddingVertical: Space.sm,
   },
   stepperRowLabel: {
     fontSize: 14,
-    color: "#1a1a1a",
+    color: Color.neutral900,
   },
   miniStepperGroup: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: Space.lg,
   },
   miniStepper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#d4d4d4",
+    borderColor: Color.neutral300,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
   },
-  miniStepperText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1a1a1a",
+  stepperPressed: {
+    backgroundColor: Color.neutral100,
   },
   stepperCount: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: Color.neutral900,
     minWidth: 20,
     textAlign: "center",
   },
   stepperCountZero: {
-    color: "#999",
+    color: Color.neutral400,
   },
 });

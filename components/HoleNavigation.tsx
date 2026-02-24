@@ -1,3 +1,4 @@
+import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
@@ -7,6 +8,7 @@ type HoleNavigationProps = {
   holeCount: number;
   onSave: () => void;
   onNavigate: (holeNumber: number) => void;
+  onFinish?: () => void;
 };
 
 export default function HoleNavigation({
@@ -14,7 +16,10 @@ export default function HoleNavigation({
   holeCount,
   onSave,
   onNavigate,
+  onFinish,
 }: HoleNavigationProps) {
+  const isLastHole = holeNumber >= holeCount;
+
   const handlePrev = () => {
     onSave();
     onNavigate(holeNumber - 1);
@@ -22,7 +27,11 @@ export default function HoleNavigation({
 
   const handleNext = () => {
     onSave();
-    onNavigate(holeNumber + 1);
+    if (isLastHole && onFinish) {
+      onFinish();
+    } else {
+      onNavigate(holeNumber + 1);
+    }
   };
 
   return (
@@ -32,19 +41,22 @@ export default function HoleNavigation({
         onPress={handlePrev}
         disabled={holeNumber <= 1}
         icon="chevron-left"
-        style={styles.navButton}
+        style={styles.prevButton}
+        textColor={Color.neutral900}
       >
         Prev
       </Button>
       <Button
-        mode="outlined"
+        mode="contained"
         onPress={handleNext}
-        disabled={holeNumber >= holeCount}
+        disabled={isLastHole && !onFinish}
         contentStyle={{ flexDirection: "row-reverse" }}
-        icon="chevron-right"
-        style={styles.navButton}
+        icon={isLastHole ? "flag-checkered" : "chevron-right"}
+        style={styles.nextButton}
+        buttonColor={Color.primary}
+        textColor={Color.white}
       >
-        Next
+        {isLastHole ? "Finish Round" : "Next Hole"}
       </Button>
     </View>
   );
@@ -54,8 +66,16 @@ const styles = StyleSheet.create({
   navRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: Space.sm,
   },
-  navButton: {
-    borderColor: "#d4d4d4",
+  prevButton: {
+    borderColor: Color.neutral300,
+    borderRadius: Radius.lg,
+    flex: 1,
+  },
+  nextButton: {
+    borderRadius: Radius.lg,
+    flex: 1,
+    ...Shadow.sm,
   },
 });

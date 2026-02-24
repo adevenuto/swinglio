@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Color } from "@/constants/design-tokens";
 
 const CENTER_BUTTON_SIZE = 64;
 const GREEN_ACCENT = "#16a34a";
@@ -170,9 +171,11 @@ const styles = StyleSheet.create({
   },
   badgeGreen: {
     backgroundColor: "#22c55e",
+    borderWidth: 2,
+    borderColor: Color.white,
   },
   badgeText: {
-    color: "#fff",
+    color: Color.white,
     fontSize: 11,
     fontWeight: "700",
     lineHeight: 13,

@@ -23,6 +23,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
@@ -322,45 +323,54 @@ export default function GameplayScreen() {
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: "flex-start",
             }}
           >
-            <Text
-              variant="titleLarge"
-              style={{
-                fontWeight: "700",
-                color: Color.neutral900,
-                flex: 1,
-                textTransform: "capitalize",
-              }}
-            >
-              {round.courses?.name || "Unknown"}
-            </Text>
-            <View
-              style={{
-                paddingHorizontal: Space.sm,
-                paddingVertical: 2,
-                borderRadius: Radius.sm,
-                borderWidth: 1,
-                borderColor: Color.primaryBorder,
-                backgroundColor: Color.primaryLight,
-              }}
-            >
+            <View style={{ flex: 1 }}>
               <Text
-                style={{ fontSize: 11, fontWeight: "600", color: Color.primary }}
+                variant="titleLarge"
+                style={{
+                  fontWeight: "700",
+                  color: Color.neutral900,
+                  textTransform: "capitalize",
+                }}
               >
-                Active
+                {round.courses?.name || "Unknown"}
               </Text>
+              {(round.teebox_data as any)?.name && (
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: Color.neutral500, marginTop: Space.xs, textTransform: "capitalize" }}
+                >
+                  {(round.teebox_data as any).name} tees
+                </Text>
+              )}
             </View>
+            {teeboxHoleData && (
+              <View style={{ alignItems: "flex-end" }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: Color.neutral900,
+                    letterSpacing: 1.5,
+                  }}
+                >
+                  HOLE {activeHole}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: Color.neutral500,
+                    marginTop: 2,
+                  }}
+                >
+                  Par {teeboxHoleData.par} · {teeboxHoleData.length} yd
+                </Text>
+              </View>
+            )}
           </View>
-          {(round.teebox_data as any)?.name && (
-            <Text
-              variant="bodyMedium"
-              style={{ color: Color.neutral500, marginTop: Space.xs, textTransform: "capitalize" }}
-            >
-              {(round.teebox_data as any).name} tees
-            </Text>
-          )}
         </View>
       </View>
 
@@ -390,17 +400,6 @@ export default function GameplayScreen() {
               currentScore={activeHoleData?.score ?? ""}
               currentStats={activeHoleData?.stats}
               onSave={handleHoleSave}
-            />
-          </View>
-        )}
-
-        {myScore && teeboxHoleData && (
-          <View className="px-4 pb-6">
-            <HoleNavigation
-              holeNumber={activeHole}
-              holeCount={holeCount}
-              onSave={saveCurrentHole}
-              onNavigate={handleNavigate}
             />
           </View>
         )}
@@ -439,6 +438,27 @@ export default function GameplayScreen() {
           </Button>
         )}
       </ScrollView>
+
+      {myScore && teeboxHoleData && (
+        <SafeAreaView edges={["bottom"]} style={gameStyles.bottomBar}>
+          <HoleNavigation
+            holeNumber={activeHole}
+            holeCount={holeCount}
+            onSave={saveCurrentHole}
+            onNavigate={handleNavigate}
+          />
+        </SafeAreaView>
+      )}
     </SafeAreaView>
   );
 }
+
+const gameStyles = StyleSheet.create({
+  bottomBar: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.md,
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+    backgroundColor: Color.white,
+  },
+});

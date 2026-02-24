@@ -1,4 +1,4 @@
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Animation, Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import {
   BunkerEntry,
   calculateGIR,
@@ -138,14 +138,14 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
         prevHoleRef.current = holeNumber;
 
         // Snap to offset, then animate to center
-        translateX.value = direction * 40;
-        translateX.value = withTiming(0, { duration: 200 });
+        translateX.value = direction * Animation.slideOffset;
+        translateX.value = withTiming(0, { duration: Animation.durationMs });
       }
     }, [holeNumber, translateX]);
 
     const animatedStyle = useAnimatedStyle(() => ({
       transform: [{ translateX: translateX.value }],
-      opacity: translateX.value === 0 ? 1 : 0.7,
+      opacity: translateX.value === 0 ? 1 : Animation.slideMinOpacity,
     }));
 
     // Re-initialize when holeNumber changes
@@ -223,14 +223,6 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     return (
       <View style={[styles.card, disabled && styles.cardDisabled]}>
         <Animated.View style={animatedStyle}>
-          {/* Hole header */}
-          <View style={styles.header}>
-            <Text style={styles.headerLabel}>HOLE {holeNumber}</Text>
-            <Text style={styles.headerSubtext}>
-              PAR {par} · {yardage} YD
-            </Text>
-          </View>
-
           {/* Score stepper */}
           <View style={styles.scoreRow}>
             <Pressable
@@ -467,22 +459,6 @@ const styles = StyleSheet.create({
   },
   cardDisabled: {
     opacity: 0.5,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: Space.lg,
-  },
-  headerLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Color.neutral900,
-    letterSpacing: 1.5,
-  },
-  headerSubtext: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: Color.neutral900,
-    marginTop: 2,
   },
   // Score stepper
   scoreRow: {

@@ -78,3 +78,14 @@ export const Color = {
   dangerLight: "#fef2f2",
   info: "#3b82f6",
 } as const;
+
+// === Animation ===
+
+export const Animation = {
+  /** Hole transition slide duration (ms) */
+  durationMs: 200,
+  /** Horizontal slide offset (px) */
+  slideOffset: 40,
+  /** Opacity during slide-in */
+  slideMinOpacity: 0.7,
+} as const;

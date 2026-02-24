@@ -15,7 +15,13 @@ import React, {
   useState,
 } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Chip, IconButton, Text, TouchableRipple } from "react-native-paper";
+import {
+  Chip,
+  IconButton,
+  List,
+  Text,
+  TouchableRipple,
+} from "react-native-paper";
 
 // === Types ===
 
@@ -34,7 +40,6 @@ type HoleEntryPanelProps = {
 };
 
 // === Helpers ===
-
 const FAIRWAY_OPTIONS: { label: string; value: FairwayResult }[] = [
   { label: "Left", value: "left" },
   { label: "Hit", value: "hit" },
@@ -112,6 +117,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     const [putts, setPutts] = useState<number | null>(null);
     const [bunkers, setBunkers] = useState<BunkerEntry[]>([]);
     const [penalties, setPenalties] = useState<PenaltyEntry[]>([]);
+    const [advancedExpanded, setAdvancedExpanded] = React.useState(false);
 
     // Re-initialize when holeNumber changes
     useEffect(() => {
@@ -264,82 +270,89 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           </View>
         )}
 
-        {/* Putts + GIR */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>PUTTS</Text>
-            {gir !== null && (
-              <View
-                style={[
-                  styles.girBadge,
-                  gir ? styles.girTrue : styles.girFalse,
-                ]}
-              >
-                <Text
+        {/* Advanced Accordion */}
+        <List.Accordion
+          title="Advanced"
+          expanded={advancedExpanded}
+          onPress={() => setAdvancedExpanded(!advancedExpanded)}
+        >
+          {/* Putts + GIR */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>PUTTS</Text>
+              {gir !== null && (
+                <View
                   style={[
-                    styles.girText,
-                    gir ? styles.girTextTrue : styles.girTextFalse,
+                    styles.girBadge,
+                    gir ? styles.girTrue : styles.girFalse,
                   ]}
                 >
-                  {gir ? "GIR" : "No GIR"}
-                </Text>
-              </View>
-            )}
+                  <Text
+                    style={[
+                      styles.girText,
+                      gir ? styles.girTextTrue : styles.girTextFalse,
+                    ]}
+                  >
+                    {gir ? "GIR" : "No GIR"}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.chipRow}>
+              {PUTT_OPTIONS.map((n) => {
+                const label = n === 4 ? "4+" : String(n);
+                const selected = putts === n;
+                return (
+                  <Chip
+                    key={n}
+                    mode="outlined"
+                    selected={selected}
+                    disabled={disabled}
+                    onPress={() => setPutts(selected ? null : n)}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                    textStyle={[
+                      styles.chipText,
+                      selected && styles.chipTextSelected,
+                    ]}
+                    showSelectedCheck={false}
+                  >
+                    {label}
+                  </Chip>
+                );
+              })}
+            </View>
           </View>
-          <View style={styles.chipRow}>
-            {PUTT_OPTIONS.map((n) => {
-              const label = n === 4 ? "4+" : String(n);
-              const selected = putts === n;
-              return (
-                <Chip
-                  key={n}
-                  mode="outlined"
-                  selected={selected}
-                  disabled={disabled}
-                  onPress={() => setPutts(selected ? null : n)}
-                  style={[styles.chip, selected && styles.chipSelected]}
-                  textStyle={[
-                    styles.chipText,
-                    selected && styles.chipTextSelected,
-                  ]}
-                  showSelectedCheck={false}
-                >
-                  {label}
-                </Chip>
-              );
-            })}
+
+          {/* Bunkers */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>BUNKERS</Text>
+            {BUNKER_TYPES.map((bt) => (
+              <CountStepperRow
+                key={bt.type}
+                label={bt.label}
+                count={countByType(bunkers, bt.type)}
+                disabled={disabled}
+                onIncrement={() => handleBunkerChange(bt.type, 1)}
+                onDecrement={() => handleBunkerChange(bt.type, -1)}
+              />
+            ))}
           </View>
-        </View>
 
-        {/* Bunkers */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>BUNKERS</Text>
-          {BUNKER_TYPES.map((bt) => (
-            <CountStepperRow
-              key={bt.type}
-              label={bt.label}
-              count={countByType(bunkers, bt.type)}
-              disabled={disabled}
-              onIncrement={() => handleBunkerChange(bt.type, 1)}
-              onDecrement={() => handleBunkerChange(bt.type, -1)}
-            />
-          ))}
-        </View>
-
-        {/* Penalties */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PENALTIES</Text>
-          {PENALTY_TYPES.map((pt) => (
-            <CountStepperRow
-              key={pt.type}
-              label={pt.label}
-              count={countByType(penalties, pt.type)}
-              disabled={disabled}
-              onIncrement={() => handlePenaltyChange(pt.type, 1)}
-              onDecrement={() => handlePenaltyChange(pt.type, -1)}
-            />
-          ))}
-        </View>
+          {/* Penalties */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>PENALTIES</Text>
+            {PENALTY_TYPES.map((pt) => (
+              <CountStepperRow
+                key={pt.type}
+                label={pt.label}
+                count={countByType(penalties, pt.type)}
+                disabled={disabled}
+                onIncrement={() => handlePenaltyChange(pt.type, 1)}
+                onDecrement={() => handlePenaltyChange(pt.type, -1)}
+              />
+            ))}
+          </View>
+        </List.Accordion>
       </View>
     );
   },

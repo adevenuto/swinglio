@@ -1,5 +1,6 @@
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { ActiveRound } from "@/hooks/use-active-rounds";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -27,27 +28,24 @@ export default function ActiveRoundCard({ rounds }: Props) {
           style={styles.card}
         >
           <View style={styles.row}>
-            <Text
-              variant="titleMedium"
-              style={styles.courseName}
-            >
-              {round.courses?.name || "Unknown Course"}
-            </Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                Active
+            <View style={styles.leftColumn}>
+              <Text variant="titleMedium" style={styles.courseName}>
+                {round.courses?.name || "Unknown Course"}
+              </Text>
+              <Text variant="bodyMedium" style={styles.subtitle}>
+                {round.courses?.name}
+                {(round.teebox_data as any)?.name
+                  ? ` · ${(round.teebox_data as any).name} tees`
+                  : ""}
               </Text>
             </View>
+            <View style={styles.badgeColumn}>
+              <View style={styles.badge}>
+                <MaterialCommunityIcons name="golf-cart" size={22} color="#22c55e" />
+              </View>
+              <Text style={styles.badgeLabel}>Play Now</Text>
+            </View>
           </View>
-          <Text
-            variant="bodyMedium"
-            style={styles.subtitle}
-          >
-            {round.courses?.name}
-            {(round.teebox_data as any)?.name
-              ? ` · ${(round.teebox_data as any).name} tees`
-              : ""}
-          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -77,28 +75,35 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  leftColumn: {
+    flex: 1,
+  },
   courseName: {
     fontWeight: "700",
     color: Color.neutral900,
-    flex: 1,
     textTransform: "capitalize",
   },
-  badge: {
-    paddingHorizontal: Space.sm,
-    paddingVertical: 2,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Color.primaryBorder,
-    backgroundColor: Color.primaryLight,
+  badgeColumn: {
+    alignItems: "center",
   },
-  badgeText: {
-    fontSize: 11,
+  badge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Color.white,
+    borderWidth: 2,
+    borderColor: "#22c55e",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeLabel: {
+    fontSize: 10,
     fontWeight: "600",
-    color: Color.primary,
+    color: Color.neutral500,
+    marginTop: 2,
   },
   subtitle: {
     color: Color.neutral500,
-    marginTop: Space.xs,
     textTransform: "capitalize",
   },
 });

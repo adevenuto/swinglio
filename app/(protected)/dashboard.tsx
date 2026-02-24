@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { PILL_TAB_BAR_OFFSET } from "@/components/PillTabBar";
 import { Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
@@ -48,7 +47,6 @@ export default function Dashboard() {
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: PILL_TAB_BAR_OFFSET }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

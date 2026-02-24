@@ -1,9 +1,9 @@
-import PillTabBar from "@/components/PillTabBar";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import BottomTabBar from "@/components/BottomTabBar";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { usePendingFriendCount } from "@/hooks/use-friends";
 import { on } from "@/lib/events";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Redirect, Tabs, useFocusEffect } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -42,38 +42,48 @@ export default function ProtectedLayout() {
 
   return (
     <Tabs
-      tabBar={(props) => <PillTabBar {...props} />}
+      tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
+      initialRouteName="dashboard"
     >
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="group" size={size} color={color} />
+          ),
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: "Stats",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="bar-chart" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="dashboard"
         options={{
           title: "Dashboard",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="sports-golf" size={30} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="sports-golf" size={size} color={color} />
           ),
           tabBarBadge:
             activeRounds.length > 0 ? activeRounds.length : undefined,
         }}
       />
       <Tabs.Screen
-        name="friends"
-        options={{
-          title: "Friends",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="group" size={30} color={color} />
-          ),
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="person" size={30} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="person" size={size} color={color} />
           ),
         }}
       />
@@ -83,8 +93,8 @@ export default function ProtectedLayout() {
           title: "Editor",
           href: isEditor ? undefined : null,
           tabBarItemStyle: isEditor ? undefined : { display: "none" },
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="edit" size={28} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="edit" size={size} color={color} />
           ),
         }}
       />

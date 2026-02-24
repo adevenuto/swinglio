@@ -72,6 +72,7 @@ export default function GameplayScreen() {
   const { roundId } = useLocalSearchParams<{ roundId: string }>();
   const scorecardRef = useRef<ScorecardRef>(null);
   const holeEntryRef = useRef<HoleEntryPanelRef>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [round, setRound] = useState<RoundData | null>(null);
   const [players, setPlayers] = useState<PlayerScore[]>([]);
@@ -206,6 +207,7 @@ export default function GameplayScreen() {
   const handleNavigate = useCallback((holeNumber: number) => {
     setActiveHole(holeNumber);
     scorecardRef.current?.scrollToHole(holeNumber);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
   // Tapping a hole number on the scorecard — save current, then jump
@@ -213,6 +215,7 @@ export default function GameplayScreen() {
     holeEntryRef.current?.saveCurrentHole();
     setActiveHole(holeNumber);
     scorecardRef.current?.scrollToHole(holeNumber);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
   const handleDeleteRound = () => {
@@ -308,74 +311,32 @@ export default function GameplayScreen() {
       </View>
 
       {/* Course info card */}
-      <View className="px-4 pb-4">
-        <View
-          style={{
-            padding: Space.lg,
-            borderWidth: 1,
-            borderColor: Color.neutral300,
-            borderRadius: Radius.md,
-            backgroundColor: Color.white,
-            ...Shadow.sm,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                variant="titleLarge"
-                style={{
-                  fontWeight: "700",
-                  color: Color.neutral900,
-                  textTransform: "capitalize",
-                }}
-              >
-                {round.courses?.name || "Unknown"}
-              </Text>
-              {(round.teebox_data as any)?.name && (
-                <Text
-                  variant="bodyMedium"
-                  style={{ color: Color.neutral500, marginTop: Space.xs, textTransform: "capitalize" }}
-                >
-                  {(round.teebox_data as any).name} tees
-                </Text>
-              )}
-            </View>
-            {teeboxHoleData && (
-              <View style={{ alignItems: "flex-end" }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: Color.neutral900,
-                    letterSpacing: 1.5,
-                  }}
-                >
-                  HOLE {activeHole}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "600",
-                    color: Color.neutral500,
-                    marginTop: 2,
-                  }}
-                >
+      <View style={gameStyles.courseCardWrapper}>
+        <View style={gameStyles.courseCard}>
+          <Text style={gameStyles.courseCardTitle}>
+            {round.courses?.name || "Unknown"}
+          </Text>
+          {(round.teebox_data as any)?.name && (
+            <Text style={gameStyles.courseCardSubtitle}>
+              {(round.teebox_data as any).name} tees
+            </Text>
+          )}
+          {teeboxHoleData && (
+            <View style={gameStyles.holeBadgeContainer}>
+              <View style={gameStyles.holeBadge}>
+                <Text style={gameStyles.holeBadgeTitle}>HOLE {activeHole}</Text>
+                <Text style={gameStyles.holeBadgeSubtitle}>
                   Par {teeboxHoleData.par} · {teeboxHoleData.length} yd
                 </Text>
               </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
       </View>
 
       {/* Scorecard + HoleEntryPanel */}
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
         refreshControl={
           <RefreshControl
@@ -460,5 +421,63 @@ const gameStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Color.neutral200,
     backgroundColor: Color.white,
+  },
+  courseCardWrapper: {
+    paddingHorizontal: Space.lg,
+    marginBottom: Space.xxl,
+  },
+  courseCard: {
+    paddingTop: Space.xl,
+    paddingHorizontal: Space.lg,
+    paddingBottom: Space.xxl,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    alignItems: "center",
+    ...Shadow.sm,
+  },
+  courseCardTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: Color.neutral900,
+    textTransform: "capitalize",
+    textAlign: "center",
+  },
+  courseCardSubtitle: {
+    fontSize: 15,
+    color: Color.neutral500,
+    marginTop: Space.xs,
+    textTransform: "capitalize",
+    textAlign: "center",
+  },
+  holeBadgeContainer: {
+    position: "absolute",
+    bottom: -26,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  holeBadge: {
+    backgroundColor: Color.primaryLight,
+    borderWidth: 1,
+    borderColor: Color.primaryBorder,
+    borderRadius: Radius.md,
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.xl,
+    alignItems: "center",
+    ...Shadow.md,
+  },
+  holeBadgeTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: Color.neutral900,
+    letterSpacing: 1.5,
+  },
+  holeBadgeSubtitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Color.neutral500,
+    marginTop: 2,
   },
 });

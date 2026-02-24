@@ -1,4 +1,5 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import ScreenHeader from "@/components/ScreenHeader";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
@@ -56,25 +57,9 @@ export default function Dashboard() {
           />
         }
       >
-        <View className="items-center px-8 pt-12">
+        <ScreenHeader title="Dashboard" />
+        <View className="items-center px-8">
           <View className="w-full max-w-md">
-            <Text
-              variant="headlineSmall"
-              style={{
-                fontWeight: "700",
-                color: "#1a1a1a",
-                textAlign: "center",
-                marginBottom: 4,
-              }}
-            >
-              Dashboard
-            </Text>
-            <Text
-              variant="bodyLarge"
-              style={{ color: "#555", textAlign: "center", marginBottom: 24 }}
-            >
-              Welcome back, {user?.email?.split("@")[0]}!
-            </Text>
 
             {activeRounds.length === 0 && (
               <Button

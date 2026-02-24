@@ -1,3 +1,4 @@
+import ScreenHeader from "@/components/ScreenHeader";
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -183,11 +184,9 @@ export default function FriendsScreen() {
           />
         }
       >
-        <View className="items-center px-8 pt-12">
+        <ScreenHeader title="Friends" />
+        <View className="items-center px-8">
           <View className="w-full max-w-md">
-            <Text className="mb-4 text-3xl font-bold text-center">
-              Friends
-            </Text>
 
             {/* Search bar */}
             <Searchbar

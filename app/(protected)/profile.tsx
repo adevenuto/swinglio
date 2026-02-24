@@ -1,16 +1,17 @@
 import UserAvatar from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { ActivityIndicator, Button, Snackbar, Text as PaperText, TextInput } from "react-native-paper";
+import { ActivityIndicator, Snackbar, Text as PaperText, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../../global.css";
 
 export default function Profile() {
-  const { user, signOut, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -208,20 +209,6 @@ export default function Profile() {
     Alert.alert("Profile Photo", undefined, options);
   };
 
-  const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/sign-in");
-        },
-      },
-    ]);
-  };
-
   if (isLoading) {
     return (
       <View className="items-center justify-center flex-1 bg-white">
@@ -244,7 +231,16 @@ export default function Profile() {
           />
         }
       >
-        <View className="items-center px-8 pt-12">
+        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+          >
+            <MaterialIcons name="chevron-left" size={28} color="#1a1a1a" />
+            <Text style={{ fontSize: 16, color: "#1a1a1a" }}>Back</Text>
+          </Pressable>
+        </View>
+        <View className="items-center px-8">
           <View className="w-full max-w-md pb-4">
             <Text className="mb-4 text-3xl font-bold text-center">
               Profile
@@ -316,14 +312,6 @@ export default function Profile() {
             </View>
           </View>
 
-          {/* Sign Out */}
-          <Button
-            mode="text"
-            onPress={handleSignOut}
-            textColor="#dc2626"
-          >
-            Sign Out
-          </Button>
           </View>
         </View>
       </ScrollView>

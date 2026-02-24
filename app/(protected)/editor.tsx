@@ -1,8 +1,9 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useCourseSearch } from "@/hooks/use-course-search";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, View } from "react-native";
+import { Pressable, ScrollView, Text as RNText, View } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,7 +33,16 @@ export default function EditorScreen() {
         className="flex-1"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="px-4 pt-8">
+        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+          >
+            <MaterialIcons name="chevron-left" size={28} color="#1a1a1a" />
+            <RNText style={{ fontSize: 16, color: "#1a1a1a" }}>Back</RNText>
+          </Pressable>
+        </View>
+        <View className="px-4">
           {/* Create Section */}
           <View
             style={{

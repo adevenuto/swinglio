@@ -242,13 +242,20 @@ export default function GameplayScreen() {
 
   const scorecardPlayers: ScorecardPlayer[] = useMemo(
     () =>
-      players.map((p) => ({
-        id: p.id,
-        golfer_id: p.golfer_id,
-        first_name: p.profiles?.display_name || p.profiles?.first_name || "?",
-        score_details: p.score_details,
-      })),
-    [players],
+      players
+        .map((p) => ({
+          id: p.id,
+          golfer_id: p.golfer_id,
+          first_name:
+            p.profiles?.display_name || p.profiles?.first_name || "?",
+          score_details: p.score_details,
+        }))
+        .sort((a, b) => {
+          if (a.golfer_id === user?.id) return -1;
+          if (b.golfer_id === user?.id) return 1;
+          return 0;
+        }),
+    [players, user?.id],
   );
 
   if (isLoading) {

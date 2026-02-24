@@ -9,7 +9,7 @@ import { useCallback, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function ProtectedLayout() {
-  const { user, isLoading, isEditor } = useAuth();
+  const { user, isLoading } = useAuth();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
   const { activeRounds, refresh: refreshActiveRounds } = useActiveRounds(
@@ -59,15 +59,6 @@ export default function ProtectedLayout() {
         }}
       />
       <Tabs.Screen
-        name="stats"
-        options={{
-          title: "Stats",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="bar-chart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="dashboard"
         options={{
           title: "Dashboard",
@@ -79,9 +70,20 @@ export default function ProtectedLayout() {
         }}
       />
       <Tabs.Screen
+        name="stats"
+        options={{
+          title: "Stats",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="bar-chart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
+          href: null,
+          tabBarItemStyle: { display: "none" },
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="person" size={size} color={color} />
           ),
@@ -91,8 +93,8 @@ export default function ProtectedLayout() {
         name="editor"
         options={{
           title: "Editor",
-          href: isEditor ? undefined : null,
-          tabBarItemStyle: isEditor ? undefined : { display: "none" },
+          href: null,
+          tabBarItemStyle: { display: "none" },
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="edit" size={size} color={color} />
           ),

@@ -26,7 +26,9 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
+import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
@@ -218,6 +220,37 @@ export default function GameplayScreen() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
+  // Swipe gestures for HoleEntryPanel
+  const swipeToNext = useCallback(() => {
+    if (activeHole < holeCount) {
+      holeEntryRef.current?.saveCurrentHole();
+      const next = activeHole + 1;
+      setActiveHole(next);
+      scorecardRef.current?.scrollToHole(next);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [activeHole, holeCount]);
+
+  const swipeToPrev = useCallback(() => {
+    if (activeHole > 1) {
+      holeEntryRef.current?.saveCurrentHole();
+      const prev = activeHole - 1;
+      setActiveHole(prev);
+      scorecardRef.current?.scrollToHole(prev);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [activeHole]);
+
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .onEnd((event) => {
+      if (event.velocityX < -500) {
+        runOnJS(swipeToNext)();
+      } else if (event.velocityX > 500) {
+        runOnJS(swipeToPrev)();
+      }
+    });
+
   const handleDeleteRound = () => {
     Alert.alert(
       "Delete Round",
@@ -352,17 +385,19 @@ export default function GameplayScreen() {
         }
       >
         {myScore && teeboxHoleData && (
-          <View className="px-4 pb-4">
-            <HoleEntryPanel
-              ref={holeEntryRef}
-              holeNumber={activeHole}
-              par={teeboxHoleData.par}
-              yardage={teeboxHoleData.length}
-              currentScore={activeHoleData?.score ?? ""}
-              currentStats={activeHoleData?.stats}
-              onSave={handleHoleSave}
-            />
-          </View>
+          <GestureDetector gesture={swipeGesture}>
+            <View className="px-4 pb-4">
+              <HoleEntryPanel
+                ref={holeEntryRef}
+                holeNumber={activeHole}
+                par={teeboxHoleData.par}
+                yardage={teeboxHoleData.length}
+                currentScore={activeHoleData?.score ?? ""}
+                currentStats={activeHoleData?.stats}
+                onSave={handleHoleSave}
+              />
+            </View>
+          </GestureDetector>
         )}
 
         <View className="px-4 pb-4">
@@ -424,7 +459,7 @@ const gameStyles = StyleSheet.create({
   },
   courseCardWrapper: {
     paddingHorizontal: Space.lg,
-    marginBottom: Space.xxl,
+    marginBottom: Space.xxxl,
   },
   courseCard: {
     paddingTop: Space.xl,
@@ -459,9 +494,9 @@ const gameStyles = StyleSheet.create({
     alignItems: "center",
   },
   holeBadge: {
-    backgroundColor: Color.primaryLight,
+    backgroundColor: Color.white,
     borderWidth: 1,
-    borderColor: Color.primaryBorder,
+    borderColor: Color.neutral300,
     borderRadius: Radius.md,
     paddingVertical: Space.sm,
     paddingHorizontal: Space.xl,

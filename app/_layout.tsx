@@ -6,6 +6,7 @@ import {
   DefaultTheme as PaperDefaultTheme,
   PaperProvider,
 } from "react-native-paper";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../global.css";
 
@@ -20,6 +21,7 @@ const paperTheme = {
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <AuthProvider>
       <ThemeProvider value={DefaultTheme}>
         <PaperProvider theme={paperTheme}>
@@ -80,5 +82,6 @@ export default function RootLayout() {
         </PaperProvider>
       </ThemeProvider>
     </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

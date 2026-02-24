@@ -239,43 +239,8 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           </Pressable>
         </View>
 
-        {/* Fairway (hidden for par 3s) */}
-        {!isPar3 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>FAIRWAY</Text>
-            <View style={styles.chipRow}>
-              {FAIRWAY_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt.value}
-                  mode="outlined"
-                  selected={fairway === opt.value}
-                  disabled={disabled}
-                  onPress={() =>
-                    setFairway(fairway === opt.value ? null : opt.value)
-                  }
-                  style={[
-                    styles.chip,
-                    fairway === opt.value && styles.chipSelected,
-                  ]}
-                  textStyle={[
-                    styles.chipText,
-                    fairway === opt.value && styles.chipTextSelected,
-                  ]}
-                  showSelectedCheck={false}
-                >
-                  {opt.label}
-                </Chip>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Advanced Accordion */}
-        <List.Accordion
-          title="Advanced"
-          expanded={advancedExpanded}
-          onPress={() => setAdvancedExpanded(!advancedExpanded)}
-        >
+        {/* Putts + Fairway wrapper (fixed height prevents shift on par 3s) */}
+        <View style={styles.puttsAndFairwayWrapper}>
           {/* Putts + GIR */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -323,6 +288,44 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
             </View>
           </View>
 
+          {/* Fairway (hidden for par 3s) */}
+          {!isPar3 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>FAIRWAY</Text>
+              <View style={styles.chipRow}>
+                {FAIRWAY_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt.value}
+                    mode="outlined"
+                    selected={fairway === opt.value}
+                    disabled={disabled}
+                    onPress={() =>
+                      setFairway(fairway === opt.value ? null : opt.value)
+                    }
+                    style={[
+                      styles.chip,
+                      fairway === opt.value && styles.chipSelected,
+                    ]}
+                    textStyle={[
+                      styles.chipText,
+                      fairway === opt.value && styles.chipTextSelected,
+                    ]}
+                    showSelectedCheck={false}
+                  >
+                    {opt.label}
+                  </Chip>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Advanced Accordion */}
+        <List.Accordion
+          title="Advanced"
+          expanded={advancedExpanded}
+          onPress={() => setAdvancedExpanded(!advancedExpanded)}
+        >
           {/* Bunkers */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>BUNKERS</Text>
@@ -519,6 +522,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
     textAlign: "center",
+  },
+  // Putts + Fairway wrapper
+  puttsAndFairwayWrapper: {
+    minHeight: 140,
   },
   // Sections
   section: {

@@ -67,6 +67,14 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
             leadingIcon="pencil"
           />
         )}
+        <Menu.Item
+          onPress={() => {
+            setMenuVisible(false);
+            router.push("/(protected)/settings");
+          }}
+          title="Settings"
+          leadingIcon="cog"
+        />
         <Divider />
         <Menu.Item
           onPress={handleSignOut}

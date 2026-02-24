@@ -100,6 +100,17 @@ export default function ProtectedLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          href: null,
+          tabBarItemStyle: { display: "none" },
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

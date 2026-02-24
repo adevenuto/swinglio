@@ -288,36 +288,37 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
             </View>
           </View>
 
-          {/* Fairway (hidden for par 3s) */}
-          {!isPar3 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>FAIRWAY</Text>
-              <View style={styles.chipRow}>
-                {FAIRWAY_OPTIONS.map((opt) => (
-                  <Chip
-                    key={opt.value}
-                    mode="outlined"
-                    selected={fairway === opt.value}
-                    disabled={disabled}
-                    onPress={() =>
-                      setFairway(fairway === opt.value ? null : opt.value)
-                    }
-                    style={[
-                      styles.chip,
-                      fairway === opt.value && styles.chipSelected,
-                    ]}
-                    textStyle={[
-                      styles.chipText,
-                      fairway === opt.value && styles.chipTextSelected,
-                    ]}
-                    showSelectedCheck={false}
-                  >
-                    {opt.label}
-                  </Chip>
-                ))}
-              </View>
+          {/* Fairway (invisible on par 3s to prevent layout shift) */}
+          <View
+            style={[styles.section, isPar3 && { opacity: 0 }]}
+            pointerEvents={isPar3 ? "none" : "auto"}
+          >
+            <Text style={styles.sectionLabel}>FAIRWAY</Text>
+            <View style={styles.chipRow}>
+              {FAIRWAY_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.value}
+                  mode="outlined"
+                  selected={fairway === opt.value}
+                  disabled={disabled}
+                  onPress={() =>
+                    setFairway(fairway === opt.value ? null : opt.value)
+                  }
+                  style={[
+                    styles.chip,
+                    fairway === opt.value && styles.chipSelected,
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    fairway === opt.value && styles.chipTextSelected,
+                  ]}
+                  showSelectedCheck={false}
+                >
+                  {opt.label}
+                </Chip>
+              ))}
             </View>
-          )}
+          </View>
         </View>
 
         {/* Advanced Accordion */}
@@ -524,9 +525,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   // Putts + Fairway wrapper
-  puttsAndFairwayWrapper: {
-    minHeight: 140,
-  },
+  puttsAndFairwayWrapper: {},
   // Sections
   section: {
     marginVertical: Space.lg,

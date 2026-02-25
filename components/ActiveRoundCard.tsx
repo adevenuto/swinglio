@@ -41,9 +41,18 @@ export default function ActiveRoundCard({ rounds }: Props) {
             </View>
             <View style={styles.badgeColumn}>
               <View style={styles.badge}>
-                <MaterialCommunityIcons name="golf-cart" size={22} color="#22c55e" />
+                <MaterialCommunityIcons
+                  name="golf-cart"
+                  size={22}
+                  color="#22c55e"
+                />
               </View>
-              <Text style={styles.badgeLabel}>Play Now</Text>
+              <Text
+                style={styles.badgeLabel}
+                className="p-1 !text-white border rounded border-cyan-600"
+              >
+                Play now
+              </Text>
             </View>
           </View>
         </TouchableOpacity>

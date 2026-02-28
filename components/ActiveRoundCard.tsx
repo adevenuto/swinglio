@@ -15,7 +15,7 @@ export default function ActiveRoundCard({ rounds }: Props) {
 
   return (
     <View style={{ marginTop: Space.lg }}>
-      <Text style={styles.sectionLabel}>Active Rounds</Text>
+      <Text style={styles.sectionLabel}>Activity Feed</Text>
       {rounds.map((round) => (
         <TouchableOpacity
           key={round.id}
@@ -47,12 +47,7 @@ export default function ActiveRoundCard({ rounds }: Props) {
                   color="#22c55e"
                 />
               </View>
-              <Text
-                style={styles.badgeLabel}
-                className="p-1 !text-white border rounded border-cyan-600"
-              >
-                Play now
-              </Text>
+              <Text style={styles.badgeLabel}>Play now</Text>
             </View>
           </View>
         </TouchableOpacity>

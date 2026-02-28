@@ -7,6 +7,8 @@ import Scorecard, {
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { emit } from "@/lib/events";
+import { buildResultsData, computePlayerResult } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { HoleStats, ScoreDetails } from "@/types/scoring";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -50,6 +52,7 @@ type RoundData = {
 type PlayerScore = {
   id: number;
   golfer_id: string;
+  score: number | null;
   score_details: ScoreDetails;
   profiles: {
     first_name: string | null;
@@ -85,6 +88,7 @@ export default function GameplayScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [activeHole, setActiveHole] = useState<number>(1);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   // Fetch user avatar
   useEffect(() => {
@@ -116,7 +120,7 @@ export default function GameplayScreen() {
     const { data: scoreData } = await supabase
       .from("scores")
       .select(
-        "id, golfer_id, score_details, profiles(first_name, last_name, display_name)",
+        "id, golfer_id, score, score_details, profiles(first_name, last_name, display_name)",
       )
       .eq("round_id", roundId);
 
@@ -128,6 +132,16 @@ export default function GameplayScreen() {
   useEffect(() => {
     fetchRound();
   }, [fetchRound]);
+
+  // Redirect to round-summary if round is completed
+  useEffect(() => {
+    if (round?.status === "completed") {
+      router.replace({
+        pathname: "/round-summary",
+        params: { roundId: String(round.id) },
+      });
+    }
+  }, [round?.status, round?.id, router]);
 
   // Set activeHole to first empty hole on initial load
   useEffect(() => {
@@ -145,6 +159,9 @@ export default function GameplayScreen() {
     () => players.find((p) => p.golfer_id === user?.id),
     [players, user?.id],
   );
+
+  // Whether the current player has finished (score integer is non-null)
+  const myFinished = myScore?.score != null;
 
   const holeCount = useMemo(
     () =>
@@ -204,6 +221,133 @@ export default function GameplayScreen() {
   const saveCurrentHole = useCallback(() => {
     holeEntryRef.current?.saveCurrentHole();
   }, []);
+
+  // Finish the round (per-player: only saves current player's total)
+  const handleFinishRound = useCallback(() => {
+    if (!myScore || !round || !user?.id) return;
+
+    // Pre-validation using current state
+    const totalHoles = Object.keys(round.teebox_data.holes).length;
+    const holesScored = Object.values(myScore.score_details.holes).filter(
+      (h) => h.score && h.score !== "",
+    ).length;
+
+    if (holesScored === 0) {
+      Alert.alert(
+        "No Scores",
+        "Enter scores for at least one hole before finishing.",
+      );
+      return;
+    }
+
+    const message =
+      holesScored < totalHoles
+        ? `You've scored ${holesScored} of ${totalHoles} holes. Finish anyway?`
+        : "Mark your scorecard as complete?";
+
+    Alert.alert("Finish Round", message, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Finish",
+        onPress: async () => {
+          if (!round || !user?.id) return;
+          setIsFinishing(true);
+
+          try {
+            // Save current hole first (avoids stale closure)
+            holeEntryRef.current?.saveCurrentHole();
+            await new Promise((r) => setTimeout(r, 300));
+
+            // Re-fetch fresh score data from Supabase
+            const { data: freshScores } = await supabase
+              .from("scores")
+              .select(
+                "id, golfer_id, score, score_details, profiles(first_name, last_name, display_name)",
+              )
+              .eq("round_id", roundId);
+
+            if (!freshScores) throw new Error("Failed to fetch scores");
+
+            const myFreshScore = freshScores.find(
+              (s: any) => s.golfer_id === user.id,
+            );
+            if (!myFreshScore) throw new Error("Score not found");
+
+            // Compute current player's total score
+            const teeboxHoles = round.teebox_data.holes;
+            const myName =
+              (myFreshScore as any).profiles?.display_name ||
+              (myFreshScore as any).profiles?.first_name ||
+              "Unknown";
+            const myResult = computePlayerResult(
+              (myFreshScore as any).score_details,
+              teeboxHoles,
+              user.id,
+              myName,
+            );
+
+            // Save only current player's total score
+            await supabase
+              .from("scores")
+              .update({ score: myResult.total_score })
+              .eq("id", (myFreshScore as any).id);
+
+            // Check if all other players have already finished
+            const othersFinished = freshScores
+              .filter((s: any) => s.golfer_id !== user.id)
+              .every((s: any) => s.score != null);
+
+            if (othersFinished) {
+              // All players done — finalize round
+              const playerResults = freshScores.map((p: any) => {
+                const name =
+                  p.profiles?.display_name ||
+                  p.profiles?.first_name ||
+                  "Unknown";
+                return computePlayerResult(
+                  p.score_details,
+                  teeboxHoles,
+                  p.golfer_id,
+                  name,
+                );
+              });
+
+              const resultsData = buildResultsData(
+                playerResults,
+                round.courses?.name || "Unknown",
+                (round.teebox_data as any)?.name || "",
+              );
+
+              await supabase
+                .from("rounds")
+                .update({ status: "completed", results_data: resultsData })
+                .eq("id", round.id);
+
+              emit("round-completed");
+
+              router.replace({
+                pathname: "/round-summary",
+                params: { roundId: String(round.id) },
+              });
+            } else {
+              // Not all players done — update local state to show finished UI
+              setPlayers((prev) =>
+                prev.map((p) =>
+                  p.golfer_id === user.id
+                    ? { ...p, score: myResult.total_score }
+                    : p,
+                ),
+              );
+            }
+          } catch (err) {
+            Alert.alert("Error", "Failed to finish round. Please try again.");
+          } finally {
+            setIsFinishing(false);
+          }
+        },
+      },
+    ]);
+  }, [round, myScore, user?.id, router, roundId]);
 
   // Navigate to a different hole
   const handleNavigate = useCallback((holeNumber: number) => {
@@ -384,7 +528,44 @@ export default function GameplayScreen() {
           />
         }
       >
-        {myScore && teeboxHoleData && (
+        {myFinished && round?.status !== "completed" && (
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: Space.xxl,
+              paddingHorizontal: Space.lg,
+            }}
+          >
+            <MaterialIcons
+              name="check-circle"
+              size={48}
+              color={Color.primary}
+            />
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: Color.neutral900,
+                marginTop: Space.md,
+                textAlign: "center",
+              }}
+            >
+              You've completed your round!
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: Color.neutral500,
+                marginTop: Space.xs,
+                textAlign: "center",
+              }}
+            >
+              Waiting for other players to finish.
+            </Text>
+          </View>
+        )}
+
+        {myScore && teeboxHoleData && !myFinished && (
           <GestureDetector gesture={swipeGesture}>
             <View className="px-4 pb-4">
               <HoleEntryPanel
@@ -435,13 +616,14 @@ export default function GameplayScreen() {
         )}
       </ScrollView>
 
-      {myScore && teeboxHoleData && (
+      {myScore && teeboxHoleData && !myFinished && (
         <SafeAreaView edges={["bottom"]} style={gameStyles.bottomBar}>
           <HoleNavigation
             holeNumber={activeHole}
             holeCount={holeCount}
             onSave={saveCurrentHole}
             onNavigate={handleNavigate}
+            onFinish={handleFinishRound}
           />
         </SafeAreaView>
       )}

@@ -3,6 +3,8 @@ import UserAvatar from "@/components/UserAvatar";
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
+import { useAttestationStats } from "@/hooks/use-attestation-stats";
+import { usePendingAttestations } from "@/hooks/use-pending-attestations";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
 import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -45,6 +47,12 @@ export default function Dashboard() {
   const { recentRounds, refresh: refreshRecent } = useRecentRounds(
     user?.id ?? "",
   );
+  const { pendingRounds, refresh: refreshPending } = usePendingAttestations(
+    user?.id ?? "",
+  );
+  const { percentage: attPct, refresh: refreshAttStats } = useAttestationStats(
+    user?.id ?? "",
+  );
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -76,7 +84,9 @@ export default function Dashboard() {
       fetchStats();
       refreshRounds();
       refreshRecent();
-    }, [fetchProfile, fetchStats, refreshRounds, refreshRecent]),
+      refreshPending();
+      refreshAttStats();
+    }, [fetchProfile, fetchStats, refreshRounds, refreshRecent, refreshPending, refreshAttStats]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -87,9 +97,11 @@ export default function Dashboard() {
       fetchStats(),
       refreshRounds(),
       refreshRecent(),
+      refreshPending(),
+      refreshAttStats(),
     ]);
     setRefreshing(false);
-  }, [refreshUser, fetchProfile, fetchStats, refreshRounds, refreshRecent]);
+  }, [refreshUser, fetchProfile, fetchStats, refreshRounds, refreshRecent, refreshPending, refreshAttStats]);
 
   // --- Cover photo ---
 
@@ -347,10 +359,10 @@ export default function Dashboard() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text variant="titleLarge" style={styles.statValue}>
-                {"\u2014"}
+                {totalRounds > 0 ? `${attPct}%` : "\u2014"}
               </Text>
               <Text variant="bodySmall" style={styles.statLabel}>
-                Best
+                Attested
               </Text>
             </View>
           </View>
@@ -373,6 +385,46 @@ export default function Dashboard() {
 
             <ActiveRoundCard rounds={activeRounds} />
 
+            {/* Attestation Requests */}
+            {pendingRounds.length > 0 && (
+              <View style={{ marginTop: Space.xl }}>
+                <Text style={styles.sectionLabel}>Needs Your Attestation</Text>
+                {pendingRounds.map((pr) => (
+                  <TouchableOpacity
+                    key={pr.round_id}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/round-summary",
+                        params: { roundId: pr.round_id },
+                      })
+                    }
+                    style={styles.card}
+                  >
+                    <View style={styles.cardRow}>
+                      <Text variant="titleMedium" style={styles.courseName}>
+                        {pr.course_name}
+                      </Text>
+                      <Button
+                        mode="contained"
+                        buttonColor={Color.primary}
+                        textColor={Color.white}
+                        compact
+                        style={{ borderRadius: Radius.lg }}
+                        labelStyle={{ fontSize: 12 }}
+                      >
+                        Review
+                      </Button>
+                    </View>
+                    <Text variant="bodyMedium" style={styles.cardSubtitle}>
+                      {pr.player_count} players
+                      {" \u00B7 "}
+                      {formatDate(pr.completed_at)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             {/* Recent Rounds */}
             <View style={{ marginTop: Space.xl }}>
               <Text style={styles.sectionLabel}>Recent Activity</Text>
@@ -391,7 +443,7 @@ export default function Dashboard() {
                     key={round.id}
                     onPress={() =>
                       router.push({
-                        pathname: "/gameplay",
+                        pathname: "/round-summary",
                         params: { roundId: round.id },
                       })
                     }

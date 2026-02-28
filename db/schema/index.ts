@@ -5,3 +5,4 @@ export * from './profiles';
 export * from './scores';
 export * from './rounds';
 export * from './friends';
+export * from './attestations';

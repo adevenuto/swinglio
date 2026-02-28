@@ -67,6 +67,13 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="round-summary"
+                options={{
+                  animation: "none",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
                 name="course-editor"
                 options={{
                   presentation: "modal",

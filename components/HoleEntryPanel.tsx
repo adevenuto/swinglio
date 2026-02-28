@@ -119,6 +119,9 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
 
     // --- Local editing state ---
     const [score, setScore] = useState<number>(parNum);
+    const [hasScoreEntry, setHasScoreEntry] = useState(
+      currentScore !== "" && currentScore != null,
+    );
     const [fairway, setFairway] = useState<FairwayResult>(null);
     const [putts, setPutts] = useState<number | null>(null);
     const [bunkers, setBunkers] = useState<BunkerEntry[]>([]);
@@ -152,8 +155,10 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     useEffect(() => {
       if (currentScore && currentScore !== "") {
         setScore(parseInt(currentScore, 10) || parNum);
+        setHasScoreEntry(true);
       } else {
         setScore(parNum);
+        setHasScoreEntry(false);
       }
       const stats = currentStats ?? createDefaultHoleStats();
       setFairway(stats.fairway);
@@ -173,7 +178,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     // Build save payload
     const buildPayload = useCallback(
       () => ({
-        score: String(score),
+        score: hasScoreEntry ? String(score) : "",
         stats: {
           fairway,
           putts,
@@ -182,7 +187,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           penalties,
         },
       }),
-      [score, fairway, putts, parNum, bunkers, penalties],
+      [score, hasScoreEntry, fairway, putts, parNum, bunkers, penalties],
     );
 
     // Expose save to parent
@@ -197,8 +202,14 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     );
 
     // Stepper helpers
-    const incrementScore = () => setScore((s) => Math.min(s + 1, 15));
-    const decrementScore = () => setScore((s) => Math.max(s - 1, 1));
+    const incrementScore = () => {
+      setScore((s) => Math.min(s + 1, 15));
+      setHasScoreEntry(true);
+    };
+    const decrementScore = () => {
+      setScore((s) => Math.max(s - 1, 1));
+      setHasScoreEntry(true);
+    };
 
     const handleBunkerChange = (type: BunkerEntry["type"], delta: number) => {
       setBunkers((prev) => {

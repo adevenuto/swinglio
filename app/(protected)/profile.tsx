@@ -1,5 +1,7 @@
 import UserAvatar from "@/components/UserAvatar";
+import { Color, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
@@ -23,6 +25,13 @@ export default function Profile() {
 
   const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
   const savedValues = useRef({ displayName: "", firstName: "", lastName: "" });
+
+  const {
+    attestedRounds: attRounds,
+    totalCompletedRounds: attTotal,
+    percentage: attPct,
+    refresh: refreshAttestation,
+  } = useAttestationStats(user?.id ?? "");
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -49,13 +58,14 @@ export default function Profile() {
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    refreshAttestation();
+  }, [fetchProfile, refreshAttestation]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshUser(), fetchProfile()]);
+    await Promise.all([refreshUser(), fetchProfile(), refreshAttestation()]);
     setRefreshing(false);
-  }, [refreshUser, fetchProfile]);
+  }, [refreshUser, fetchProfile, refreshAttestation]);
 
   const handleFieldBlur = useCallback(async () => {
     if (!user?.id) return;
@@ -311,6 +321,55 @@ export default function Profile() {
               </PaperText>
             </View>
           </View>
+
+          {/* Attestation Badge */}
+          {attTotal > 0 && (
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: Color.neutral300,
+                borderRadius: Radius.md,
+                backgroundColor: Color.white,
+                padding: Space.lg,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View>
+                <PaperText
+                  variant="titleMedium"
+                  style={{ fontWeight: "700", color: Color.neutral900 }}
+                >
+                  Attestation: {attPct}%
+                </PaperText>
+                <PaperText
+                  variant="bodySmall"
+                  style={{ color: Color.neutral500, marginTop: 2 }}
+                >
+                  {attRounds} of {attTotal} rounds
+                </PaperText>
+              </View>
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  borderWidth: 3,
+                  borderColor: Color.primary,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <PaperText
+                  variant="bodySmall"
+                  style={{ fontWeight: "700", color: Color.primary }}
+                >
+                  {attPct}%
+                </PaperText>
+              </View>
+            </View>
+          )}
 
           </View>
         </View>

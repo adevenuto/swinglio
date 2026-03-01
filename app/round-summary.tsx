@@ -42,6 +42,7 @@ type PlayerScore = {
   golfer_id: string;
   score_details: ScoreDetails;
   player_status: string;
+  self_attested: boolean;
   profiles: {
     first_name: string | null;
     last_name: string | null;
@@ -99,7 +100,7 @@ export default function RoundSummaryScreen() {
     const { data: scoreData } = await supabase
       .from("scores")
       .select(
-        "id, golfer_id, score_details, player_status, profiles(first_name, last_name, display_name, avatar_url)",
+        "id, golfer_id, score_details, player_status, self_attested, profiles(first_name, last_name, display_name, avatar_url)",
       )
       .eq("round_id", roundId);
 
@@ -119,19 +120,41 @@ export default function RoundSummaryScreen() {
   }, [fetchRound, refreshAttestations]);
 
   const resultsData = round?.results_data;
-  const isSoloRound = players.length <= 1;
   const isParticipant = players.some((p) => p.golfer_id === user?.id);
   const hasAttested = attestations.some((a) => a.attester_id === user?.id);
   const attestCount = attestations.length;
-  const myPlayerStatus = players.find(
-    (p) => p.golfer_id === user?.id,
-  )?.player_status;
+  const myScore = players.find((p) => p.golfer_id === user?.id);
+  const myPlayerStatus = myScore?.player_status;
   const myWithdrew = myPlayerStatus === "withdrew";
   const myIncomplete = myPlayerStatus === "incomplete";
   const eligiblePlayers = players.filter(
     (p) => p.player_status !== "withdrew" && p.player_status !== "incomplete",
   );
   const eligiblePlayerCount = eligiblePlayers.length;
+  const isEffectivelySolo = eligiblePlayerCount <= 1;
+  const mySelfAttested = myScore?.self_attested ?? false;
+
+  // Auto-confirm self-attestation for effectively-solo rounds
+  useEffect(() => {
+    if (
+      isEffectivelySolo &&
+      myScore &&
+      !mySelfAttested &&
+      myPlayerStatus === "completed"
+    ) {
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === myScore.id ? { ...p, self_attested: true } : p,
+        ),
+      );
+      void (async () => {
+        await supabase
+          .from("scores")
+          .update({ self_attested: true })
+          .eq("id", myScore.id);
+      })();
+    }
+  }, [isEffectivelySolo, myScore, mySelfAttested, myPlayerStatus]);
 
   const scorecardPlayers: ScorecardPlayer[] = useMemo(
     () =>
@@ -245,13 +268,7 @@ export default function RoundSummaryScreen() {
                       size={40}
                     />
                     <View style={s.resultInfo}>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: Space.sm,
-                        }}
-                      >
+                      <View style={s.resultTopRow}>
                         <Text style={s.resultName}>{pr.display_name}</Text>
                         {isWd && (
                           <View style={s.wdBadge}>
@@ -278,29 +295,31 @@ export default function RoundSummaryScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={s.resultSub}>
-                        {partialHoles
-                          ? `${pr.holes_completed} of ${pr.hole_count} holes`
-                          : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
-                      </Text>
-                    </View>
-                    <View style={s.scoreContainer}>
-                      <Text style={s.scoreTotal}>{pr.total_score}</Text>
-                      <Text
-                        style={[
-                          s.scoreToPar,
-                          {
-                            color:
-                              pr.score_to_par > 0
-                                ? Color.danger
-                                : pr.score_to_par < 0
-                                  ? Color.primary
-                                  : Color.neutral500,
-                          },
-                        ]}
-                      >
-                        ({formatScoreToPar(pr.score_to_par)})
-                      </Text>
+                      <View style={s.resultBottomRow}>
+                        <Text style={s.resultSub}>
+                          {partialHoles
+                            ? `${pr.holes_completed} of ${pr.hole_count} holes`
+                            : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
+                        </Text>
+                        <View style={s.scoreContainer}>
+                          <Text style={s.scoreTotal}>{pr.total_score}</Text>
+                          <Text
+                            style={[
+                              s.scoreToPar,
+                              {
+                                color:
+                                  pr.score_to_par > 0
+                                    ? Color.danger
+                                    : pr.score_to_par < 0
+                                      ? Color.primary
+                                      : Color.neutral500,
+                              },
+                            ]}
+                          >
+                            ({formatScoreToPar(pr.score_to_par)})
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 );
@@ -309,8 +328,8 @@ export default function RoundSummaryScreen() {
           </View>
         )}
 
-        {/* Attestation section — hidden for solo rounds; WD players can't attest */}
-        {!isSoloRound && isParticipant && !myWithdrew && !myIncomplete && (
+        {/* Peer attestation — only for multi-player eligible rounds */}
+        {!isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
             <Text style={s.sectionLabel}>ATTESTATION</Text>
             <View style={s.attestCard}>
@@ -339,6 +358,23 @@ export default function RoundSummaryScreen() {
                   Attest Scores
                 </Button>
               )}
+            </View>
+          </View>
+        )}
+
+        {/* Self-confirmed indicator — for effectively-solo rounds */}
+        {isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
+          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+            <Text style={s.sectionLabel}>SCORE CONFIRMATION</Text>
+            <View style={s.attestCard}>
+              <View style={s.attestedRow}>
+                <MaterialIcons
+                  name="check-circle"
+                  size={24}
+                  color={Color.primary}
+                />
+                <Text style={s.attestedText}>Scores Confirmed</Text>
+              </View>
             </View>
           </View>
         )}
@@ -413,7 +449,7 @@ const s = StyleSheet.create({
   },
   resultRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: Space.lg,
     borderBottomWidth: 1,
     borderBottomColor: Color.neutral200,
@@ -421,6 +457,17 @@ const s = StyleSheet.create({
   resultInfo: {
     flex: 1,
     marginLeft: Space.md,
+  },
+  resultTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  resultBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: Space.xs,
   },
   resultName: {
     fontSize: 16,
@@ -431,7 +478,7 @@ const s = StyleSheet.create({
   resultSub: {
     fontSize: 13,
     color: Color.neutral500,
-    marginTop: 2,
+    textTransform: "capitalize",
   },
   scoreContainer: {
     flexDirection: "row",

@@ -1,6 +1,6 @@
 // === Per-hole stat types ===
 
-export type FairwayResult = "hit" | "left" | "right" | null;
+export type FairwayResult = "hit" | "left" | "right" | "long" | "short" | null;
 
 export type BunkerEntry = {
   type: "greenside" | "fairway";

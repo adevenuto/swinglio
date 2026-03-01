@@ -1,4 +1,10 @@
-import { Animation, Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import {
+  Animation,
+  Color,
+  Radius,
+  Shadow,
+  Space,
+} from "@/constants/design-tokens";
 import {
   BunkerEntry,
   calculateGIR,
@@ -7,6 +13,7 @@ import {
   HoleStats,
   PenaltyEntry,
 } from "@/types/scoring";
+import Feather from "@expo/vector-icons/Feather";
 import React, {
   forwardRef,
   useCallback,
@@ -16,13 +23,7 @@ import React, {
   useState,
 } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import {
-  Chip,
-  IconButton,
-  List,
-  Text,
-  TouchableRipple,
-} from "react-native-paper";
+import { Text } from "react-native-paper";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -46,13 +47,6 @@ type HoleEntryPanelProps = {
 };
 
 // === Helpers ===
-const FAIRWAY_OPTIONS: { label: string; value: FairwayResult }[] = [
-  { label: "Left", value: "left" },
-  { label: "Hit", value: "hit" },
-  { label: "Right", value: "right" },
-];
-
-const PUTT_OPTIONS = [0, 1, 2, 3, 4];
 
 const BUNKER_TYPES: { label: string; type: BunkerEntry["type"] }[] = [
   { label: "Greenside", type: "greenside" },
@@ -123,10 +117,15 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       currentScore !== "" && currentScore != null,
     );
     const [fairway, setFairway] = useState<FairwayResult>(null);
-    const [putts, setPutts] = useState<number | null>(null);
+    const [puttsCount, setPuttsCount] = useState<number>(
+      currentStats?.putts ?? 2,
+    );
+    const [hasPuttsEntry, setHasPuttsEntry] = useState(
+      currentStats?.putts != null,
+    );
     const [bunkers, setBunkers] = useState<BunkerEntry[]>([]);
     const [penalties, setPenalties] = useState<PenaltyEntry[]>([]);
-    const [advancedExpanded, setAdvancedExpanded] = React.useState(false);
+    const [advancedExpanded, setAdvancedExpanded] = useState(false);
 
     // Track previous hole to detect transitions and direction
     const prevHoleRef = useRef(holeNumber);
@@ -162,13 +161,17 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       }
       const stats = currentStats ?? createDefaultHoleStats();
       setFairway(stats.fairway);
-      setPutts(stats.putts);
+      setPuttsCount(stats.putts ?? 2);
+      setHasPuttsEntry(stats.putts != null);
       setBunkers([...stats.bunkers]);
       setPenalties([...stats.penalties]);
     }, [holeNumber, currentScore, currentStats, parNum]);
 
+    // Effective putts for GIR calculation
+    const effectivePutts = hasPuttsEntry ? puttsCount : null;
+
     // GIR auto-calculation
-    const gir = calculateGIR(score, putts, parNum);
+    const gir = calculateGIR(score, effectivePutts, parNum);
 
     // Score-to-par feedback — use neutral diff during transition to prevent red flicker
     const displayScoreDiff = isTransitioning ? 0 : score - parNum;
@@ -181,13 +184,22 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
         score: hasScoreEntry ? String(score) : "",
         stats: {
           fairway,
-          putts,
-          gir: calculateGIR(score, putts, parNum),
+          putts: hasPuttsEntry ? puttsCount : null,
+          gir: calculateGIR(score, hasPuttsEntry ? puttsCount : null, parNum),
           bunkers,
           penalties,
         },
       }),
-      [score, hasScoreEntry, fairway, putts, parNum, bunkers, penalties],
+      [
+        score,
+        hasScoreEntry,
+        fairway,
+        puttsCount,
+        hasPuttsEntry,
+        parNum,
+        bunkers,
+        penalties,
+      ],
     );
 
     // Expose save to parent
@@ -201,7 +213,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       [onSave, buildPayload],
     );
 
-    // Stepper helpers
+    // Score stepper helpers
     const incrementScore = () => {
       setScore((s) => Math.min(s + 1, 15));
       setHasScoreEntry(true);
@@ -209,6 +221,21 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     const decrementScore = () => {
       setScore((s) => Math.max(s - 1, 1));
       setHasScoreEntry(true);
+    };
+
+    // Putts stepper helpers
+    const incrementPutts = () => {
+      setPuttsCount((c) => Math.min(c + 1, 10));
+      setHasPuttsEntry(true);
+    };
+    const decrementPutts = () => {
+      setPuttsCount((c) => Math.max(c - 1, 0));
+      setHasPuttsEntry(true);
+    };
+
+    // Fairway toggle
+    const toggleFairway = (value: FairwayResult) => {
+      setFairway((prev) => (prev === value ? null : value));
     };
 
     const handleBunkerChange = (type: BunkerEntry["type"], delta: number) => {
@@ -234,165 +261,275 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     return (
       <View style={[styles.card, disabled && styles.cardDisabled]}>
         <Animated.View style={animatedStyle}>
-          {/* Score stepper */}
-          <View style={styles.scoreRow}>
-            <Pressable
-              onPress={decrementScore}
-              disabled={disabled}
-              style={({ pressed }) => [
-                styles.decrementButton,
-                pressed && styles.decrementPressed,
-              ]}
+          {/* Top section: D-pad + Score/Putts steppers */}
+          <View style={styles.topSection}>
+            {/* Fairway D-pad */}
+            <View
+              style={[styles.dpadWrapper, isPar3 && { opacity: 0 }]}
+              pointerEvents={isPar3 ? "none" : "auto"}
             >
-              <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
-                <View style={[styles.stepper]}>
-                  <IconButton size={32} icon="minus" />
-                </View>
-              </TouchableRipple>
-            </Pressable>
-            <View style={styles.scoreCircle}>
-              <Text style={[styles.scoreValue, { color: scoreColor }]}>
-                {score}
-              </Text>
-              <Text style={[styles.scoreLabel, { color: scoreColor }]}>
-                {scoreLabel}
-              </Text>
-            </View>
-            <Pressable
-              onPress={incrementScore}
-              disabled={disabled}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.incrementPressed,
-              ]}
-            >
-              <View style={[styles.stepper]}>
-                <IconButton size={32} icon="plus" />
-              </View>
-            </Pressable>
-          </View>
+              <View style={styles.dpadCircle}>
+                {/* Up — Long */}
+                <Pressable
+                  onPress={() => toggleFairway("long")}
+                  disabled={disabled}
+                  style={styles.dpadChevron}
+                >
+                  <Feather
+                    name="chevron-up"
+                    size={30}
+                    strokeWidth={2.7}
+                    color={
+                      fairway === "long" ? Color.primary : Color.neutral400
+                    }
+                  />
+                </Pressable>
 
-          {/* Putts + Fairway wrapper (fixed height prevents shift on par 3s) */}
-          <View style={styles.puttsAndFairwayWrapper}>
-            {/* Putts + GIR */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>PUTTS</Text>
-                {gir !== null && (
-                  <View
+                {/* Middle row: Left, HIT, Right */}
+                <View style={styles.dpadMiddleRow}>
+                  <Pressable
+                    onPress={() => toggleFairway("left")}
+                    disabled={disabled}
+                    style={styles.dpadChevron}
+                  >
+                    <Feather
+                      name="chevron-left"
+                      size={30}
+                      strokeWidth={2.7}
+                      color={
+                        fairway === "left" ? Color.primary : Color.neutral400
+                      }
+                    />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => toggleFairway("hit")}
+                    disabled={disabled}
                     style={[
-                      styles.girBadge,
-                      gir ? styles.girTrue : styles.girFalse,
+                      styles.dpadHitButton,
+                      fairway === "hit" && styles.dpadHitButtonActive,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.girText,
-                        gir ? styles.girTextTrue : styles.girTextFalse,
+                        styles.dpadHitText,
+                        fairway === "hit"
+                          ? styles.dpadHitTextActive
+                          : styles.dpadHitTextInactive,
                       ]}
                     >
-                      {gir ? "GIR" : "No GIR"}
+                      HIT
                     </Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.chipRow}>
-                {PUTT_OPTIONS.map((n) => {
-                  const label = n === 4 ? "4+" : String(n);
-                  const selected = putts === n;
-                  return (
-                    <Chip
-                      key={n}
-                      mode="outlined"
-                      selected={selected}
-                      disabled={disabled}
-                      onPress={() => setPutts(selected ? null : n)}
-                      style={[styles.chip, selected && styles.chipSelected]}
-                      textStyle={[
-                        styles.chipText,
-                        selected && styles.chipTextSelected,
-                      ]}
-                      showSelectedCheck={false}
-                    >
-                      {label}
-                    </Chip>
-                  );
-                })}
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => toggleFairway("right")}
+                    disabled={disabled}
+                    style={styles.dpadChevron}
+                  >
+                    <Feather
+                      name="chevron-right"
+                      size={30}
+                      strokeWidth={2.7}
+                      color={
+                        fairway === "right" ? Color.primary : Color.neutral400
+                      }
+                    />
+                  </Pressable>
+                </View>
+
+                {/* Down — Short */}
+                <Pressable
+                  onPress={() => toggleFairway("short")}
+                  disabled={disabled}
+                  style={styles.dpadChevron}
+                >
+                  <Feather
+                    name="chevron-down"
+                    size={30}
+                    strokeWidth={2.7}
+                    color={
+                      fairway === "short" ? Color.primary : Color.neutral400
+                    }
+                  />
+                </Pressable>
               </View>
             </View>
 
-            {/* Fairway (invisible on par 3s to prevent layout shift) */}
-            <View
-              style={[styles.section, isPar3 && { opacity: 0 }]}
-              pointerEvents={isPar3 ? "none" : "auto"}
-            >
-              <Text style={styles.sectionLabel}>FAIRWAY</Text>
-              <View style={styles.chipRow}>
-                {FAIRWAY_OPTIONS.map((opt) => (
-                  <Chip
-                    key={opt.value}
-                    mode="outlined"
-                    selected={fairway === opt.value}
+            {/* Score + Putts steppers */}
+            <View style={styles.steppersArea}>
+              {/* Score stepper */}
+              <View style={styles.stepperColumn}>
+                <Text style={styles.stepperLabel}>Score</Text>
+                <View style={styles.horizontalPill}>
+                  <Pressable
+                    onPress={incrementScore}
                     disabled={disabled}
-                    onPress={() =>
-                      setFairway(fairway === opt.value ? null : opt.value)
-                    }
-                    style={[
-                      styles.chip,
-                      fairway === opt.value && styles.chipSelected,
+                    style={({ pressed }) => [
+                      styles.pillButton,
+                      pressed && styles.pillButtonPressed,
                     ]}
-                    textStyle={[
-                      styles.chipText,
-                      fairway === opt.value && styles.chipTextSelected,
-                    ]}
-                    showSelectedCheck={false}
                   >
-                    {opt.label}
-                  </Chip>
-                ))}
+                    <View style={styles.pillButton}>
+                      <Feather name="plus" size={20} color={Color.neutral900} />
+                    </View>
+                  </Pressable>
+                  <Text style={[styles.pillNumber, { color: scoreColor }]}>
+                    {score}
+                  </Text>
+                  <Pressable
+                    onPress={decrementScore}
+                    disabled={disabled}
+                    style={({ pressed }) => [
+                      styles.pillButton,
+                      pressed && styles.pillButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.pillButton}>
+                      <Feather
+                        name="minus"
+                        size={20}
+                        color={Color.neutral900}
+                      />
+                    </View>
+                  </Pressable>
+                </View>
+                <Text style={[styles.pillSubLabel, { color: scoreColor }]}>
+                  {scoreLabel}
+                </Text>
+              </View>
+
+              {/* Putts stepper */}
+              <View style={styles.stepperColumn}>
+                <Text style={styles.stepperLabel}>Putts</Text>
+                <View style={styles.horizontalPill}>
+                  <Pressable
+                    onPress={incrementPutts}
+                    disabled={disabled}
+                    style={({ pressed }) => [
+                      styles.pillButton,
+                      pressed && styles.pillButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.pillButton}>
+                      <Feather name="plus" size={20} color={Color.neutral900} />
+                    </View>
+                  </Pressable>
+                  <Text style={styles.pillNumber}>{puttsCount}</Text>
+                  <Pressable
+                    onPress={decrementPutts}
+                    disabled={disabled}
+                    style={({ pressed }) => [
+                      styles.pillButton,
+                      pressed && styles.pillButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.pillButton}>
+                      <Feather
+                        name="minus"
+                        size={20}
+                        color={Color.neutral900}
+                      />
+                    </View>
+                  </Pressable>
+                </View>
+                <View
+                  style={[
+                    styles.girBadge,
+                    gir !== null
+                      ? gir
+                        ? styles.girTrue
+                        : styles.girFalse
+                      : { opacity: 0 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.girText,
+                      gir !== null
+                        ? gir
+                          ? styles.girTextTrue
+                          : styles.girTextFalse
+                        : { opacity: 0 },
+                    ]}
+                  >
+                    {gir !== null ? (gir ? "GIR" : "No GIR") : "GIR"}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
 
-          {/* Advanced Accordion */}
-          <List.Accordion
-            title="Advanced"
-            expanded={advancedExpanded}
-            onPress={() => setAdvancedExpanded(!advancedExpanded)}
-            style={styles.accordion}
-            rippleColor="transparent"
-            theme={{ colors: { background: "transparent" } }}
-          >
-            {/* Bunkers */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>BUNKERS</Text>
-              {BUNKER_TYPES.map((bt) => (
-                <CountStepperRow
-                  key={bt.type}
-                  label={bt.label}
-                  count={countByType(bunkers, bt.type)}
-                  disabled={disabled}
-                  onIncrement={() => handleBunkerChange(bt.type, 1)}
-                  onDecrement={() => handleBunkerChange(bt.type, -1)}
-                />
-              ))}
-            </View>
+          {/* Basic / Advanced Toggle */}
+          <View style={styles.toggleContainer}>
+            <Pressable
+              onPress={() => setAdvancedExpanded(false)}
+              style={[
+                styles.toggleButton,
+                !advancedExpanded && styles.toggleButtonActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  !advancedExpanded && styles.toggleTextActive,
+                ]}
+              >
+                Basic
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setAdvancedExpanded(true)}
+              style={[
+                styles.toggleButton,
+                advancedExpanded && styles.toggleButtonActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  advancedExpanded && styles.toggleTextActive,
+                ]}
+              >
+                Advanced
+              </Text>
+            </Pressable>
+          </View>
 
-            {/* Penalties */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>PENALTIES</Text>
-              {PENALTY_TYPES.map((pt) => (
-                <CountStepperRow
-                  key={pt.type}
-                  label={pt.label}
-                  count={countByType(penalties, pt.type)}
-                  disabled={disabled}
-                  onIncrement={() => handlePenaltyChange(pt.type, 1)}
-                  onDecrement={() => handlePenaltyChange(pt.type, -1)}
-                />
-              ))}
+          {/* Advanced content */}
+          {advancedExpanded && (
+            <View style={styles.advancedContent}>
+              {/* Bunkers */}
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>BUNKERS</Text>
+                {BUNKER_TYPES.map((bt) => (
+                  <CountStepperRow
+                    key={bt.type}
+                    label={bt.label}
+                    count={countByType(bunkers, bt.type)}
+                    disabled={disabled}
+                    onIncrement={() => handleBunkerChange(bt.type, 1)}
+                    onDecrement={() => handleBunkerChange(bt.type, -1)}
+                  />
+                ))}
+              </View>
+
+              {/* Penalties */}
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>PENALTIES</Text>
+                {PENALTY_TYPES.map((pt) => (
+                  <CountStepperRow
+                    key={pt.type}
+                    label={pt.label}
+                    count={countByType(penalties, pt.type)}
+                    disabled={disabled}
+                    onIncrement={() => handlePenaltyChange(pt.type, 1)}
+                    onDecrement={() => handlePenaltyChange(pt.type, -1)}
+                  />
+                ))}
+              </View>
             </View>
-          </List.Accordion>
+          )}
         </Animated.View>
       </View>
     );
@@ -430,11 +567,7 @@ function CountStepperRow({
             pressed && styles.stepperPressed,
           ]}
         >
-          <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
-            <View style={[styles.stepper, styles.stepperSmall]}>
-              <IconButton size={20} icon="minus" />
-            </View>
-          </TouchableRipple>
+          <Feather name="minus" size={16} color={Color.neutral900} />
         </Pressable>
         <Text
           style={[styles.stepperCount, count === 0 && styles.stepperCountZero]}
@@ -449,11 +582,7 @@ function CountStepperRow({
             pressed && styles.stepperPressed,
           ]}
         >
-          <TouchableRipple rippleColor="rgba(0, 0, 0, .32)">
-            <View style={[styles.stepper, styles.stepperSmall]}>
-              <IconButton size={20} icon="plus" />
-            </View>
-          </TouchableRipple>
+          <Feather name="plus" size={16} color={Color.neutral900} />
         </Pressable>
       </View>
     </View>
@@ -461,6 +590,10 @@ function CountStepperRow({
 }
 
 // === Styles ===
+
+const DPAD_SIZE = 120;
+const CHEVRON_SIZE = 36;
+const HIT_SIZE = 48;
 
 const styles = StyleSheet.create({
   card: {
@@ -474,120 +607,123 @@ const styles = StyleSheet.create({
   cardDisabled: {
     opacity: 0.5,
   },
-  // Score stepper
-  scoreRow: {
+
+  // Top section
+  topSection: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Space.xxl,
+    alignItems: "flex-start",
+    gap: Space.lg,
     marginBottom: Space.lg,
   },
-  decrementButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 1.5,
-    borderColor: Color.neutral300,
-    justifyContent: "center",
+
+  // D-pad
+  dpadWrapper: {
     alignItems: "center",
-    backgroundColor: Color.white,
   },
-  decrementPressed: {
+  dpadCircle: {
+    width: DPAD_SIZE,
+    height: DPAD_SIZE,
+    borderRadius: DPAD_SIZE / 2,
     backgroundColor: Color.neutral100,
-  },
-  stepperText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Color.neutral900,
-  },
-  stepper: {
-    display: "flex",
-    justifyContent: "center",
     alignItems: "center",
-    borderColor: Color.neutral900,
-    borderWidth: 1,
-    borderStyle: "solid",
-    padding: 5,
-    borderRadius: "50%",
-    width: 54,
-    height: 54,
-  },
-  stepperSmall: {
-    width: 30,
-    height: 30,
-  },
-  incrementButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Color.primary,
   },
-  incrementPressed: {
-    backgroundColor: "#15803d",
-  },
-  scoreCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Color.neutral100,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scoreValue: {
-    fontSize: 52,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  scoreLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  // Putts + Fairway wrapper
-  puttsAndFairwayWrapper: {},
-  // Sections
-  section: {
-    marginVertical: Space.lg,
-  },
-  sectionHeader: {
+  dpadMiddleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: Space.sm,
+    justifyContent: "center",
   },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
-    marginBottom: Space.sm,
+  dpadChevron: {
+    width: CHEVRON_SIZE,
+    height: CHEVRON_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  // Chips
-  chipRow: {
+  dpadHitButton: {
+    width: HIT_SIZE,
+    height: HIT_SIZE,
+    borderRadius: HIT_SIZE / 2,
+    backgroundColor: Color.neutral300,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dpadHitButtonActive: {
+    backgroundColor: Color.primary,
+  },
+  dpadHitText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  dpadHitTextActive: {
+    color: Color.white,
+  },
+  dpadHitTextInactive: {
+    color: Color.neutral500,
+  },
+  // Steppers area (right side)
+  steppersArea: {
+    flex: 1,
     flexDirection: "row",
     gap: Space.sm,
   },
-  chip: {
+  stepperColumn: {
+    flex: 1,
+    alignItems: "center",
+  },
+  stepperLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.sm - 4,
+  },
+  horizontalPill: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: 46,
+    minHeight: 120,
+    margin: "auto",
+    alignSelf: "stretch",
+    borderRadius: Radius.full,
+    borderWidth: 1,
     borderColor: Color.neutral300,
     backgroundColor: Color.white,
+    paddingVertical: Space.sm,
   },
-  chipSelected: {
-    backgroundColor: Color.primary,
-    borderColor: Color.primary,
+  pillButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    justifyContent: "center",
+    alignItems: "center",
+    display: "flex",
   },
-  chipText: {
+  pillButtonPressed: {
+    backgroundColor: Color.neutral100,
+  },
+  pillNumber: {
+    fontSize: 32,
+    fontWeight: "700",
     color: Color.neutral900,
+    minWidth: 40,
+    textAlign: "center",
   },
-  chipTextSelected: {
-    color: Color.white,
+  pillSubLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: Space.xs,
   },
+
   // GIR badge
   girBadge: {
+    marginTop: Space.xs,
     paddingHorizontal: Space.sm,
     paddingVertical: 2,
     borderRadius: Radius.sm,
+    alignSelf: "center",
   },
   girTrue: {
     backgroundColor: Color.primary,
@@ -605,6 +741,53 @@ const styles = StyleSheet.create({
   girTextFalse: {
     color: Color.neutral500,
   },
+
+  // Toggle
+  toggleContainer: {
+    flexDirection: "row",
+    alignSelf: "center",
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    overflow: "hidden",
+    marginBottom: Space.md,
+  },
+  toggleButton: {
+    height: 36,
+    paddingHorizontal: Space.xl,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Color.white,
+  },
+  toggleButtonActive: {
+    backgroundColor: Color.neutral900,
+  },
+  toggleText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: Color.neutral900,
+  },
+  toggleTextActive: {
+    color: Color.white,
+  },
+
+  // Advanced content
+  advancedContent: {
+    marginTop: Space.sm,
+  },
+
+  // Sections (bunkers, penalties)
+  section: {
+    marginVertical: Space.sm,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    marginBottom: Space.sm,
+  },
+
   // Count stepper rows (bunkers, penalties)
   stepperRow: {
     flexDirection: "row",
@@ -643,9 +826,5 @@ const styles = StyleSheet.create({
   },
   stepperCountZero: {
     color: Color.neutral400,
-  },
-  accordion: {
-    paddingVertical: Space.xs,
-    borderRadius: Radius.md,
   },
 });

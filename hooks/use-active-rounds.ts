@@ -27,7 +27,8 @@ export function useActiveRounds(userId: string) {
     const { data: scoreRows } = await supabase
       .from("scores")
       .select("round_id")
-      .eq("golfer_id", userId);
+      .eq("golfer_id", userId)
+      .eq("player_status", "active");
 
     if (!scoreRows || scoreRows.length === 0) {
       setActiveRounds([]);

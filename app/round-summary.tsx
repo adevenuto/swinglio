@@ -1,6 +1,4 @@
-import Scorecard, {
-  ScorecardPlayer,
-} from "@/components/Scorecard";
+import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
@@ -9,6 +7,7 @@ import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -42,6 +41,7 @@ type PlayerScore = {
   id: number;
   golfer_id: string;
   score_details: ScoreDetails;
+  player_status: string;
   profiles: {
     first_name: string | null;
     last_name: string | null;
@@ -74,8 +74,12 @@ export default function RoundSummaryScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { attestations, isLoading: attestLoading, refresh: refreshAttestations, attest } =
-    useAttestations(roundId);
+  const {
+    attestations,
+    isLoading: attestLoading,
+    refresh: refreshAttestations,
+    attest,
+  } = useAttestations(roundId);
 
   const fetchRound = useCallback(async () => {
     setIsLoading(true);
@@ -95,7 +99,7 @@ export default function RoundSummaryScreen() {
     const { data: scoreData } = await supabase
       .from("scores")
       .select(
-        "id, golfer_id, score_details, profiles(first_name, last_name, display_name, avatar_url)",
+        "id, golfer_id, score_details, player_status, profiles(first_name, last_name, display_name, avatar_url)",
       )
       .eq("round_id", roundId);
 
@@ -119,6 +123,15 @@ export default function RoundSummaryScreen() {
   const isParticipant = players.some((p) => p.golfer_id === user?.id);
   const hasAttested = attestations.some((a) => a.attester_id === user?.id);
   const attestCount = attestations.length;
+  const myPlayerStatus = players.find(
+    (p) => p.golfer_id === user?.id,
+  )?.player_status;
+  const myWithdrew = myPlayerStatus === "withdrew";
+  const myIncomplete = myPlayerStatus === "incomplete";
+  const eligiblePlayers = players.filter(
+    (p) => p.player_status !== "withdrew" && p.player_status !== "incomplete",
+  );
+  const eligiblePlayerCount = eligiblePlayers.length;
 
   const scorecardPlayers: ScorecardPlayer[] = useMemo(
     () =>
@@ -126,8 +139,7 @@ export default function RoundSummaryScreen() {
         .map((p) => ({
           id: p.id,
           golfer_id: p.golfer_id,
-          first_name:
-            p.profiles?.display_name || p.profiles?.first_name || "?",
+          first_name: p.profiles?.display_name || p.profiles?.first_name || "?",
           score_details: p.score_details,
         }))
         .sort((a, b) => {
@@ -166,11 +178,12 @@ export default function RoundSummaryScreen() {
     >
       {/* Header */}
       <View style={s.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={s.backButton}
-        >
-          <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+        <Pressable onPress={() => router.back()} style={s.backButton}>
+          <MaterialIcons
+            name="chevron-left"
+            size={28}
+            color={Color.neutral900}
+          />
           <Text style={{ fontSize: 17, color: Color.neutral900 }}>Back</Text>
         </Pressable>
         <Text style={s.headerTitle}>Round Summary</Text>
@@ -190,9 +203,7 @@ export default function RoundSummaryScreen() {
       >
         {/* Course info card */}
         <View style={s.courseCard}>
-          <Text style={s.courseName}>
-            {round.courses?.name || "Unknown"}
-          </Text>
+          <Text style={s.courseName}>{round.courses?.name || "Unknown"}</Text>
           {(round.teebox_data as any)?.name && (
             <Text style={s.teeboxName}>
               {(round.teebox_data as any).name} tees
@@ -224,6 +235,8 @@ export default function RoundSummaryScreen() {
                 const playerData = players.find(
                   (p) => p.golfer_id === pr.golfer_id,
                 );
+                const isWd = pr.player_status === "withdrew";
+                const partialHoles = pr.holes_completed < pr.hole_count;
                 return (
                   <View key={pr.golfer_id} style={s.resultRow}>
                     <UserAvatar
@@ -232,21 +245,61 @@ export default function RoundSummaryScreen() {
                       size={40}
                     />
                     <View style={s.resultInfo}>
-                      <Text style={s.resultName}>{pr.display_name}</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: Space.sm,
+                        }}
+                      >
+                        <Text style={s.resultName}>{pr.display_name}</Text>
+                        {isWd && (
+                          <View style={s.wdBadge}>
+                            <MaterialIcons
+                              name="block"
+                              size={15}
+                              color={Color.danger}
+                            />
+                            <Text style={s.wdBadgeText}>WD</Text>
+                          </View>
+                        )}
+                        {pr.player_status === "incomplete" && (
+                          <View style={s.incompleteBadge}>
+                            <MaterialIcons name="warning" size={15} color={Color.warning} />
+                            <Text style={s.incompleteBadgeText}>
+                              Incomplete
+                            </Text>
+                          </View>
+                        )}
+                        {pr.player_status === "completed" && (
+                          <View style={s.completedBadge}>
+                            <SimpleLineIcons name="badge" size={15} color={Color.primary} />
+                            <Text style={s.completedBadgeText}>Completed</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={s.resultSub}>
-                        Front {pr.front_nine} / Back {pr.back_nine}
+                        {partialHoles
+                          ? `${pr.holes_completed} of ${pr.hole_count} holes`
+                          : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
                       </Text>
                     </View>
-                    <View style={s.resultScores}>
-                      <Text style={s.resultTotal}>{pr.total_score}</Text>
+                    <View style={s.scoreContainer}>
+                      <Text style={s.scoreTotal}>{pr.total_score}</Text>
                       <Text
                         style={[
-                          s.resultPar,
-                          pr.score_to_par < 0 && { color: Color.primary },
-                          pr.score_to_par > 0 && { color: Color.danger },
+                          s.scoreToPar,
+                          {
+                            color:
+                              pr.score_to_par > 0
+                                ? Color.danger
+                                : pr.score_to_par < 0
+                                  ? Color.primary
+                                  : Color.neutral500,
+                          },
                         ]}
                       >
-                        {formatScoreToPar(pr.score_to_par)}
+                        ({formatScoreToPar(pr.score_to_par)})
                       </Text>
                     </View>
                   </View>
@@ -256,13 +309,13 @@ export default function RoundSummaryScreen() {
           </View>
         )}
 
-        {/* Attestation section */}
-        {!isSoloRound && isParticipant && (
+        {/* Attestation section — hidden for solo rounds; WD players can't attest */}
+        {!isSoloRound && isParticipant && !myWithdrew && !myIncomplete && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
             <Text style={s.sectionLabel}>ATTESTATION</Text>
             <View style={s.attestCard}>
               <Text style={s.attestCount}>
-                {attestCount} of {players.length} players attested
+                {attestCount} of {eligiblePlayerCount} players attested
               </Text>
 
               {hasAttested ? (
@@ -380,19 +433,19 @@ const s = StyleSheet.create({
     color: Color.neutral500,
     marginTop: 2,
   },
-  resultScores: {
-    alignItems: "flex-end",
+  scoreContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
   },
-  resultTotal: {
-    fontSize: 24,
+  scoreTotal: {
+    fontSize: 16,
     fontWeight: "700",
     color: Color.neutral900,
   },
-  resultPar: {
+  scoreToPar: {
     fontSize: 14,
     fontWeight: "600",
-    color: Color.neutral500,
-    marginTop: 2,
   },
   attestCard: {
     borderWidth: 1,
@@ -419,5 +472,47 @@ const s = StyleSheet.create({
   },
   attestButton: {
     borderRadius: Radius.lg,
+  },
+  wdBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Color.dangerLight,
+    paddingHorizontal: Space.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  wdBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Color.danger,
+  },
+  incompleteBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Color.warningLight,
+    paddingHorizontal: Space.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  incompleteBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Color.warning,
+  },
+  completedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Color.primaryLight,
+    paddingHorizontal: Space.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  completedBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Color.primary,
   },
 });

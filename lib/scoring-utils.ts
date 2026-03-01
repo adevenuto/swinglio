@@ -9,6 +9,7 @@ export type PlayerResult = {
   score_to_par: number;
   holes_completed: number;
   hole_count: number;
+  player_status?: string;
 };
 
 export type ResultsData = {
@@ -34,8 +35,6 @@ export function computePlayerResult(
   let totalPar = 0;
   let frontNine = 0;
   let backNine = 0;
-  let frontPar = 0;
-  let backPar = 0;
   let holesCompleted = 0;
 
   for (let i = 1; i <= holeCount; i++) {
@@ -44,21 +43,17 @@ export function computePlayerResult(
     const teeboxHole = teeboxHoles[key];
     const par = teeboxHole ? parseInt(teeboxHole.par, 10) : 0;
 
-    if (i <= 9) frontPar += par;
-    else backPar += par;
-
     if (holeData?.score) {
       const score = parseInt(holeData.score, 10);
       if (!isNaN(score)) {
         totalScore += score;
+        totalPar += par;
         holesCompleted++;
         if (i <= 9) frontNine += score;
         else backNine += score;
       }
     }
   }
-
-  totalPar = frontPar + backPar;
 
   return {
     golfer_id: golferId,

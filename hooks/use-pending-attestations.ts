@@ -49,7 +49,7 @@ export function usePendingAttestations(userId: string) {
       .from("rounds")
       .select("id, created_at, results_data, courses(name)")
       .in("id", roundIds)
-      .eq("status", "completed");
+      .in("status", ["completed", "incomplete"]);
 
     if (!roundsData || roundsData.length === 0) {
       setPendingRounds([]);
@@ -71,28 +71,39 @@ export function usePendingAttestations(userId: string) {
       (existingAttestations || []).map((a) => a.round_id),
     );
 
-    // 4. Get player counts
+    // 4. Get player counts + statuses (exclude WD players from count)
     const { data: allScores } = await supabase
       .from("scores")
-      .select("round_id")
+      .select("round_id, golfer_id, player_status")
       .in(
         "round_id",
         roundsData.map((r) => r.id),
       );
 
     const playerCounts: Record<number, number> = {};
+    const userIneligibleRounds = new Set<number>();
     for (const s of allScores || []) {
-      if (s.round_id) {
+      if (!s.round_id) continue;
+      // Track if current user withdrew or is incomplete — they can't attest
+      if (
+        s.golfer_id === userId &&
+        (s.player_status === "withdrew" || s.player_status === "incomplete")
+      ) {
+        userIneligibleRounds.add(s.round_id);
+      }
+      // Only count completed players (exclude withdrew + incomplete)
+      if (s.player_status !== "withdrew" && s.player_status !== "incomplete") {
         playerCounts[s.round_id] = (playerCounts[s.round_id] || 0) + 1;
       }
     }
 
-    // 5. Filter to rounds not yet attested, with >1 player
+    // 5. Filter to rounds not yet attested, with >1 eligible player, user is eligible
     const pending: PendingAttestationRound[] = [];
     for (const r of roundsData) {
       const count = playerCounts[r.id] || 0;
-      if (count <= 1) continue; // Solo rounds — skip
+      if (count <= 1) continue; // Solo rounds or only one completed player — skip
       if (attestedRoundIds.has(r.id)) continue; // Already attested
+      if (userIneligibleRounds.has(r.id)) continue; // User withdrew/incomplete — skip
 
       const results = r.results_data as any;
       pending.push({

@@ -1,27 +1,19 @@
 import HoleEntryPanel, { HoleEntryPanelRef } from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
-import Scorecard, {
-  ScorecardPlayer,
-  ScorecardRef,
-} from "@/components/Scorecard";
+import Scorecard, { ScorecardRef } from "@/components/Scorecard";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import { emit } from "@/lib/events";
-import { buildResultsData, computePlayerResult } from "@/lib/scoring-utils";
+import {
+  GameplayProvider,
+  getCurrentHole,
+  useGameplay,
+} from "@/contexts/gameplay-context";
 import { supabase } from "@/lib/supabase";
-import { HoleStats, ScoreDetails } from "@/types/scoring";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -34,61 +26,44 @@ import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import "../global.css";
 
-type RoundData = {
-  id: number;
-  creator_id: string;
-  course_id: number;
-  status: string;
-  created_at: string;
-  teebox_data: {
-    order: number;
-    name: string;
-    color?: string;
-    holes: Record<string, { par: string; length: string }>;
-  };
-  courses: { name: string };
-};
-
-type PlayerScore = {
-  id: number;
-  golfer_id: string;
-  score: number | null;
-  score_details: ScoreDetails;
-  profiles: {
-    first_name: string | null;
-    last_name: string | null;
-    display_name: string | null;
-  };
-};
-
-function getCurrentHole(players: PlayerScore[], userId: string): number | null {
-  const me = players.find((p) => p.golfer_id === userId);
-  if (!me?.score_details?.holes) return null;
-  const holeCount = Object.keys(me.score_details.holes).length;
-  for (let i = 1; i <= holeCount; i++) {
-    if (!me.score_details.holes[`hole-${i}`]?.score) return i;
-  }
-  return null;
+export default function GameplayScreen() {
+  const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  return (
+    <GameplayProvider roundId={roundId!}>
+      <GameplayScreenContent />
+    </GameplayProvider>
+  );
 }
 
-export default function GameplayScreen() {
+function GameplayScreenContent() {
   const { user } = useAuth();
   const router = useRouter();
-  const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  const {
+    round,
+    players,
+    activeHole,
+    isLoading,
+    isQuitting,
+    myScore,
+    myFinished,
+    holeCount,
+    activeHoleKey,
+    activeHoleData,
+    teeboxHoleData,
+    scorecardPlayers,
+    fetchRound,
+    saveHole,
+    setActiveHole,
+    handleQuitRound,
+  } = useGameplay();
+
   const scorecardRef = useRef<ScorecardRef>(null);
   const holeEntryRef = useRef<HoleEntryPanelRef>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const [round, setRound] = useState<RoundData | null>(null);
-  const [players, setPlayers] = useState<PlayerScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isCreator, setIsCreator] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [activeHole, setActiveHole] = useState<number>(1);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [isFinishing, setIsFinishing] = useState(false);
 
   // Fetch user avatar
   useEffect(() => {
@@ -101,41 +76,9 @@ export default function GameplayScreen() {
       .then(({ data }) => setAvatarUrl(data?.avatar_url ?? null));
   }, [user?.id]);
 
-  const fetchRound = useCallback(async () => {
-    setIsLoading(true);
-
-    const { data: roundData } = await supabase
-      .from("rounds")
-      .select(
-        "id, creator_id, course_id, status, created_at, teebox_data, courses(name)",
-      )
-      .eq("id", roundId)
-      .single();
-
-    if (roundData) {
-      setRound(roundData as unknown as RoundData);
-      setIsCreator(roundData.creator_id === user?.id);
-    }
-
-    const { data: scoreData } = await supabase
-      .from("scores")
-      .select(
-        "id, golfer_id, score, score_details, profiles(first_name, last_name, display_name)",
-      )
-      .eq("round_id", roundId);
-
-    if (scoreData) setPlayers(scoreData as unknown as PlayerScore[]);
-
-    setIsLoading(false);
-  }, [roundId, user?.id]);
-
-  useEffect(() => {
-    fetchRound();
-  }, [fetchRound]);
-
   // Redirect to round-summary if round is completed
   useEffect(() => {
-    if (round?.status === "completed") {
+    if (round?.status === "completed" || round?.status === "incomplete") {
       router.replace({
         pathname: "/round-summary",
         params: { roundId: String(round.id) },
@@ -152,217 +95,28 @@ export default function GameplayScreen() {
       setTimeout(() => scorecardRef.current?.scrollToHole(startHole), 100);
       setInitialLoadDone(true);
     }
-  }, [isLoading, players, user?.id, initialLoadDone]);
-
-  // Current user's score row
-  const myScore = useMemo(
-    () => players.find((p) => p.golfer_id === user?.id),
-    [players, user?.id],
-  );
-
-  // Whether the current player has finished (score integer is non-null)
-  const myFinished = myScore?.score != null;
-
-  const holeCount = useMemo(
-    () =>
-      round?.teebox_data?.holes
-        ? Object.keys(round.teebox_data.holes).length
-        : 18,
-    [round],
-  );
-
-  const activeHoleKey = `hole-${activeHole}`;
-  const activeHoleData = myScore?.score_details?.holes[activeHoleKey];
-  const teeboxHoleData = round?.teebox_data?.holes[activeHoleKey];
-
-  // Save score + stats for the active hole
-  const handleHoleSave = useCallback(
-    async (data: { score: string; stats: HoleStats }) => {
-      if (!myScore || !round) return;
-
-      const updatedHoleData = {
-        ...myScore.score_details.holes[activeHoleKey],
-        score: data.score,
-        stats: data.stats,
-      };
-
-      const updatedScoreDetails = {
-        ...myScore.score_details,
-        holes: {
-          ...myScore.score_details.holes,
-          [activeHoleKey]: updatedHoleData,
-        },
-      };
-
-      // Optimistic update
-      const prevPlayers = players;
-      setPlayers((prev) =>
-        prev.map((p) =>
-          p.id === myScore.id
-            ? { ...p, score_details: updatedScoreDetails }
-            : p,
-        ),
-      );
-
-      const { error } = await supabase
-        .from("scores")
-        .update({ score_details: updatedScoreDetails })
-        .eq("id", myScore.id);
-
-      if (error) {
-        setPlayers(prevPlayers);
-        Alert.alert("Error", "Failed to save. Please try again.");
-      }
-    },
-    [myScore, players, activeHoleKey, round],
-  );
-
-  // Save current hole (used by HoleNavigation)
-  const saveCurrentHole = useCallback(() => {
-    holeEntryRef.current?.saveCurrentHole();
-  }, []);
-
-  // Finish the round (per-player: only saves current player's total)
-  const handleFinishRound = useCallback(() => {
-    if (!myScore || !round || !user?.id) return;
-
-    // Pre-validation using current state
-    const totalHoles = Object.keys(round.teebox_data.holes).length;
-    const holesScored = Object.values(myScore.score_details.holes).filter(
-      (h) => h.score && h.score !== "",
-    ).length;
-
-    if (holesScored === 0) {
-      Alert.alert(
-        "No Scores",
-        "Enter scores for at least one hole before finishing.",
-      );
-      return;
-    }
-
-    const message =
-      holesScored < totalHoles
-        ? `You've scored ${holesScored} of ${totalHoles} holes. Finish anyway?`
-        : "Mark your scorecard as complete?";
-
-    Alert.alert("Finish Round", message, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Finish",
-        onPress: async () => {
-          if (!round || !user?.id) return;
-          setIsFinishing(true);
-
-          try {
-            // Save current hole first (avoids stale closure)
-            holeEntryRef.current?.saveCurrentHole();
-            await new Promise((r) => setTimeout(r, 300));
-
-            // Re-fetch fresh score data from Supabase
-            const { data: freshScores } = await supabase
-              .from("scores")
-              .select(
-                "id, golfer_id, score, score_details, profiles(first_name, last_name, display_name)",
-              )
-              .eq("round_id", roundId);
-
-            if (!freshScores) throw new Error("Failed to fetch scores");
-
-            const myFreshScore = freshScores.find(
-              (s: any) => s.golfer_id === user.id,
-            );
-            if (!myFreshScore) throw new Error("Score not found");
-
-            // Compute current player's total score
-            const teeboxHoles = round.teebox_data.holes;
-            const myName =
-              (myFreshScore as any).profiles?.display_name ||
-              (myFreshScore as any).profiles?.first_name ||
-              "Unknown";
-            const myResult = computePlayerResult(
-              (myFreshScore as any).score_details,
-              teeboxHoles,
-              user.id,
-              myName,
-            );
-
-            // Save only current player's total score
-            await supabase
-              .from("scores")
-              .update({ score: myResult.total_score })
-              .eq("id", (myFreshScore as any).id);
-
-            // Check if all other players have already finished
-            const othersFinished = freshScores
-              .filter((s: any) => s.golfer_id !== user.id)
-              .every((s: any) => s.score != null);
-
-            if (othersFinished) {
-              // All players done — finalize round
-              const playerResults = freshScores.map((p: any) => {
-                const name =
-                  p.profiles?.display_name ||
-                  p.profiles?.first_name ||
-                  "Unknown";
-                return computePlayerResult(
-                  p.score_details,
-                  teeboxHoles,
-                  p.golfer_id,
-                  name,
-                );
-              });
-
-              const resultsData = buildResultsData(
-                playerResults,
-                round.courses?.name || "Unknown",
-                (round.teebox_data as any)?.name || "",
-              );
-
-              await supabase
-                .from("rounds")
-                .update({ status: "completed", results_data: resultsData })
-                .eq("id", round.id);
-
-              emit("round-completed");
-
-              router.replace({
-                pathname: "/round-summary",
-                params: { roundId: String(round.id) },
-              });
-            } else {
-              // Not all players done — update local state to show finished UI
-              setPlayers((prev) =>
-                prev.map((p) =>
-                  p.golfer_id === user.id
-                    ? { ...p, score: myResult.total_score }
-                    : p,
-                ),
-              );
-            }
-          } catch (err) {
-            Alert.alert("Error", "Failed to finish round. Please try again.");
-          } finally {
-            setIsFinishing(false);
-          }
-        },
-      },
-    ]);
-  }, [round, myScore, user?.id, router, roundId]);
+  }, [isLoading, players, user?.id, initialLoadDone, setActiveHole]);
 
   // Navigate to a different hole
-  const handleNavigate = useCallback((holeNumber: number) => {
-    setActiveHole(holeNumber);
-    scorecardRef.current?.scrollToHole(holeNumber);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleNavigate = useCallback(
+    (holeNumber: number) => {
+      setActiveHole(holeNumber);
+      scorecardRef.current?.scrollToHole(holeNumber);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    },
+    [setActiveHole],
+  );
 
   // Tapping a hole number on the scorecard — save current, then jump
-  const handleHolePress = useCallback((holeNumber: number) => {
-    holeEntryRef.current?.saveCurrentHole();
-    setActiveHole(holeNumber);
-    scorecardRef.current?.scrollToHole(holeNumber);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleHolePress = useCallback(
+    (holeNumber: number) => {
+      holeEntryRef.current?.saveCurrentHole();
+      setActiveHole(holeNumber);
+      scorecardRef.current?.scrollToHole(holeNumber);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    },
+    [setActiveHole],
+  );
 
   // Swipe gestures for HoleEntryPanel
   const swipeToNext = useCallback(() => {
@@ -373,7 +127,7 @@ export default function GameplayScreen() {
       scorecardRef.current?.scrollToHole(next);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
-  }, [activeHole, holeCount]);
+  }, [activeHole, holeCount, setActiveHole]);
 
   const swipeToPrev = useCallback(() => {
     if (activeHole > 1) {
@@ -383,7 +137,7 @@ export default function GameplayScreen() {
       scorecardRef.current?.scrollToHole(prev);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
-  }, [activeHole]);
+  }, [activeHole, setActiveHole]);
 
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
@@ -395,49 +149,16 @@ export default function GameplayScreen() {
       }
     });
 
-  const handleDeleteRound = () => {
-    Alert.alert(
-      "Delete Round",
-      "Are you sure you want to delete this round and all scores? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setIsDeleting(true);
-            await supabase.from("scores").delete().eq("round_id", roundId);
-            const { error } = await supabase
-              .from("rounds")
-              .delete()
-              .eq("id", roundId);
-            setIsDeleting(false);
-            if (!error) {
-              router.back();
-            }
-          },
-        },
-      ],
-    );
-  };
+  // Flush current hole then show quit/finish modal
+  const onFinishRound = useCallback(() => {
+    holeEntryRef.current?.saveCurrentHole();
+    handleQuitRound();
+  }, [handleQuitRound]);
 
-  const scorecardPlayers: ScorecardPlayer[] = useMemo(
-    () =>
-      players
-        .map((p) => ({
-          id: p.id,
-          golfer_id: p.golfer_id,
-          first_name:
-            p.profiles?.display_name || p.profiles?.first_name || "?",
-          score_details: p.score_details,
-        }))
-        .sort((a, b) => {
-          if (a.golfer_id === user?.id) return -1;
-          if (b.golfer_id === user?.id) return 1;
-          return 0;
-        }),
-    [players, user?.id],
-  );
+  // Save current hole (used by HoleNavigation)
+  const saveCurrentHole = useCallback(() => {
+    holeEntryRef.current?.saveCurrentHole();
+  }, []);
 
   if (isLoading) {
     return (
@@ -575,7 +296,7 @@ export default function GameplayScreen() {
                 yardage={teeboxHoleData.length}
                 currentScore={activeHoleData?.score ?? ""}
                 currentStats={activeHoleData?.stats}
-                onSave={handleHoleSave}
+                onSave={saveHole}
               />
             </View>
           </GestureDetector>
@@ -603,17 +324,18 @@ export default function GameplayScreen() {
           />
         </View>
 
-        {isCreator && (
+        {!myFinished && (
           <Button
             mode="text"
-            onPress={handleDeleteRound}
-            loading={isDeleting}
-            textColor="#dc2626"
-            style={{ marginTop: Space.xl, marginBottom: Space.xxl }}
+            onPress={onFinishRound}
+            loading={isQuitting}
+            textColor={Color.neutral500}
+            style={{ marginTop: Space.xl }}
           >
-            Delete Round
+            Quit Round
           </Button>
         )}
+
       </ScrollView>
 
       {myScore && teeboxHoleData && !myFinished && (
@@ -623,7 +345,7 @@ export default function GameplayScreen() {
             holeCount={holeCount}
             onSave={saveCurrentHole}
             onNavigate={handleNavigate}
-            onFinish={handleFinishRound}
+            onFinish={onFinishRound}
           />
         </SafeAreaView>
       )}

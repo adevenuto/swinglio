@@ -76,6 +76,8 @@ export const Color = {
   // Semantic
   danger: "#dc2626",
   dangerLight: "#fef2f2",
+  warning: "#f59e0b",
+  warningLight: "#fffbeb",
   info: "#3b82f6",
 } as const;
 

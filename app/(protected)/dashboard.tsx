@@ -1,4 +1,5 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import RoundCard from "@/components/RoundCard";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
@@ -86,7 +87,14 @@ export default function Dashboard() {
       refreshRecent();
       refreshPending();
       refreshAttStats();
-    }, [fetchProfile, fetchStats, refreshRounds, refreshRecent, refreshPending, refreshAttStats]),
+    }, [
+      fetchProfile,
+      fetchStats,
+      refreshRounds,
+      refreshRecent,
+      refreshPending,
+      refreshAttStats,
+    ]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -101,7 +109,15 @@ export default function Dashboard() {
       refreshAttStats(),
     ]);
     setRefreshing(false);
-  }, [refreshUser, fetchProfile, fetchStats, refreshRounds, refreshRecent, refreshPending, refreshAttStats]);
+  }, [
+    refreshUser,
+    fetchProfile,
+    fetchStats,
+    refreshRounds,
+    refreshRecent,
+    refreshPending,
+    refreshAttStats,
+  ]);
 
   // --- Cover photo ---
 
@@ -109,13 +125,20 @@ export default function Dashboard() {
     if (source === "camera") {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Camera permission is needed to take photos.");
+        Alert.alert(
+          "Permission Required",
+          "Camera permission is needed to take photos.",
+        );
         return;
       }
     } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Photo library permission is needed.");
+        Alert.alert(
+          "Permission Required",
+          "Photo library permission is needed.",
+        );
         return;
       }
     }
@@ -254,17 +277,18 @@ export default function Dashboard() {
           {/* Banner */}
           <Pressable onPress={handleCoverPress} style={styles.banner}>
             {coverUrl ? (
-              <Image
-                source={{ uri: coverUrl }}
-                style={styles.bannerImage}
-              />
+              <Image source={{ uri: coverUrl }} style={styles.bannerImage} />
             ) : (
               <View style={styles.bannerFallback} />
             )}
 
             {/* Camera edit icon */}
             <View style={styles.cameraIcon}>
-              <MaterialIcons name="photo-camera" size={18} color={Color.white} />
+              <MaterialIcons
+                name="photo-camera"
+                size={18}
+                color={Color.white}
+              />
             </View>
 
             {/* Menu button */}
@@ -323,7 +347,11 @@ export default function Dashboard() {
           {/* Avatar + Name row */}
           <View style={styles.profileRow}>
             <View style={styles.avatarBorder}>
-              <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={80} />
+              <UserAvatar
+                avatarUrl={avatarUrl}
+                firstName={firstName}
+                size={80}
+              />
             </View>
             <View style={styles.nameContainer}>
               {fullName ? (
@@ -439,33 +467,23 @@ export default function Dashboard() {
                 </View>
               ) : (
                 recentRounds.map((round) => (
-                  <TouchableOpacity
+                  <RoundCard
                     key={round.id}
+                    courseName={round.courses?.name || "Unknown Course"}
+                    playerStatus={round.player_status}
+                    teeboxName={(round.teebox_data as any)?.name}
+                    date={round.created_at}
+                    playerScore={round.player_score}
+                    scoreToPar={round.score_to_par}
+                    holesCompleted={round.holes_completed}
+                    holeCount={round.hole_count}
                     onPress={() =>
                       router.push({
                         pathname: "/round-summary",
                         params: { roundId: round.id },
                       })
                     }
-                    style={styles.card}
-                  >
-                    <View style={styles.cardRow}>
-                      <Text variant="titleMedium" style={styles.courseName}>
-                        {round.courses?.name || "Unknown Course"}
-                      </Text>
-                      <Text
-                        variant="bodySmall"
-                        style={{ color: Color.neutral400 }}
-                      >
-                        {formatDate(round.created_at)}
-                      </Text>
-                    </View>
-                    <Text variant="bodyMedium" style={styles.cardSubtitle}>
-                      {(round.teebox_data as any)?.name
-                        ? `${(round.teebox_data as any).name} tees`
-                        : ""}
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 ))
               )}
             </View>
@@ -486,7 +504,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   // --- Hero ---
   banner: {
-    height: 200,
+    height: 225,
     width: "100%",
     position: "relative",
   },
@@ -528,6 +546,7 @@ const styles = StyleSheet.create({
   avatarBorder: {
     borderWidth: 3,
     borderColor: Color.white,
+    backgroundColor: "#fff",
     borderRadius: 43,
     overflow: "hidden",
   },
@@ -604,7 +623,6 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     color: Color.neutral500,
-    marginTop: Space.xs,
     textTransform: "capitalize",
   },
   emptyText: {

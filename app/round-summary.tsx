@@ -178,6 +178,35 @@ export default function RoundSummaryScreen() {
     await attest(user.id);
   }, [user?.id, attest]);
 
+  const myResult = useMemo(
+    () => resultsData?.players.find((p) => p.golfer_id === user?.id),
+    [resultsData, user?.id],
+  );
+
+  const handleContinueRound = useCallback(async () => {
+    if (!user?.id || !roundId || !myScore) return;
+
+    // Reset player status and clear total score so gameplay doesn't think we're finished
+    await supabase
+      .from("scores")
+      .update({ player_status: "active", score: null })
+      .eq("id", myScore.id);
+
+    // Reset round status to active and clear stale results
+    await supabase
+      .from("rounds")
+      .update({ status: "active", results_data: null })
+      .eq("id", round?.id);
+
+    // Delete stale attestations (results will change)
+    await supabase
+      .from("round_attestations")
+      .delete()
+      .eq("round_id", roundId);
+
+    router.replace({ pathname: "/gameplay", params: { roundId } });
+  }, [user?.id, roundId, myScore, round?.id, router]);
+
   if (isLoading) {
     return (
       <View className="items-center justify-center flex-1 bg-white">
@@ -324,6 +353,29 @@ export default function RoundSummaryScreen() {
                   </View>
                 );
               })}
+            </View>
+          </View>
+        )}
+
+        {/* Continue Round — for incomplete players */}
+        {myIncomplete && isParticipant && (
+          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+            <Text style={s.sectionLabel}>RESUME</Text>
+            <View style={s.attestCard}>
+              <Text style={{ fontSize: 14, color: Color.neutral500, marginBottom: Space.md }}>
+                You scored {myResult?.holes_completed ?? 0} of{" "}
+                {myResult?.hole_count ?? 0} holes.
+              </Text>
+              <Button
+                mode="contained"
+                buttonColor={Color.primary}
+                textColor={Color.white}
+                style={s.attestButton}
+                onPress={handleContinueRound}
+                icon="play"
+              >
+                Continue Round
+              </Button>
             </View>
           </View>
         )}

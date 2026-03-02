@@ -416,7 +416,7 @@ export default function Dashboard() {
             {/* Attestation Requests */}
             {pendingRounds.length > 0 && (
               <View style={{ marginTop: Space.xl }}>
-                <Text style={styles.sectionLabel}>Needs Your Attestation</Text>
+                <Text style={styles.sectionLabel}>Review & Attest</Text>
                 {pendingRounds.map((pr) => (
                   <TouchableOpacity
                     key={pr.round_id}

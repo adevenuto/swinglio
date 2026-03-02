@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "space-around",
-    width: 46,
+    width: 58,
     minHeight: 120,
     margin: "auto",
     alignSelf: "stretch",
@@ -692,8 +692,8 @@ const styles = StyleSheet.create({
     paddingVertical: Space.sm,
   },
   pillButton: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Color.neutral300,
@@ -781,7 +781,6 @@ const styles = StyleSheet.create({
     marginVertical: Space.sm,
   },
   sectionLabel: {
-    fontSize: 13,
     fontWeight: "700",
     color: Color.neutral400,
     letterSpacing: 0.5,

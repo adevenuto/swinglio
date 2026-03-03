@@ -221,7 +221,7 @@ const verticalStyles = StyleSheet.create({
     justifyContent: "space-around",
     width: 58,
     minHeight: 120,
-    margin: "auto",
+    // margin: "auto",
     alignSelf: "stretch",
     borderRadius: Radius.full,
     borderWidth: 1,

@@ -273,7 +273,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
               pointerEvents={isPar3 ? "none" : "auto"}
             >
               <DPad
-                size={120}
+                size={150}
                 value={fairway}
                 onControl={toggleFairway}
                 quadrantColor={Color.neutral200}
@@ -431,10 +431,13 @@ const styles = StyleSheet.create({
   steppersArea: {
     flex: 1,
     flexDirection: "row",
-    gap: Space.sm,
+    justifyContent: "flex-end",
+    gap: Space.xxl,
   },
   stepperColumn: {
-    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-around",
     alignItems: "center",
   },
   stepperLabel: {

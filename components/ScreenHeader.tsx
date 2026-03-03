@@ -1,4 +1,4 @@
-import { Color, Space } from "@/constants/design-tokens";
+import { Color, Font, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -32,7 +32,7 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
 
   return (
     <View style={styles.container}>
-      <Text variant="headlineSmall" style={styles.title}>
+      <Text style={styles.title}>
         {title}
       </Text>
 
@@ -97,7 +97,9 @@ const styles = StyleSheet.create({
     paddingVertical: Space.md,
   },
   title: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 22,
+    lineHeight: 28,
     color: Color.neutral900,
   },
   menuButton: {

@@ -1,4 +1,5 @@
 import UserAvatar from "@/components/UserAvatar";
+import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import {
   Player,
   usePlayerSearch,
@@ -6,7 +7,7 @@ import {
 } from "@/hooks/use-player-search";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import {
   ActivityIndicator,
   Button,
@@ -14,7 +15,6 @@ import {
   Searchbar,
   Text,
 } from "react-native-paper";
-import "../global.css";
 
 export default function PlayerScoresScreen() {
   const router = useRouter();
@@ -48,26 +48,23 @@ export default function PlayerScoresScreen() {
   // Player not yet selected — show search
   if (!selectedPlayer) {
     return (
-      <View className="flex-1 px-4 pt-4 bg-white">
-        <Searchbar
-          placeholder="Search players..."
-          onChangeText={search}
-          value={query}
-          loading={isSearching}
-          mode="bar"
-          style={{
-            backgroundColor: "transparent",
-            borderWidth: 1,
-            borderColor: "#d4d4d4",
-            borderRadius: 8,
-          }}
-          inputStyle={{ color: "#1a1a1a" }}
-        />
+      <View style={styles.screen}>
+        <View style={{ paddingHorizontal: Space.lg, paddingTop: Space.lg }}>
+          <Searchbar
+            placeholder="Search players..."
+            onChangeText={search}
+            value={query}
+            loading={isSearching}
+            mode="bar"
+            style={styles.searchbar}
+            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
+          />
+        </View>
 
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
-          className="mt-2"
+          style={{ marginTop: Space.sm, paddingHorizontal: Space.lg }}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
             <List.Item
@@ -75,9 +72,9 @@ export default function PlayerScoresScreen() {
                 [item.first_name, item.last_name].filter(Boolean).join(" ") ||
                 "Unknown"
               }
-              titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+              titleStyle={{ fontFamily: Font.semiBold, color: Color.neutral900 }}
               description={item.email || undefined}
-              descriptionStyle={{ color: "#555" }}
+              descriptionStyle={{ fontFamily: Font.regular, color: Color.neutral500 }}
               onPress={() => handleSelectPlayer(item)}
               left={() => (
                 <View style={{ justifyContent: "center", marginLeft: 8 }}>
@@ -88,8 +85,8 @@ export default function PlayerScoresScreen() {
           )}
           ListEmptyComponent={
             query.length >= 2 && !isSearching ? (
-              <View className="items-center py-8">
-                <Text variant="bodyMedium">No players found</Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No players found</Text>
               </View>
             ) : null
           }
@@ -100,56 +97,54 @@ export default function PlayerScoresScreen() {
 
   // Player selected — show scores
   return (
-    <View className="flex-1 px-4 pt-4 bg-white">
-      <View className="p-4 mb-4 border border-green-200 rounded-lg bg-green-50">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text
-              variant="titleMedium"
-              style={{ color: "#14532d", fontWeight: "600" }}
-            >
+    <View style={styles.screen}>
+      <View style={{ paddingHorizontal: Space.lg, paddingTop: Space.lg }}>
+        <View style={styles.playerCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.playerName}>
               {playerName || "Unknown Player"}
             </Text>
             {selectedPlayer.email && (
-              <Text variant="bodySmall" style={{ color: "#15803d" }}>
+              <Text style={styles.playerEmail}>
                 {selectedPlayer.email}
               </Text>
             )}
           </View>
-          <Button mode="outlined" onPress={handleChangePlayer} compact>
+          <Button mode="outlined" onPress={handleChangePlayer} compact labelStyle={{ fontFamily: Font.medium }}>
             Change
           </Button>
         </View>
       </View>
 
-      <Text variant="titleSmall" style={{ marginBottom: 8, color: "#111827" }}>
-        Scores ({scores.length})
-      </Text>
+      <View style={{ paddingHorizontal: Space.lg }}>
+        <Text style={styles.scoresTitle}>
+          Scores ({scores.length})
+        </Text>
+      </View>
 
       {isLoading ? (
-        <View className="items-center py-8">
+        <View style={styles.emptyContainer}>
           <ActivityIndicator size="small" />
         </View>
       ) : scores.length === 0 ? (
-        <View className="items-center py-8">
-          <Text variant="bodyMedium" style={{ color: "#999" }}>
-            No scores found
-          </Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No scores found</Text>
         </View>
       ) : (
         <FlatList
           data={scores}
           keyExtractor={(item) => item.id.toString()}
+          style={{ paddingHorizontal: Space.lg }}
           renderItem={({ item }) => (
             <List.Item
               title={item.score != null ? `Score: ${item.score}` : "No score"}
-              titleStyle={{ color: "#1a1a1a", fontWeight: "600" }}
+              titleStyle={{ fontFamily: Font.semiBold, color: Color.neutral900 }}
               description={
                 item.created_at
                   ? new Date(item.created_at).toLocaleDateString()
                   : undefined
               }
-              descriptionStyle={{ color: "#555" }}
+              descriptionStyle={{ fontFamily: Font.regular, color: Color.neutral500 }}
               left={(props) => <List.Icon {...props} icon="golf-tee" />}
             />
           )}
@@ -158,3 +153,52 @@ export default function PlayerScoresScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  searchbar: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.full,
+  },
+  playerCard: {
+    padding: Space.lg,
+    marginBottom: Space.lg,
+    borderWidth: 1,
+    borderColor: Color.primaryBorder,
+    borderRadius: Radius.md,
+    backgroundColor: Color.primaryLight,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  playerName: {
+    fontFamily: Font.semiBold,
+    fontSize: 17,
+    color: Color.primary,
+  },
+  playerEmail: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.primaryBorder,
+  },
+  scoresTitle: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral900,
+    marginBottom: Space.sm,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: Space.xxl,
+  },
+  emptyText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral400,
+  },
+});

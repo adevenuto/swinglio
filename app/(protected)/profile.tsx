@@ -1,5 +1,5 @@
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { supabase } from "@/lib/supabase";
@@ -7,10 +7,17 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { ActivityIndicator, Snackbar, Text as PaperText, TextInput } from "react-native-paper";
+import {
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
+import { ActivityIndicator, Snackbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../../global.css";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -76,7 +83,6 @@ export default function Profile() {
       lastName: lastName.trim(),
     };
 
-    // Only save if something changed
     if (
       current.displayName === savedValues.current.displayName &&
       current.firstName === savedValues.current.firstName &&
@@ -102,7 +108,6 @@ export default function Profile() {
   }, [user?.id, displayName, firstName, lastName]);
 
   const pickImage = async (source: "camera" | "gallery") => {
-    // Request permissions
     if (source === "camera") {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
@@ -131,7 +136,6 @@ export default function Profile() {
           });
 
     if (result.canceled || !result.assets?.[0]) return;
-
     await uploadAvatar(result.assets[0].uri);
   };
 
@@ -140,7 +144,6 @@ export default function Profile() {
 
     const fileName = `${user.id}.jpg`;
 
-    // Build FormData for reliable RN upload
     const formData = new FormData();
     formData.append("", {
       uri,
@@ -148,7 +151,6 @@ export default function Profile() {
       type: "image/jpeg",
     } as any);
 
-    // Upload to Supabase Storage (upsert to replace existing)
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(fileName, formData, {
@@ -162,14 +164,12 @@ export default function Profile() {
       return;
     }
 
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from("avatars")
       .getPublicUrl(fileName);
 
     const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-    // Update profile record
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ avatar_url: publicUrl })
@@ -188,9 +188,7 @@ export default function Profile() {
     if (!user?.id) return;
 
     const fileName = `${user.id}.jpg`;
-
     await supabase.storage.from("avatars").remove([fileName]);
-
     await supabase
       .from("profiles")
       .update({ avatar_url: null })
@@ -215,162 +213,110 @@ export default function Profile() {
     }
 
     options.push({ text: "Cancel", style: "cancel" });
-
     Alert.alert("Profile Photo", undefined, options);
   };
 
   if (isLoading) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3b82f6"
-            colors={["#3b82f6"]}
+            tintColor={Color.info}
+            colors={[Color.info]}
           />
         }
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-          <Pressable
-            onPress={() => router.back()}
-            style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
-          >
-            <MaterialIcons name="chevron-left" size={28} color="#1a1a1a" />
-            <Text style={{ fontSize: 16, color: "#1a1a1a" }}>Back</Text>
+        <View style={styles.navRow}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+            <Text style={styles.backText}>Back</Text>
           </Pressable>
         </View>
-        <View className="items-center px-8">
-          <View className="w-full max-w-md pb-4">
-            <Text className="mb-4 text-3xl font-bold text-center">
-              Profile
-            </Text>
-            <Text className="mb-8 text-lg text-center text-gray-600">
-              Manage your account
-            </Text>
-          {/* Avatar */}
-          <View style={{ alignItems: "center", marginBottom: 24 }}>
-            <Pressable onPress={handleAvatarPress}>
-              <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={120} />
-            </Pressable>
-            <PaperText
-              variant="bodySmall"
-              style={{ color: "#555", marginTop: 8 }}
-            >
-              Tap to change photo
-            </PaperText>
-          </View>
 
-          {/* Info Card */}
-          <View
-            style={{
-              borderWidth: 1,
-              borderColor: "#d4d4d4",
-              borderRadius: 8,
-              backgroundColor: "#fff",
-              padding: 16,
-              marginBottom: 16,
-            }}
-          >
-            <TextInput
-              mode="outlined"
-              label="Display Name"
-              value={displayName}
-              onChangeText={setDisplayName}
-              onBlur={handleFieldBlur}
-              style={{ marginBottom: 4 }}
-            />
-            <PaperText
-              variant="bodySmall"
-              style={{ color: "#999", marginBottom: 12 }}
-            >
-              Shown on scorecards
-            </PaperText>
-            <TextInput
-              mode="outlined"
-              label="First Name"
-              value={firstName}
-              onChangeText={setFirstName}
-              onBlur={handleFieldBlur}
-              style={{ marginBottom: 12 }}
-            />
-            <TextInput
-              mode="outlined"
-              label="Last Name"
-              value={lastName}
-              onChangeText={setLastName}
-              onBlur={handleFieldBlur}
-              style={{ marginBottom: 12 }}
-            />
-            <View>
-              <PaperText variant="bodySmall" style={{ color: "#999", marginBottom: 4 }}>
-                Email
-              </PaperText>
-              <PaperText variant="bodyMedium" style={{ color: "#1a1a1a" }}>
-                {user?.email}
-              </PaperText>
+        <View style={styles.container}>
+          <View style={styles.inner}>
+            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.subtitle}>Manage your account</Text>
+
+            {/* Avatar */}
+            <View style={styles.avatarSection}>
+              <Pressable onPress={handleAvatarPress}>
+                <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={120} />
+              </Pressable>
+              <Text style={styles.avatarHint}>Tap to change photo</Text>
             </View>
-          </View>
 
-          {/* Attestation Badge */}
-          {attTotal > 0 && (
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: Color.neutral300,
-                borderRadius: Radius.md,
-                backgroundColor: Color.white,
-                padding: Space.lg,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <View>
-                <PaperText
-                  variant="titleMedium"
-                  style={{ fontWeight: "700", color: Color.neutral900 }}
-                >
-                  Attestation: {attPct}%
-                </PaperText>
-                <PaperText
-                  variant="bodySmall"
-                  style={{ color: Color.neutral500, marginTop: 2 }}
-                >
-                  {attRounds} of {attTotal} rounds
-                </PaperText>
+            {/* Info Card */}
+            <View style={styles.card}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Display Name</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={displayName}
+                  onChangeText={setDisplayName}
+                  onBlur={handleFieldBlur}
+                  placeholder="Display Name"
+                  placeholderTextColor={Color.neutral400}
+                />
+                <Text style={styles.fieldHint}>Shown on scorecards</Text>
               </View>
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  borderWidth: 3,
-                  borderColor: Color.primary,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <PaperText
-                  variant="bodySmall"
-                  style={{ fontWeight: "700", color: Color.primary }}
-                >
-                  {attPct}%
-                </PaperText>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>First Name</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  onBlur={handleFieldBlur}
+                  placeholder="First Name"
+                  placeholderTextColor={Color.neutral400}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Last Name</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  onBlur={handleFieldBlur}
+                  placeholder="Last Name"
+                  placeholderTextColor={Color.neutral400}
+                />
+              </View>
+
+              <View style={[styles.fieldGroup, { marginBottom: 0 }]}>
+                <Text style={styles.fieldLabel}>Email</Text>
+                <Text style={styles.emailText}>{user?.email}</Text>
               </View>
             </View>
-          )}
 
+            {/* Attestation Badge */}
+            {attTotal > 0 && (
+              <View style={styles.attestCard}>
+                <View>
+                  <Text style={styles.attestTitle}>Attestation: {attPct}%</Text>
+                  <Text style={styles.attestSub}>
+                    {attRounds} of {attTotal} rounds
+                  </Text>
+                </View>
+                <View style={styles.attestCircle}>
+                  <Text style={styles.attestCircleText}>{attPct}%</Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -384,3 +330,139 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Color.neutral50,
+  },
+  navRow: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.md,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Space.md,
+  },
+  backText: {
+    fontFamily: Font.regular,
+    fontSize: 16,
+    color: Color.neutral900,
+  },
+  container: {
+    alignItems: "center",
+    paddingHorizontal: Space.xxl,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 448,
+    paddingBottom: Space.lg,
+  },
+  title: {
+    fontFamily: Font.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Color.neutral900,
+    textAlign: "center",
+    marginBottom: Space.xs,
+  },
+  subtitle: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral500,
+    textAlign: "center",
+    marginBottom: Space.xxl,
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: Space.xl,
+  },
+  avatarHint: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: Space.sm,
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    padding: Space.lg,
+    marginBottom: Space.lg,
+  },
+  fieldGroup: {
+    marginBottom: Space.lg,
+  },
+  fieldLabel: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    color: Color.neutral700,
+    marginBottom: Space.sm,
+  },
+  fieldInput: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral900,
+    height: 48,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Space.lg,
+    backgroundColor: Color.white,
+  },
+  fieldHint: {
+    fontFamily: Font.regular,
+    fontSize: 12,
+    color: Color.neutral400,
+    marginTop: Space.xs,
+  },
+  emailText: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral900,
+    paddingVertical: Space.md,
+  },
+  attestCard: {
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    padding: Space.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  attestTitle: {
+    fontFamily: Font.bold,
+    fontSize: 17,
+    color: Color.neutral900,
+  },
+  attestSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 2,
+  },
+  attestCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: Color.accent,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  attestCircleText: {
+    fontFamily: Font.bold,
+    fontSize: 13,
+    color: Color.accent,
+  },
+});

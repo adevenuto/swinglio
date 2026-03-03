@@ -1,4 +1,4 @@
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import React from "react";
@@ -50,7 +50,7 @@ export default function RoundCard({
     <TouchableOpacity onPress={onPress} style={styles.card}>
       {/* Row 1: course name | badge */}
       <View style={styles.cardRow}>
-        <Text variant="titleMedium" style={styles.courseName}>
+        <Text style={styles.courseName}>
           {courseName}
         </Text>
         {playerStatus === "withdrew" && (
@@ -75,7 +75,7 @@ export default function RoundCard({
 
       {/* Row 2: tees · date | score + holes */}
       <View style={styles.cardBottomRow}>
-        <Text variant="bodyMedium" style={styles.cardSubtitle}>
+        <Text style={styles.cardSubtitle}>
           {subtitle}
         </Text>
         <View style={{ alignItems: "flex-end" }}>
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   card: {
     padding: Space.lg,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,
@@ -128,7 +128,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   courseName: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 17,
     color: Color.neutral900,
     flex: 1,
     textTransform: "capitalize",
@@ -140,6 +141,8 @@ const styles = StyleSheet.create({
     marginTop: Space.xs,
   },
   cardSubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 14,
     color: Color.neutral500,
     textTransform: "capitalize",
   },
@@ -149,15 +152,16 @@ const styles = StyleSheet.create({
     gap: Space.xs,
   },
   scoreTotal: {
+    fontFamily: Font.bold,
     fontSize: 16,
-    fontWeight: "700",
     color: Color.neutral900,
   },
   scoreToPar: {
+    fontFamily: Font.semiBold,
     fontSize: 14,
-    fontWeight: "600",
   },
   holesText: {
+    fontFamily: Font.regular,
     fontSize: 12,
     color: Color.neutral400,
     marginTop: 2,
@@ -172,8 +176,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   wdBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.danger,
   },
   incompleteBadge: {
@@ -186,8 +190,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   incompleteBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.warning,
   },
   completedBadge: {
@@ -200,8 +204,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   completedBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.primary,
   },
 });

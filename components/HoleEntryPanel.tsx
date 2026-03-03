@@ -1,9 +1,11 @@
 import {
   Animation,
   Color,
+  Font,
   Radius,
   Shadow,
   Space,
+  Type,
 } from "@/constants/design-tokens";
 import {
   BunkerEntry,
@@ -29,6 +31,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import DPad from "./DPad";
+import Stepper, { CountStepperRow } from "./Stepper";
 
 // === Types ===
 
@@ -265,95 +269,21 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
           <View style={styles.topSection}>
             {/* Fairway D-pad */}
             <View
-              style={[styles.dpadWrapper, isPar3 && { opacity: 0 }]}
+              style={[styles.dpadWrapper, isPar3 && { opacity: 0.25 }]}
               pointerEvents={isPar3 ? "none" : "auto"}
             >
-              <View style={styles.dpadCircle}>
-                {/* Up — Long */}
-                <Pressable
-                  onPress={() => toggleFairway("long")}
-                  disabled={disabled}
-                  style={styles.dpadChevron}
-                >
-                  <Feather
-                    name="chevron-up"
-                    size={30}
-                    strokeWidth={2.7}
-                    color={
-                      fairway === "long" ? Color.primary : Color.neutral400
-                    }
-                  />
-                </Pressable>
-
-                {/* Middle row: Left, HIT, Right */}
-                <View style={styles.dpadMiddleRow}>
-                  <Pressable
-                    onPress={() => toggleFairway("left")}
-                    disabled={disabled}
-                    style={styles.dpadChevron}
-                  >
-                    <Feather
-                      name="chevron-left"
-                      size={30}
-                      strokeWidth={2.7}
-                      color={
-                        fairway === "left" ? Color.primary : Color.neutral400
-                      }
-                    />
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => toggleFairway("hit")}
-                    disabled={disabled}
-                    style={[
-                      styles.dpadHitButton,
-                      fairway === "hit" && styles.dpadHitButtonActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dpadHitText,
-                        fairway === "hit"
-                          ? styles.dpadHitTextActive
-                          : styles.dpadHitTextInactive,
-                      ]}
-                    >
-                      HIT
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => toggleFairway("right")}
-                    disabled={disabled}
-                    style={styles.dpadChevron}
-                  >
-                    <Feather
-                      name="chevron-right"
-                      size={30}
-                      strokeWidth={2.7}
-                      color={
-                        fairway === "right" ? Color.primary : Color.neutral400
-                      }
-                    />
-                  </Pressable>
-                </View>
-
-                {/* Down — Short */}
-                <Pressable
-                  onPress={() => toggleFairway("short")}
-                  disabled={disabled}
-                  style={styles.dpadChevron}
-                >
-                  <Feather
-                    name="chevron-down"
-                    size={30}
-                    strokeWidth={2.7}
-                    color={
-                      fairway === "short" ? Color.primary : Color.neutral400
-                    }
-                  />
-                </Pressable>
-              </View>
+              <DPad
+                size={120}
+                value={fairway}
+                onControl={toggleFairway}
+                quadrantColor={Color.neutral200}
+                selectedColor={Color.primary}
+                iconColor={Color.neutral400}
+                selectedIconColor={Color.white}
+                centerBgColor={Color.neutral300}
+                centerTextColor={Color.neutral500}
+                iconSize={24}
+              />
             </View>
 
             {/* Score + Putts steppers */}
@@ -361,39 +291,15 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
               {/* Score stepper */}
               <View style={styles.stepperColumn}>
                 <Text style={styles.stepperLabel}>Score</Text>
-                <View style={styles.horizontalPill}>
-                  <Pressable
-                    onPress={incrementScore}
-                    disabled={disabled}
-                    style={({ pressed }) => [
-                      styles.pillButton,
-                      pressed && styles.pillButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.pillButton}>
-                      <Feather name="plus" size={20} color={Color.neutral900} />
-                    </View>
-                  </Pressable>
-                  <Text style={[styles.pillNumber, { color: scoreColor }]}>
-                    {score}
-                  </Text>
-                  <Pressable
-                    onPress={decrementScore}
-                    disabled={disabled}
-                    style={({ pressed }) => [
-                      styles.pillButton,
-                      pressed && styles.pillButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.pillButton}>
-                      <Feather
-                        name="minus"
-                        size={20}
-                        color={Color.neutral900}
-                      />
-                    </View>
-                  </Pressable>
-                </View>
+                <Stepper
+                  value={score}
+                  onIncrement={incrementScore}
+                  onDecrement={decrementScore}
+                  variant="primary"
+                  direction="vertical"
+                  disabled={disabled}
+                  valueColor={scoreColor}
+                />
                 <Text style={[styles.pillSubLabel, { color: scoreColor }]}>
                   {scoreLabel}
                 </Text>
@@ -402,37 +308,14 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
               {/* Putts stepper */}
               <View style={styles.stepperColumn}>
                 <Text style={styles.stepperLabel}>Putts</Text>
-                <View style={styles.horizontalPill}>
-                  <Pressable
-                    onPress={incrementPutts}
-                    disabled={disabled}
-                    style={({ pressed }) => [
-                      styles.pillButton,
-                      pressed && styles.pillButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.pillButton}>
-                      <Feather name="plus" size={20} color={Color.neutral900} />
-                    </View>
-                  </Pressable>
-                  <Text style={styles.pillNumber}>{puttsCount}</Text>
-                  <Pressable
-                    onPress={decrementPutts}
-                    disabled={disabled}
-                    style={({ pressed }) => [
-                      styles.pillButton,
-                      pressed && styles.pillButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.pillButton}>
-                      <Feather
-                        name="minus"
-                        size={20}
-                        color={Color.neutral900}
-                      />
-                    </View>
-                  </Pressable>
-                </View>
+                <Stepper
+                  value={puttsCount}
+                  onIncrement={incrementPutts}
+                  onDecrement={decrementPutts}
+                  variant="primary"
+                  direction="vertical"
+                  disabled={disabled}
+                />
                 <View
                   style={[
                     styles.girBadge,
@@ -460,41 +343,18 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
             </View>
           </View>
 
-          {/* Basic / Advanced Toggle */}
-          <View style={styles.toggleContainer}>
-            <Pressable
-              onPress={() => setAdvancedExpanded(false)}
-              style={[
-                styles.toggleButton,
-                !advancedExpanded && styles.toggleButtonActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.toggleText,
-                  !advancedExpanded && styles.toggleTextActive,
-                ]}
-              >
-                Basic
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setAdvancedExpanded(true)}
-              style={[
-                styles.toggleButton,
-                advancedExpanded && styles.toggleButtonActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.toggleText,
-                  advancedExpanded && styles.toggleTextActive,
-                ]}
-              >
-                Advanced
-              </Text>
-            </Pressable>
-          </View>
+          {/* Advanced toggle */}
+          <Pressable
+            onPress={() => setAdvancedExpanded((prev) => !prev)}
+            style={styles.advancedToggle}
+          >
+            <Text style={styles.advancedToggleText}>Advanced</Text>
+            <Feather
+              name={advancedExpanded ? "chevron-up" : "chevron-down"}
+              size={16}
+              color={Color.neutral500}
+            />
+          </Pressable>
 
           {/* Advanced content */}
           {advancedExpanded && (
@@ -540,65 +400,12 @@ HoleEntryPanel.displayName = "HoleEntryPanel";
 
 export default HoleEntryPanel;
 
-// === CountStepperRow sub-component ===
-
-function CountStepperRow({
-  label,
-  count,
-  disabled,
-  onIncrement,
-  onDecrement,
-}: {
-  label: string;
-  count: number;
-  disabled?: boolean;
-  onIncrement: () => void;
-  onDecrement: () => void;
-}) {
-  return (
-    <View style={styles.stepperRow}>
-      <Text style={styles.stepperRowLabel}>{label}</Text>
-      <View style={styles.miniStepperGroup}>
-        <Pressable
-          onPress={onDecrement}
-          disabled={disabled}
-          style={({ pressed }) => [
-            styles.miniStepper,
-            pressed && styles.stepperPressed,
-          ]}
-        >
-          <Feather name="minus" size={16} color={Color.neutral900} />
-        </Pressable>
-        <Text
-          style={[styles.stepperCount, count === 0 && styles.stepperCountZero]}
-        >
-          {count}
-        </Text>
-        <Pressable
-          onPress={onIncrement}
-          disabled={disabled}
-          style={({ pressed }) => [
-            styles.miniStepper,
-            pressed && styles.stepperPressed,
-          ]}
-        >
-          <Feather name="plus" size={16} color={Color.neutral900} />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
 // === Styles ===
-
-const DPAD_SIZE = 120;
-const CHEVRON_SIZE = 36;
-const HIT_SIZE = 48;
 
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -620,46 +427,6 @@ const styles = StyleSheet.create({
   dpadWrapper: {
     alignItems: "center",
   },
-  dpadCircle: {
-    width: DPAD_SIZE,
-    height: DPAD_SIZE,
-    borderRadius: DPAD_SIZE / 2,
-    backgroundColor: Color.neutral100,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dpadMiddleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dpadChevron: {
-    width: CHEVRON_SIZE,
-    height: CHEVRON_SIZE,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dpadHitButton: {
-    width: HIT_SIZE,
-    height: HIT_SIZE,
-    borderRadius: HIT_SIZE / 2,
-    backgroundColor: Color.neutral300,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dpadHitButtonActive: {
-    backgroundColor: Color.primary,
-  },
-  dpadHitText: {
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  dpadHitTextActive: {
-    color: Color.white,
-  },
-  dpadHitTextInactive: {
-    color: Color.neutral500,
-  },
   // Steppers area (right side)
   steppersArea: {
     flex: 1,
@@ -671,49 +438,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepperLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.overline,
     marginBottom: Space.sm - 4,
   },
-  horizontalPill: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-around",
-    width: 58,
-    minHeight: 120,
-    margin: "auto",
-    alignSelf: "stretch",
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    backgroundColor: Color.white,
-    paddingVertical: Space.sm,
-  },
-  pillButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    justifyContent: "center",
-    alignItems: "center",
-    display: "flex",
-  },
-  pillButtonPressed: {
-    backgroundColor: Color.neutral100,
-  },
-  pillNumber: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Color.neutral900,
-    minWidth: 40,
-    textAlign: "center",
-  },
   pillSubLabel: {
+    fontFamily: Font.semiBold,
     fontSize: 11,
-    fontWeight: "600",
     marginTop: Space.xs,
   },
 
@@ -732,8 +462,8 @@ const styles = StyleSheet.create({
     backgroundColor: Color.neutral200,
   },
   girText: {
+    fontFamily: Font.semiBold,
     fontSize: 11,
-    fontWeight: "600",
   },
   girTextTrue: {
     color: Color.white,
@@ -742,33 +472,18 @@ const styles = StyleSheet.create({
     color: Color.neutral500,
   },
 
-  // Toggle
-  toggleContainer: {
+  // Advanced toggle
+  advancedToggle: {
     flexDirection: "row",
-    alignSelf: "center",
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    overflow: "hidden",
-    marginBottom: Space.md,
-  },
-  toggleButton: {
-    height: 36,
-    paddingHorizontal: Space.xl,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Color.white,
+    alignSelf: "center",
+    gap: Space.xs,
+    paddingVertical: Space.xs,
   },
-  toggleButtonActive: {
-    backgroundColor: Color.neutral900,
-  },
-  toggleText: {
+  advancedToggleText: {
+    fontFamily: Font.semiBold,
     fontSize: 13,
-    fontWeight: "600",
-    color: Color.neutral900,
-  },
-  toggleTextActive: {
-    color: Color.white,
+    color: Color.neutral500,
   },
 
   // Advanced content
@@ -781,49 +496,9 @@ const styles = StyleSheet.create({
     marginVertical: Space.sm,
   },
   sectionLabel: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
     color: Color.neutral400,
     letterSpacing: 0.5,
     marginBottom: Space.sm,
-  },
-
-  // Count stepper rows (bunkers, penalties)
-  stepperRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: Space.sm,
-  },
-  stepperRowLabel: {
-    fontSize: 14,
-    color: Color.neutral900,
-  },
-  miniStepperGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Space.lg,
-  },
-  miniStepper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Color.white,
-  },
-  stepperPressed: {
-    backgroundColor: Color.neutral100,
-  },
-  stepperCount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Color.neutral900,
-    minWidth: 20,
-    textAlign: "center",
-  },
-  stepperCountZero: {
-    color: Color.neutral400,
   },
 });

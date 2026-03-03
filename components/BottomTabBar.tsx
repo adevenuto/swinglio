@@ -3,10 +3,9 @@ import * as Haptics from "expo-haptics";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Color } from "@/constants/design-tokens";
+import { Color, Font } from "@/constants/design-tokens";
 
 const CENTER_BUTTON_SIZE = 64;
-const GREEN_ACCENT = "#16a34a";
 
 export default function BottomTabBar({
   state,
@@ -61,7 +60,7 @@ export default function BottomTabBar({
               <View style={styles.centerButton}>
                 {options.tabBarIcon?.({
                   focused: isFocused,
-                  color: "#fff",
+                  color: Color.white,
                   size: 30,
                 })}
                 {badge != null && (
@@ -79,7 +78,7 @@ export default function BottomTabBar({
           );
         }
 
-        const color = isFocused ? "#1a1a1a" : "#999";
+        const color = isFocused ? Color.primary : Color.neutral400;
 
         return (
           <Pressable
@@ -115,9 +114,9 @@ export default function BottomTabBar({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
     borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
+    borderTopColor: Color.neutral200,
     overflow: "visible",
   },
   tab: {
@@ -136,7 +135,7 @@ const styles = StyleSheet.create({
     width: CENTER_BUTTON_SIZE,
     height: CENTER_BUTTON_SIZE,
     borderRadius: CENTER_BUTTON_SIZE / 2,
-    backgroundColor: GREEN_ACCENT,
+    backgroundColor: Color.primary,
     justifyContent: "center",
     alignItems: "center",
     marginTop: -24,
@@ -147,13 +146,13 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   label: {
+    fontFamily: Font.medium,
     fontSize: 11,
-    color: "#999",
+    color: Color.neutral400,
     marginTop: 4,
   },
   labelActive: {
-    color: "#1a1a1a",
-    fontWeight: "600",
+    color: Color.primary,
   },
   badge: {
     position: "absolute",
@@ -167,17 +166,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeRed: {
-    backgroundColor: "#dc2626",
+    backgroundColor: Color.danger,
   },
   badgeGreen: {
-    backgroundColor: "#22c55e",
+    backgroundColor: Color.primary,
     borderWidth: 2,
     borderColor: Color.white,
   },
   badgeText: {
     color: Color.white,
+    fontFamily: Font.bold,
     fontSize: 11,
-    fontWeight: "700",
     lineHeight: 13,
   },
 });

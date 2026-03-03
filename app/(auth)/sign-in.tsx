@@ -1,3 +1,4 @@
+import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
@@ -5,17 +6,20 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import "../../global.css";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const { signIn, signInWithGoogle } = useAuth();
 
   const handleSignIn = async () => {
@@ -46,76 +50,203 @@ export default function SignIn() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex-1 justify-center px-8">
-        <Text className="text-3xl font-bold text-center mb-8">Sign In</Text>
+    <View style={styles.screen}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <View style={styles.inner}>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Welcome back to the course</Text>
 
-        <View className="mb-4">
-          <Text className="text-sm font-medium mb-2">Email</Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            editable={!loading}
-          />
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={[
+                styles.input,
+                focusedField === "email" && styles.inputFocused,
+              ]}
+              placeholder="Enter your email"
+              placeholderTextColor={Color.neutral400}
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={[
+                styles.input,
+                focusedField === "password" && styles.inputFocused,
+              ]}
+              placeholder="Enter your password"
+              placeholderTextColor={Color.neutral400}
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              secureTextEntry
+              editable={!loading}
+            />
+          </View>
+
+          <Pressable
+            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+            onPress={handleSignIn}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={Color.white} />
+            ) : (
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+            )}
+          </Pressable>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Pressable
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+            disabled={loading}
+          >
+            <AntDesign name="google" size={20} color={Color.neutral700} />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </Pressable>
+
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Link href="/(auth)/sign-up" asChild>
+              <Pressable>
+                <Text style={styles.footerLink}>Sign Up</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium mb-2">Password</Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
-        </View>
-
-        <Pressable
-          className="bg-blue-600 rounded-lg py-3 mb-4"
-          onPress={handleSignIn}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white text-center font-semibold text-base">
-              Sign In
-            </Text>
-          )}
-        </Pressable>
-
-        <View className="flex-row items-center mb-4">
-          <View className="flex-1 h-px bg-gray-300" />
-          <Text className="px-4 text-gray-500">or</Text>
-          <View className="flex-1 h-px bg-gray-300" />
-        </View>
-
-        <Pressable
-          className="border border-gray-300 rounded-lg py-3 mb-6 flex-row items-center justify-center"
-          style={{ gap: 8 }}
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-        >
-          <AntDesign name="google" size={20} color="#4285F4" />
-          <Text className="text-gray-700 font-semibold text-base">
-            Sign in with Google
-          </Text>
-        </Pressable>
-
-        <View className="flex-row justify-center">
-          <Text className="text-gray-600">Don't have an account? </Text>
-          <Link href="/(auth)/sign-up" asChild>
-            <Pressable>
-              <Text className="text-blue-600 font-semibold">Sign Up</Text>
-            </Pressable>
-          </Link>
-        </View>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  inner: {
+    paddingHorizontal: Space.xxl,
+  },
+  title: {
+    fontFamily: Font.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Color.neutral900,
+    textAlign: "center",
+    marginBottom: Space.xs,
+  },
+  subtitle: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral500,
+    textAlign: "center",
+    marginBottom: Space.xxl,
+  },
+  fieldGroup: {
+    marginBottom: Space.lg,
+  },
+  label: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    color: Color.neutral700,
+    marginBottom: Space.sm,
+  },
+  input: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral900,
+    height: 52,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Space.lg,
+    backgroundColor: Color.white,
+  },
+  inputFocused: {
+    borderColor: Color.primary,
+    borderWidth: 2,
+  },
+  primaryButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: Space.sm,
+    marginBottom: Space.lg,
+  },
+  primaryButtonText: {
+    fontFamily: Font.bold,
+    fontSize: 16,
+    color: Color.white,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Space.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Color.neutral300,
+  },
+  dividerText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral400,
+    paddingHorizontal: Space.lg,
+  },
+  googleButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    backgroundColor: Color.white,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  googleButtonText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral700,
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  footerText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+  },
+  footerLink: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.primary,
+  },
+});

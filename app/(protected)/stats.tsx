@@ -1,5 +1,5 @@
 import ScreenHeader from "@/components/ScreenHeader";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { supabase } from "@/lib/supabase";
@@ -8,7 +8,6 @@ import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../../global.css";
 
 export default function StatsScreen() {
   const { user } = useAuth();
@@ -30,7 +29,6 @@ export default function StatsScreen() {
     if (!user?.id) return;
     setStatsLoading(true);
 
-    // Total completed rounds
     const { data: scoreRows } = await supabase
       .from("scores")
       .select("round_id, score")
@@ -57,7 +55,6 @@ export default function StatsScreen() {
     const completed = completedRounds || [];
     setRoundCount(completed.length);
 
-    // Average score from scores with a total
     const scoresWithTotal = scoreRows.filter(
       (s) =>
         s.score != null &&
@@ -70,7 +67,6 @@ export default function StatsScreen() {
       setAvgScore(null);
     }
 
-    // Rounds this month
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonth = completed.filter(
@@ -97,9 +93,9 @@ export default function StatsScreen() {
   const isLoading = statsLoading || attLoading;
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -116,8 +112,8 @@ export default function StatsScreen() {
             <ActivityIndicator size="large" />
           </View>
         ) : (
-          <View className="items-center px-8">
-            <View className="w-full max-w-md">
+          <View style={styles.container}>
+            <View style={styles.inner}>
               {/* Attestation Card */}
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Attestation</Text>
@@ -176,9 +172,21 @@ export default function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  container: {
+    alignItems: "center",
+    paddingHorizontal: Space.xxl,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 448,
+  },
   card: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -186,11 +194,7 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   cardTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    ...Type.caption,
     marginBottom: Space.md,
   },
   attestRow: {
@@ -202,16 +206,17 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 4,
-    borderColor: Color.primary,
+    borderColor: Color.accent,
     justifyContent: "center",
     alignItems: "center",
   },
   percentText: {
+    fontFamily: Font.bold,
     fontSize: 18,
-    fontWeight: "700",
-    color: Color.primary,
+    color: Color.accent,
   },
   attestLabel: {
+    fontFamily: Font.regular,
     fontSize: 14,
     color: Color.neutral700,
     marginBottom: Space.sm,
@@ -236,11 +241,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statValue: {
+    fontFamily: Font.bold,
     fontSize: 24,
-    fontWeight: "700",
     color: Color.neutral900,
   },
   statLabel: {
+    fontFamily: Font.regular,
     fontSize: 12,
     color: Color.neutral500,
     marginTop: 2,

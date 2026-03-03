@@ -29,7 +29,7 @@ export default function ProtectedLayout() {
 
   if (isLoading) {
     return (
-      <View className="items-center justify-center flex-1">
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
       </View>
     );

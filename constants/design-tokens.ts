@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, TextStyle } from "react-native";
 
 // === Spacing (8pt grid) ===
 
@@ -29,8 +29,8 @@ export const Shadow = {
     ios: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 3,
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
     },
     android: { elevation: 1 },
   })!,
@@ -38,8 +38,8 @@ export const Shadow = {
     ios: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
     },
     android: { elevation: 3 },
   })!,
@@ -47,8 +47,8 @@ export const Shadow = {
     ios: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
+      shadowOpacity: 0.10,
+      shadowRadius: 12,
     },
     android: { elevation: 6 },
   })!,
@@ -58,27 +58,94 @@ export const Shadow = {
 
 export const Color = {
   // Brand
-  primary: "#16a34a",
-  primaryLight: "#f0fdf4",
-  primaryBorder: "#86efac",
+  primary: "#15603A",
+  primaryLight: "#E8F0EC",
+  primaryBorder: "#5BA67A",
+
+  // Accent (gold / champagne)
+  accent: "#C4973B",
+  accentLight: "#FBF6EE",
 
   // Neutrals
-  neutral900: "#111827",
-  neutral700: "#374151",
-  neutral500: "#6b7280",
-  neutral400: "#9ca3af",
-  neutral300: "#d4d4d4",
-  neutral200: "#e5e5e5",
-  neutral100: "#f5f5f5",
-  neutral50: "#fafafa",
-  white: "#ffffff",
+  neutral900: "#111517",
+  neutral700: "#3D4549",
+  neutral500: "#6B7681",
+  neutral400: "#94A0AC",
+  neutral300: "#D5DAE0",
+  neutral200: "#E8EAED",
+  neutral100: "#F3F4F6",
+  neutral50: "#F9FAFB",
+  white: "#FFFFFF",
 
   // Semantic
-  danger: "#dc2626",
-  dangerLight: "#fef2f2",
-  warning: "#f59e0b",
-  warningLight: "#fffbeb",
-  info: "#3b82f6",
+  danger: "#C53030",
+  dangerLight: "#FEF2F2",
+  warning: "#D97706",
+  warningLight: "#FFFBEB",
+  info: "#2563EB",
+} as const;
+
+// === Typography ===
+
+export const Font = {
+  regular: "DMSans_400Regular",
+  medium: "DMSans_500Medium",
+  semiBold: "DMSans_600SemiBold",
+  bold: "DMSans_700Bold",
+} as const;
+
+export const Type = {
+  h1: {
+    fontFamily: Font.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Color.neutral900,
+  } as TextStyle,
+  h2: {
+    fontFamily: Font.bold,
+    fontSize: 22,
+    lineHeight: 28,
+    color: Color.neutral900,
+  } as TextStyle,
+  h3: {
+    fontFamily: Font.semiBold,
+    fontSize: 17,
+    lineHeight: 22,
+    color: Color.neutral900,
+  } as TextStyle,
+  body: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Color.neutral700,
+  } as TextStyle,
+  bodySm: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Color.neutral500,
+  } as TextStyle,
+  caption: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    lineHeight: 16,
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  } as TextStyle,
+  label: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    lineHeight: 18,
+    color: Color.neutral700,
+  } as TextStyle,
+  overline: {
+    fontFamily: Font.bold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: Color.neutral400,
+    letterSpacing: 0.5,
+  } as TextStyle,
 } as const;
 
 // === Animation ===

@@ -1,4 +1,4 @@
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
@@ -43,6 +43,7 @@ export default function HoleNavigation({
         icon="chevron-left"
         style={styles.prevButton}
         textColor={Color.neutral900}
+        labelStyle={{ fontFamily: Font.medium }}
       >
         Prev
       </Button>
@@ -55,6 +56,7 @@ export default function HoleNavigation({
         style={styles.nextButton}
         buttonColor={Color.primary}
         textColor={Color.white}
+        labelStyle={{ fontFamily: Font.bold }}
       >
         {isLastHole ? "Finish Round" : "Next Hole"}
       </Button>
@@ -71,10 +73,12 @@ const styles = StyleSheet.create({
   prevButton: {
     borderColor: Color.neutral300,
     borderRadius: Radius.lg,
+    padding: 5,
     flex: 1,
   },
   nextButton: {
     borderRadius: Radius.lg,
+    padding: 5,
     flex: 1,
     ...Shadow.sm,
   },

@@ -1,8 +1,14 @@
 import HoleEntryPanel, { HoleEntryPanelRef } from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
 import Scorecard, { ScorecardRef } from "@/components/Scorecard";
-import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import {
   GameplayProvider,
@@ -24,7 +30,6 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
 import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../global.css";
 
 export default function GameplayScreen() {
   const { roundId } = useLocalSearchParams<{ roundId: string }>();
@@ -162,7 +167,7 @@ function GameplayScreenContent() {
 
   if (isLoading) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
+      <View style={gameStyles.centeredContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -170,8 +175,8 @@ function GameplayScreenContent() {
 
   if (!round) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <Text variant="bodyLarge">Round not found</Text>
+      <View style={gameStyles.centeredContainer}>
+        <Text style={{ ...Type.body }}>Round not found</Text>
       </View>
     );
   }
@@ -179,33 +184,24 @@ function GameplayScreenContent() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.white, paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: Color.neutral50, paddingTop: 20 }}
     >
       {/* Nav header */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: Space.lg,
-          paddingTop: Space.sm,
-          paddingBottom: Space.lg,
-        }}
-      >
+      <View style={gameStyles.navHeader}>
         <Pressable
           onPress={() => {
             holeEntryRef.current?.saveCurrentHole();
             router.back();
           }}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
+          style={gameStyles.navBack}
         >
-          <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
-          <Text style={{ fontSize: 17, color: Color.neutral900 }}>Dashboard</Text>
+          <MaterialIcons
+            name="chevron-left"
+            size={28}
+            color={Color.neutral900}
+          />
+          <Text style={gameStyles.navBackText}>Dashboard</Text>
         </Pressable>
-        <UserAvatar avatarUrl={avatarUrl} firstName={null} size={40} />
       </View>
 
       {/* Course info card */}
@@ -235,7 +231,7 @@ function GameplayScreenContent() {
       {/* Scorecard + HoleEntryPanel */}
       <ScrollView
         ref={scrollViewRef}
-        className="flex-1"
+        style={{ flex: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -244,43 +240,22 @@ function GameplayScreenContent() {
               await fetchRound();
               setRefreshing(false);
             }}
-            tintColor="#3b82f6"
-            colors={["#3b82f6"]}
+            tintColor={Color.info}
+            colors={[Color.info]}
           />
         }
       >
         {myFinished && round?.status !== "completed" && (
-          <View
-            style={{
-              alignItems: "center",
-              paddingVertical: Space.xxl,
-              paddingHorizontal: Space.lg,
-            }}
-          >
+          <View style={gameStyles.finishedContainer}>
             <MaterialIcons
               name="check-circle"
               size={48}
               color={Color.primary}
             />
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                color: Color.neutral900,
-                marginTop: Space.md,
-                textAlign: "center",
-              }}
-            >
+            <Text style={gameStyles.finishedTitle}>
               You've completed your round!
             </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: Color.neutral500,
-                marginTop: Space.xs,
-                textAlign: "center",
-              }}
-            >
+            <Text style={gameStyles.finishedSubtitle}>
               Waiting for other players to finish.
             </Text>
           </View>
@@ -288,7 +263,9 @@ function GameplayScreenContent() {
 
         {myScore && teeboxHoleData && !myFinished && (
           <GestureDetector gesture={swipeGesture}>
-            <View className="px-4 pb-4">
+            <View
+              style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}
+            >
               <HoleEntryPanel
                 ref={holeEntryRef}
                 holeNumber={activeHole}
@@ -302,18 +279,8 @@ function GameplayScreenContent() {
           </GestureDetector>
         )}
 
-        <View className="px-4 pb-4">
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "700",
-              color: Color.neutral400,
-              letterSpacing: 0.5,
-              marginBottom: Space.sm,
-            }}
-          >
-            SCORECARD
-          </Text>
+        <View style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}>
+          <Text style={gameStyles.scorecardLabel}>SCORECARD</Text>
           <Scorecard
             ref={scorecardRef}
             teeboxData={round.teebox_data}
@@ -331,11 +298,11 @@ function GameplayScreenContent() {
             loading={isQuitting}
             textColor={Color.neutral500}
             style={{ marginTop: Space.xl }}
+            labelStyle={{ fontFamily: Font.medium }}
           >
             Quit Round
           </Button>
         )}
-
       </ScrollView>
 
       {myScore && teeboxHoleData && !myFinished && (
@@ -354,6 +321,29 @@ function GameplayScreenContent() {
 }
 
 const gameStyles = StyleSheet.create({
+  centeredContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Color.neutral50,
+  },
+  navHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.sm,
+    paddingBottom: Space.lg,
+  },
+  navBack: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  navBackText: {
+    fontFamily: Font.regular,
+    fontSize: 17,
+    color: Color.neutral900,
+  },
   bottomBar: {
     paddingHorizontal: Space.lg,
     paddingTop: Space.md,
@@ -370,20 +360,21 @@ const gameStyles = StyleSheet.create({
     paddingHorizontal: Space.lg,
     paddingBottom: Space.xxl,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     alignItems: "center",
     ...Shadow.sm,
   },
   courseCardTitle: {
+    fontFamily: Font.bold,
     fontSize: 22,
-    fontWeight: "700",
     color: Color.neutral900,
     textTransform: "capitalize",
     textAlign: "center",
   },
   courseCardSubtitle: {
+    fontFamily: Font.regular,
     fontSize: 15,
     color: Color.neutral500,
     marginTop: Space.xs,
@@ -400,7 +391,7 @@ const gameStyles = StyleSheet.create({
   holeBadge: {
     backgroundColor: Color.white,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     paddingVertical: Space.sm,
     paddingHorizontal: Space.xl,
@@ -408,15 +399,38 @@ const gameStyles = StyleSheet.create({
     ...Shadow.md,
   },
   holeBadgeTitle: {
+    fontFamily: Font.bold,
     fontSize: 16,
-    fontWeight: "700",
     color: Color.neutral900,
     letterSpacing: 1.5,
   },
   holeBadgeSubtitle: {
+    fontFamily: Font.semiBold,
     fontSize: 13,
-    fontWeight: "600",
     color: Color.neutral500,
     marginTop: 2,
+  },
+  scorecardLabel: {
+    ...Type.caption,
+    marginBottom: Space.sm,
+  },
+  finishedContainer: {
+    alignItems: "center",
+    paddingVertical: Space.xxl,
+    paddingHorizontal: Space.lg,
+  },
+  finishedTitle: {
+    fontFamily: Font.bold,
+    fontSize: 18,
+    color: Color.neutral900,
+    marginTop: Space.md,
+    textAlign: "center",
+  },
+  finishedSubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+    marginTop: Space.xs,
+    textAlign: "center",
   },
 });

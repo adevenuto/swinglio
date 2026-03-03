@@ -1,6 +1,6 @@
 import ScreenHeader from "@/components/ScreenHeader";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import {
   FriendWithProfile,
@@ -11,7 +11,6 @@ import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
-  FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -20,7 +19,6 @@ import {
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../../global.css";
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -58,7 +56,6 @@ export default function FriendsScreen() {
     setRefreshing(false);
   }, [refreshFriends, clearSearch]);
 
-  // Determine relationship status with a search result
   const getRelationship = (
     playerId: string,
   ): "accepted" | "pending_sent" | "pending_received" | "none" => {
@@ -162,7 +159,6 @@ export default function FriendsScreen() {
     p.email ||
     "Unknown";
 
-  // Filter search results to exclude self
   const filteredResults = searchResults.filter((p) => p.id !== user?.id);
 
   const showSearchResults = query.length >= 2;
@@ -173,9 +169,9 @@ export default function FriendsScreen() {
     pendingSent.length === 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
@@ -187,8 +183,8 @@ export default function FriendsScreen() {
         }
       >
         <ScreenHeader title="Friends" />
-        <View className="items-center px-8">
-          <View className="w-full max-w-md">
+        <View style={styles.container}>
+          <View style={styles.inner}>
 
             {/* Search bar */}
             <Searchbar
@@ -198,20 +194,15 @@ export default function FriendsScreen() {
               loading={isSearching}
               mode="bar"
               style={styles.searchbar}
-              inputStyle={{ color: Color.neutral900 }}
+              inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
             />
 
             {/* Search results */}
             {showSearchResults && (
               <View style={{ marginBottom: Space.lg }}>
                 {filteredResults.length === 0 && !isSearching ? (
-                  <View className="items-center py-4">
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: Color.neutral400 }}
-                    >
-                      No players found
-                    </Text>
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No players found</Text>
                   </View>
                 ) : (
                   filteredResults.map((player) => {
@@ -220,50 +211,24 @@ export default function FriendsScreen() {
                     const name = getPlayerName(player);
 
                     return (
-                      <View
-                        key={player.id}
-                        style={styles.card}
-                      >
+                      <View key={player.id} style={styles.card}>
                         <UserAvatar
                           avatarUrl={player.avatar_url}
                           firstName={player.first_name}
                           size={40}
                         />
                         <View style={{ flex: 1, marginLeft: Space.md }}>
-                          <Text
-                            variant="bodyLarge"
-                            style={styles.playerName}
-                          >
-                            {name}
-                          </Text>
+                          <Text style={styles.playerName}>{name}</Text>
                           {player.email && (
-                            <Text
-                              variant="bodySmall"
-                              style={{ color: Color.neutral500 }}
-                            >
-                              {player.email}
-                            </Text>
+                            <Text style={styles.playerEmail}>{player.email}</Text>
                           )}
                         </View>
                         <View style={styles.actionColumn}>
                           {relationship === "accepted" && (
-                            <Text
-                              variant="bodyMedium"
-                              style={{
-                                color: Color.primary,
-                                fontWeight: "600",
-                              }}
-                            >
-                              Friends
-                            </Text>
+                            <Text style={styles.friendsText}>Friends</Text>
                           )}
                           {relationship === "pending_sent" && (
-                            <Text
-                              variant="bodySmall"
-                              style={{ color: Color.neutral400 }}
-                            >
-                              Invite Sent
-                            </Text>
+                            <Text style={styles.inviteSentText}>Invite Sent</Text>
                           )}
                           {relationship === "pending_received" &&
                             friendRow && (
@@ -271,6 +236,7 @@ export default function FriendsScreen() {
                                 mode="outlined"
                                 compact
                                 onPress={() => handleAccept(friendRow)}
+                                labelStyle={{ fontFamily: Font.medium }}
                               >
                                 Accept
                               </Button>
@@ -280,6 +246,7 @@ export default function FriendsScreen() {
                               mode="outlined"
                               compact
                               onPress={() => handleSendInvite(player.id)}
+                              labelStyle={{ fontFamily: Font.medium }}
                             >
                               Send Invite
                             </Button>
@@ -299,26 +266,16 @@ export default function FriendsScreen() {
                   Friend Requests ({pendingReceived.length})
                 </Text>
                 {pendingReceived.map((fr) => (
-                  <View
-                    key={fr.id}
-                    style={styles.card}
-                  >
+                  <View key={fr.id} style={styles.card}>
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
                     <View style={{ flex: 1, marginLeft: Space.md }}>
-                      <Text
-                        variant="bodyLarge"
-                        style={styles.playerName}
-                      >
-                        {getName(fr)}
-                      </Text>
+                      <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
-                          {fr.profile.email}
-                        </Text>
+                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
                       )}
                     </View>
                     <View style={{ flexDirection: "row", gap: Space.sm }}>
@@ -326,6 +283,7 @@ export default function FriendsScreen() {
                         mode="outlined"
                         compact
                         onPress={() => handleAccept(fr)}
+                        labelStyle={{ fontFamily: Font.medium }}
                       >
                         Accept
                       </Button>
@@ -334,9 +292,7 @@ export default function FriendsScreen() {
                         onPress={() => handleDecline(fr)}
                         style={{ justifyContent: "center" }}
                       >
-                        <Text style={{ color: Color.danger, fontWeight: "600" }}>
-                          Decline
-                        </Text>
+                        <Text style={styles.declineText}>Decline</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -351,35 +307,23 @@ export default function FriendsScreen() {
                   Friends ({friends.length})
                 </Text>
                 {friends.map((fr) => (
-                  <View
-                    key={fr.id}
-                    style={styles.card}
-                  >
+                  <View key={fr.id} style={styles.card}>
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
                     <View style={{ flex: 1, marginLeft: Space.md }}>
-                      <Text
-                        variant="bodyLarge"
-                        style={styles.playerName}
-                      >
-                        {getName(fr)}
-                      </Text>
+                      <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
-                          {fr.profile.email}
-                        </Text>
+                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
                       )}
                     </View>
                     <Pressable
                       hitSlop={16}
                       onPress={() => handleRemoveFriend(fr)}
                     >
-                      <Text style={{ color: Color.danger, fontSize: 13 }}>
-                        Disconnect
-                      </Text>
+                      <Text style={styles.disconnectText}>Disconnect</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -393,34 +337,19 @@ export default function FriendsScreen() {
                   Sent Requests ({pendingSent.length})
                 </Text>
                 {pendingSent.map((fr) => (
-                  <View
-                    key={fr.id}
-                    style={styles.card}
-                  >
+                  <View key={fr.id} style={styles.card}>
                     <UserAvatar
                       avatarUrl={fr.profile.avatar_url}
                       firstName={fr.profile.first_name}
                       size={40}
                     />
                     <View style={{ flex: 1, marginLeft: Space.md }}>
-                      <Text
-                        variant="bodyLarge"
-                        style={styles.playerName}
-                      >
-                        {getName(fr)}
-                      </Text>
+                      <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
-                          {fr.profile.email}
-                        </Text>
+                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
                       )}
                     </View>
-                    <Text
-                      variant="bodySmall"
-                      style={{ color: Color.neutral400 }}
-                    >
-                      Invite Sent
-                    </Text>
+                    <Text style={styles.inviteSentText}>Invite Sent</Text>
                   </View>
                 ))}
               </View>
@@ -428,11 +357,8 @@ export default function FriendsScreen() {
 
             {/* Empty state */}
             {hasNoFriendsData && !showSearchResults && (
-              <View className="items-center py-8">
-                <Text
-                  variant="bodyMedium"
-                  style={{ color: Color.neutral400, textAlign: "center" }}
-                >
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
                   Search for players above to add friends
                 </Text>
               </View>
@@ -445,13 +371,21 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  container: {
+    alignItems: "center",
+    paddingHorizontal: Space.xxl,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 448,
+  },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.sm,
-    textTransform: "uppercase",
   },
   searchbar: {
     backgroundColor: "transparent",
@@ -462,7 +396,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     padding: Space.md,
@@ -472,13 +406,49 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   playerName: {
+    fontFamily: Font.semiBold,
+    fontSize: 16,
     color: Color.neutral900,
-    fontWeight: "600",
     textTransform: "capitalize",
+  },
+  playerEmail: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
   },
   actionColumn: {
     justifyContent: "center",
     alignItems: "center",
     minWidth: 90,
+  },
+  friendsText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.primary,
+  },
+  inviteSentText: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral400,
+  },
+  declineText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.danger,
+  },
+  disconnectText: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.danger,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: Space.xxl,
+  },
+  emptyText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral400,
+    textAlign: "center",
   },
 });

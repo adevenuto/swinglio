@@ -1,7 +1,14 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
 import RoundCard from "@/components/RoundCard";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
@@ -24,7 +31,6 @@ import {
 } from "react-native";
 import { Button, Divider, Menu, Snackbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../../global.css";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -260,9 +266,9 @@ export default function Dashboard() {
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -355,50 +361,36 @@ export default function Dashboard() {
             </View>
             <View style={styles.nameContainer}>
               {fullName ? (
-                <Text variant="headlineSmall" style={styles.nameText}>
-                  {fullName}
-                </Text>
+                <Text style={styles.nameText}>{fullName}</Text>
               ) : null}
-              <Text variant="bodyMedium" style={styles.greetingText}>
-                Welcome back
-              </Text>
+              <Text style={styles.greetingText}>Welcome back</Text>
             </View>
           </View>
 
           {/* Stats row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text variant="titleLarge" style={styles.statValue}>
-                {totalRounds}
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Rounds
-              </Text>
+              <Text style={styles.statValue}>{totalRounds}</Text>
+              <Text style={styles.statLabel}>Rounds</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text variant="titleLarge" style={styles.statValue}>
-                {"\u2014"}
-              </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Handicap
-              </Text>
+              <Text style={styles.statValue}>{"\u2014"}</Text>
+              <Text style={styles.statLabel}>Handicap</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text variant="titleLarge" style={styles.statValue}>
+              <Text style={styles.statValue}>
                 {totalRounds > 0 ? `${attPct}%` : "\u2014"}
               </Text>
-              <Text variant="bodySmall" style={styles.statLabel}>
-                Attested
-              </Text>
+              <Text style={styles.statLabel}>Attested</Text>
             </View>
           </View>
         </View>
 
         {/* Dashboard Content */}
-        <View className="items-center px-8">
-          <View className="w-full max-w-md" style={{ marginTop: Space.lg }}>
+        <View style={styles.contentContainer}>
+          <View style={styles.contentInner}>
             {activeRounds.length === 0 && (
               <Button
                 mode="contained"
@@ -406,6 +398,7 @@ export default function Dashboard() {
                 textColor={Color.white}
                 onPress={() => router.push("/start-round")}
                 style={styles.ctaButton}
+                labelStyle={{ fontFamily: Font.bold }}
               >
                 Start A Round
               </Button>
@@ -429,21 +422,19 @@ export default function Dashboard() {
                     style={styles.card}
                   >
                     <View style={styles.cardRow}>
-                      <Text variant="titleMedium" style={styles.courseName}>
-                        {pr.course_name}
-                      </Text>
+                      <Text style={styles.courseName}>{pr.course_name}</Text>
                       <Button
                         mode="contained"
                         buttonColor={Color.primary}
                         textColor={Color.white}
                         compact
                         style={{ borderRadius: Radius.lg }}
-                        labelStyle={{ fontSize: 12 }}
+                        labelStyle={{ fontFamily: Font.semiBold, fontSize: 12 }}
                       >
                         Review
                       </Button>
                     </View>
-                    <Text variant="bodyMedium" style={styles.cardSubtitle}>
+                    <Text style={styles.cardSubtitle}>
                       {pr.player_count} players
                       {" \u00B7 "}
                       {formatDate(pr.completed_at)}
@@ -502,6 +493,10 @@ export default function Dashboard() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
   // --- Hero ---
   banner: {
     height: 225,
@@ -546,7 +541,7 @@ const styles = StyleSheet.create({
   avatarBorder: {
     borderWidth: 3,
     borderColor: Color.white,
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
     borderRadius: 43,
     overflow: "hidden",
   },
@@ -557,10 +552,14 @@ const styles = StyleSheet.create({
     paddingBottom: Space.xs,
   },
   nameText: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 22,
+    lineHeight: 28,
     color: Color.neutral900,
   },
   greetingText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
     color: Color.neutral500,
   },
   statsRow: {
@@ -576,10 +575,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statValue: {
-    fontWeight: "700",
-    color: Color.neutral900,
+    fontFamily: Font.bold,
+    fontSize: 20,
+    color: Color.accent,
   },
   statLabel: {
+    fontFamily: Font.regular,
+    fontSize: 13,
     color: Color.neutral500,
     marginTop: 2,
   },
@@ -589,22 +591,28 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   // --- Dashboard content ---
+  contentContainer: {
+    alignItems: "center",
+    paddingHorizontal: Space.xxl,
+  },
+  contentInner: {
+    width: "100%",
+    maxWidth: 448,
+    marginTop: Space.lg,
+  },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.sm,
-    textTransform: "uppercase",
   },
   ctaButton: {
     marginBottom: Space.lg,
+    padding: 5,
     borderRadius: Radius.lg,
   },
   card: {
     padding: Space.lg,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,
@@ -616,19 +624,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   courseName: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 17,
     color: Color.neutral900,
     flex: 1,
     textTransform: "capitalize",
   },
   cardSubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 14,
     color: Color.neutral500,
     textTransform: "capitalize",
   },
   emptyText: {
+    fontFamily: Font.regular,
+    fontSize: 15,
     color: Color.neutral400,
     marginTop: Space.md,
-    fontSize: 15,
     textAlign: "center",
   },
 });

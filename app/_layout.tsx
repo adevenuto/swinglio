@@ -1,25 +1,75 @@
+import { Color, Font } from "@/constants/design-tokens";
 import { AuthProvider } from "@/contexts/auth-context";
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+} from "@expo-google-fonts/dm-sans";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import {
   DefaultTheme as PaperDefaultTheme,
   PaperProvider,
+  configureFonts,
 } from "react-native-paper";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../global.css";
 
+SplashScreen.preventAutoHideAsync();
+
+const fontConfig = {
+  displayLarge: { fontFamily: Font.bold },
+  displayMedium: { fontFamily: Font.bold },
+  displaySmall: { fontFamily: Font.bold },
+  headlineLarge: { fontFamily: Font.bold },
+  headlineMedium: { fontFamily: Font.bold },
+  headlineSmall: { fontFamily: Font.bold },
+  titleLarge: { fontFamily: Font.bold },
+  titleMedium: { fontFamily: Font.semiBold },
+  titleSmall: { fontFamily: Font.semiBold },
+  bodyLarge: { fontFamily: Font.regular },
+  bodyMedium: { fontFamily: Font.regular },
+  bodySmall: { fontFamily: Font.regular },
+  labelLarge: { fontFamily: Font.medium },
+  labelMedium: { fontFamily: Font.medium },
+  labelSmall: { fontFamily: Font.medium },
+} as const;
+
 const paperTheme = {
   ...PaperDefaultTheme,
+  fonts: configureFonts({ config: fontConfig }),
   colors: {
     ...PaperDefaultTheme.colors,
-    primary: "#1a1a1a",
-    secondaryContainer: "#e5e5e5",
+    primary: Color.primary,
+    secondaryContainer: Color.neutral100,
   },
 };
 
+const headerStyle = { backgroundColor: Color.white };
+const headerTintColor = Color.neutral900;
+
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
@@ -43,8 +93,8 @@ export default function RootLayout() {
                   presentation: "modal",
                   headerShown: true,
                   title: "Player Scores",
-                  headerStyle: { backgroundColor: "#fff" },
-                  headerTintColor: "#1a1a1a",
+                  headerStyle,
+                  headerTintColor,
                   headerShadowVisible: false,
                 }}
               />
@@ -54,8 +104,8 @@ export default function RootLayout() {
                   presentation: "modal",
                   headerShown: true,
                   title: "Start Round",
-                  headerStyle: { backgroundColor: "#fff" },
-                  headerTintColor: "#1a1a1a",
+                  headerStyle,
+                  headerTintColor,
                   headerShadowVisible: false,
                 }}
               />
@@ -79,8 +129,8 @@ export default function RootLayout() {
                   presentation: "modal",
                   headerShown: true,
                   title: "Course Editor",
-                  headerStyle: { backgroundColor: "#fff" },
-                  headerTintColor: "#1a1a1a",
+                  headerStyle,
+                  headerTintColor,
                   headerShadowVisible: false,
                 }}
               />

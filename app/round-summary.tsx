@@ -1,6 +1,6 @@
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestations } from "@/hooks/use-attestations";
 import { ResultsData } from "@/lib/scoring-utils";
@@ -19,7 +19,6 @@ import {
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import "../global.css";
 
 type RoundData = {
   id: number;
@@ -186,19 +185,16 @@ export default function RoundSummaryScreen() {
   const handleContinueRound = useCallback(async () => {
     if (!user?.id || !roundId || !myScore) return;
 
-    // Reset player status and clear total score so gameplay doesn't think we're finished
     await supabase
       .from("scores")
       .update({ player_status: "active", score: null })
       .eq("id", myScore.id);
 
-    // Reset round status to active and clear stale results
     await supabase
       .from("rounds")
       .update({ status: "active", results_data: null })
       .eq("id", round?.id);
 
-    // Delete stale attestations (results will change)
     await supabase
       .from("round_attestations")
       .delete()
@@ -209,7 +205,7 @@ export default function RoundSummaryScreen() {
 
   if (isLoading) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
+      <View style={s.centeredContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -217,8 +213,8 @@ export default function RoundSummaryScreen() {
 
   if (!round) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <Text variant="bodyLarge">Round not found</Text>
+      <View style={s.centeredContainer}>
+        <Text style={{ ...Type.body }}>Round not found</Text>
       </View>
     );
   }
@@ -226,7 +222,7 @@ export default function RoundSummaryScreen() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.white, paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: Color.neutral50, paddingTop: 20 }}
     >
       {/* Header */}
       <View style={s.header}>
@@ -236,14 +232,14 @@ export default function RoundSummaryScreen() {
             size={28}
             color={Color.neutral900}
           />
-          <Text style={{ fontSize: 17, color: Color.neutral900 }}>Back</Text>
+          <Text style={s.backText}>Back</Text>
         </Pressable>
         <Text style={s.headerTitle}>Round Summary</Text>
         <View style={{ width: 80 }} />
       </View>
 
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -362,7 +358,7 @@ export default function RoundSummaryScreen() {
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
             <Text style={s.sectionLabel}>RESUME</Text>
             <View style={s.attestCard}>
-              <Text style={{ fontSize: 14, color: Color.neutral500, marginBottom: Space.md }}>
+              <Text style={s.attestCount}>
                 You scored {myResult?.holes_completed ?? 0} of{" "}
                 {myResult?.hole_count ?? 0} holes.
               </Text>
@@ -373,6 +369,7 @@ export default function RoundSummaryScreen() {
                 style={s.attestButton}
                 onPress={handleContinueRound}
                 icon="play"
+                labelStyle={{ fontFamily: Font.bold }}
               >
                 Continue Round
               </Button>
@@ -406,6 +403,7 @@ export default function RoundSummaryScreen() {
                   style={s.attestButton}
                   onPress={handleAttest}
                   icon="check-bold"
+                  labelStyle={{ fontFamily: Font.bold }}
                 >
                   Attest Scores
                 </Button>
@@ -438,6 +436,12 @@ export default function RoundSummaryScreen() {
 }
 
 const s = StyleSheet.create({
+  centeredContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Color.neutral50,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -451,49 +455,53 @@ const s = StyleSheet.create({
     alignItems: "center",
     width: 80,
   },
-  headerTitle: {
+  backText: {
+    fontFamily: Font.regular,
     fontSize: 17,
-    fontWeight: "700",
+    color: Color.neutral900,
+  },
+  headerTitle: {
+    fontFamily: Font.bold,
+    fontSize: 17,
     color: Color.neutral900,
   },
   courseCard: {
     marginHorizontal: Space.lg,
     padding: Space.xl,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     alignItems: "center",
     ...Shadow.sm,
   },
   courseName: {
+    fontFamily: Font.bold,
     fontSize: 22,
-    fontWeight: "700",
     color: Color.neutral900,
     textTransform: "capitalize",
     textAlign: "center",
   },
   teeboxName: {
+    fontFamily: Font.regular,
     fontSize: 15,
     color: Color.neutral500,
     marginTop: Space.xs,
     textTransform: "capitalize",
   },
   dateText: {
+    fontFamily: Font.regular,
     fontSize: 13,
     color: Color.neutral400,
     marginTop: Space.xs,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.sm,
   },
   resultsCard: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     overflow: "hidden",
@@ -522,12 +530,13 @@ const s = StyleSheet.create({
     marginTop: Space.xs,
   },
   resultName: {
+    fontFamily: Font.bold,
     fontSize: 16,
-    fontWeight: "700",
     color: Color.neutral900,
     textTransform: "capitalize",
   },
   resultSub: {
+    fontFamily: Font.regular,
     fontSize: 13,
     color: Color.neutral500,
     textTransform: "capitalize",
@@ -538,23 +547,24 @@ const s = StyleSheet.create({
     gap: Space.xs,
   },
   scoreTotal: {
+    fontFamily: Font.bold,
     fontSize: 16,
-    fontWeight: "700",
     color: Color.neutral900,
   },
   scoreToPar: {
+    fontFamily: Font.semiBold,
     fontSize: 14,
-    fontWeight: "600",
   },
   attestCard: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
     ...Shadow.sm,
   },
   attestCount: {
+    fontFamily: Font.regular,
     fontSize: 14,
     color: Color.neutral500,
     marginBottom: Space.md,
@@ -565,8 +575,8 @@ const s = StyleSheet.create({
     gap: Space.sm,
   },
   attestedText: {
+    fontFamily: Font.bold,
     fontSize: 16,
-    fontWeight: "700",
     color: Color.primary,
   },
   attestButton: {
@@ -582,8 +592,8 @@ const s = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   wdBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.danger,
   },
   incompleteBadge: {
@@ -596,8 +606,8 @@ const s = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   incompleteBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.warning,
   },
   completedBadge: {
@@ -610,8 +620,8 @@ const s = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   completedBadgeText: {
+    fontFamily: Font.bold,
     fontSize: 12,
-    fontWeight: "700",
     color: Color.primary,
   },
 });

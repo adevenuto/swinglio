@@ -1,15 +1,27 @@
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import {
   Course,
-  Teebox,
   parseTeeboxes,
+  Teebox,
   useCourseSearch,
 } from "@/hooks/use-course-search";
-import { useNearbyCourses } from "@/hooks/use-nearby-courses";
 import { FriendWithProfile, useFriends } from "@/hooks/use-friends";
+import { useNearbyCourses } from "@/hooks/use-nearby-courses";
 import { supabase } from "@/lib/supabase";
+import {
+  createDefaultHoleStats,
+  HoleData,
+  ScoreDetails,
+} from "@/types/scoring";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -22,15 +34,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import {
-  Button,
-  Chip,
-  List,
-  Searchbar,
-  Text,
-} from "react-native-paper";
-import { createDefaultHoleStats, HoleData, ScoreDetails } from "@/types/scoring";
-import "../global.css";
+import { Button, Chip, List, Searchbar, Text } from "react-native-paper";
 
 function buildScoreDetails(teebox: Teebox): ScoreDetails {
   const holes: Record<string, HoleData> = {};
@@ -44,7 +48,6 @@ export default function StartRoundScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Step 1: Course + Teebox
   const {
     query: courseQuery,
     results: courseResults,
@@ -63,21 +66,18 @@ export default function StartRoundScreen() {
   const [teeboxes, setTeeboxes] = useState<Teebox[]>([]);
   const [selectedTeebox, setSelectedTeebox] = useState<Teebox | null>(null);
 
-  // Step 2: Friends selection
   const { friends, refresh: refreshFriends } = useFriends(user?.id ?? "");
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(
     new Set(),
   );
   const [isStarting, setIsStarting] = useState(false);
 
-  // Load friends when reaching step 2
   useEffect(() => {
     if (selectedTeebox) {
       refreshFriends();
     }
   }, [selectedTeebox, refreshFriends]);
 
-  // --- Course selection ---
   const handleSelectCourse = (course: Course) => {
     setSelectedCourse(course);
     const parsed = parseTeeboxes(course.layout_data);
@@ -92,7 +92,6 @@ export default function StartRoundScreen() {
     setSelectedTeebox(null);
   };
 
-  // --- Friend toggle ---
   const toggleFriend = (friendId: string) => {
     setSelectedFriendIds((prev) => {
       const next = new Set(prev);
@@ -105,11 +104,9 @@ export default function StartRoundScreen() {
     });
   };
 
-  // --- Start round ---
   const handleStartRound = async () => {
     if (!selectedCourse || !selectedTeebox || !user?.id) return;
 
-    // All players = current user + selected friends
     const allPlayerIds = [
       user.id,
       ...friends
@@ -119,7 +116,6 @@ export default function StartRoundScreen() {
 
     setIsStarting(true);
 
-    // 1. Create the round
     const { data: round, error: roundError } = await supabase
       .from("rounds")
       .insert({
@@ -137,7 +133,6 @@ export default function StartRoundScreen() {
       return;
     }
 
-    // 2. Create score rows for all players
     const scoreRows = allPlayerIds.map((golferId) => ({
       golfer_id: golferId,
       round_id: round.id,
@@ -169,16 +164,14 @@ export default function StartRoundScreen() {
     f.profile.email ||
     "Unknown";
 
-  const totalPlayers = selectedFriendIds.size + 1; // +1 for current user
+  const totalPlayers = selectedFriendIds.size + 1;
 
   // --- Step 1: Course search ---
   if (!selectedCourse) {
     return (
-      <View className="flex-1 bg-white">
-        <View className="px-4 pt-4">
-          <Text style={styles.sectionLabel}>
-            Search for a Course
-          </Text>
+      <View style={styles.screen}>
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Search for a Course</Text>
           <Searchbar
             placeholder="Search courses..."
             onChangeText={searchCourses}
@@ -186,42 +179,48 @@ export default function StartRoundScreen() {
             loading={courseSearching}
             mode="bar"
             style={styles.searchbar}
-            inputStyle={{ color: Color.neutral900 }}
+            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
           />
         </View>
         {courseQuery.length >= 2 ? (
           <FlatList
             data={courseResults}
             keyExtractor={(item) => item.id.toString()}
-            className="mt-2 px-4"
+            style={{ marginTop: Space.sm, paddingHorizontal: Space.lg }}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <List.Item
                 title={item.name}
-                titleStyle={{ color: Color.neutral900, fontWeight: "600" }}
+                titleStyle={{
+                  color: Color.neutral900,
+                  fontFamily: Font.semiBold,
+                }}
                 description={
                   [item.street, item.state, item.postal_code]
                     .filter(Boolean)
                     .join(", ") || undefined
                 }
-                descriptionStyle={{ color: Color.neutral500 }}
+                descriptionStyle={{
+                  color: Color.neutral500,
+                  fontFamily: Font.regular,
+                }}
                 onPress={() => handleSelectCourse(item)}
                 left={(props) => <List.Icon {...props} icon="golf" />}
               />
             )}
             ListEmptyComponent={
               !courseSearching ? (
-                <View className="items-center py-8">
-                  <Text variant="bodyMedium">No courses found</Text>
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No courses found</Text>
                 </View>
               ) : null
             }
           />
         ) : !locationDenied ? (
-          <ScrollView className="mt-4 px-4">
-            <Text style={styles.sectionLabel}>
-              Nearby
-            </Text>
+          <ScrollView
+            style={{ marginTop: Space.lg, paddingHorizontal: Space.lg }}
+          >
+            <Text style={styles.sectionLabel}>Nearby</Text>
             {nearbyLoading ? (
               <ActivityIndicator
                 size="small"
@@ -233,7 +232,10 @@ export default function StartRoundScreen() {
                 <List.Item
                   key={item.id}
                   title={item.name}
-                  titleStyle={{ color: Color.neutral900, fontWeight: "600" }}
+                  titleStyle={{
+                    color: Color.neutral900,
+                    fontFamily: Font.semiBold,
+                  }}
                   description={
                     [
                       item.street,
@@ -245,18 +247,17 @@ export default function StartRoundScreen() {
                       .filter(Boolean)
                       .join("  ·  ") || undefined
                   }
-                  descriptionStyle={{ color: Color.neutral500 }}
+                  descriptionStyle={{
+                    color: Color.neutral500,
+                    fontFamily: Font.regular,
+                  }}
                   onPress={() => handleSelectCourse(item)}
-                  left={(props) => (
-                    <List.Icon {...props} icon="map-marker" />
-                  )}
+                  left={(props) => <List.Icon {...props} icon="map-marker" />}
                 />
               ))
             ) : (
-              <View className="items-center py-8">
-                <Text variant="bodyMedium" style={{ color: Color.neutral400 }}>
-                  No nearby courses found
-                </Text>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No nearby courses found</Text>
               </View>
             )}
           </ScrollView>
@@ -265,34 +266,35 @@ export default function StartRoundScreen() {
     );
   }
 
-  // --- Step 1b: Teebox selection (if course has multiple) ---
+  // --- Step 1b: Teebox selection ---
   if (!selectedTeebox) {
     return (
-      <View className="flex-1 bg-white">
-        <View className="px-4 pt-4">
+      <View style={styles.screen}>
+        <View style={styles.section}>
           <View style={styles.courseCard}>
             <View style={styles.cardRow}>
-              <Text
-                variant="titleMedium"
-                style={styles.courseName}
+              <Text style={styles.courseName}>{selectedCourse.name}</Text>
+              <Button
+                mode="outlined"
+                onPress={handleChangeCourse}
+                compact
+                labelStyle={{ fontFamily: Font.medium }}
               >
-                {selectedCourse.name}
-              </Text>
-              <Button mode="outlined" onPress={handleChangeCourse} compact>
                 Change
               </Button>
             </View>
           </View>
 
-          <Text style={styles.sectionLabel}>
-            Select Tee Box
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: Space.sm }}>
+          <Text style={styles.sectionLabel}>Select Tee Box</Text>
+          <View
+            style={{ flexDirection: "row", flexWrap: "wrap", gap: Space.sm }}
+          >
             {teeboxes.map((tb) => (
               <Chip
                 key={tb.name}
                 mode="outlined"
                 onPress={() => setSelectedTeebox(tb)}
+                textStyle={{ fontFamily: Font.medium }}
               >
                 {tb.name.charAt(0).toUpperCase() + tb.name.slice(1)}
               </Chip>
@@ -305,30 +307,23 @@ export default function StartRoundScreen() {
 
   // --- Step 2: Select friends ---
   return (
-    <View className="flex-1 bg-white">
+    <View style={styles.screen}>
       {/* Header: Course + Teebox */}
-      <View className="px-4 pt-4 pb-2">
+      <View style={styles.section}>
         <View style={styles.courseCard}>
           <View style={styles.cardRow}>
             <View style={{ flex: 1 }}>
-              <Text
-                variant="titleMedium"
-                style={styles.courseName}
-              >
-                {selectedCourse.name}
-              </Text>
-              <Text
-                variant="bodyMedium"
-                style={{
-                  color: Color.neutral500,
-                  marginTop: 2,
-                  textTransform: "capitalize",
-                }}
-              >
+              <Text style={styles.courseName}>{selectedCourse.name}</Text>
+              <Text style={styles.courseSubtitle}>
                 {selectedTeebox.name} tees
               </Text>
             </View>
-            <Button mode="outlined" onPress={handleChangeCourse} compact>
+            <Button
+              mode="outlined"
+              onPress={handleChangeCourse}
+              compact
+              labelStyle={{ fontFamily: Font.medium }}
+            >
               Change
             </Button>
           </View>
@@ -336,27 +331,15 @@ export default function StartRoundScreen() {
       </View>
 
       {/* Friends selection */}
-      <View className="px-4 pb-2">
-        <Text style={styles.sectionLabel}>
-          Select Players ({totalPlayers})
-        </Text>
+      <View style={{ paddingHorizontal: Space.lg, paddingBottom: Space.sm }}>
+        <Text style={styles.sectionLabel}>Select Players ({totalPlayers})</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4">
+      <ScrollView style={{ flex: 1, paddingHorizontal: Space.lg }}>
         {/* Current user (always included) */}
         <View style={styles.playerCard}>
-          <View
-            style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
-          >
-            <Text
-              variant="bodyLarge"
-              style={{
-                color: Color.neutral900,
-                fontWeight: "600",
-              }}
-            >
-              You
-            </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <Text style={styles.playerYouText}>You</Text>
           </View>
           <FontAwesome5 name="check-circle" size={20} color={Color.primary} />
         </View>
@@ -389,18 +372,11 @@ export default function StartRoundScreen() {
                     size={36}
                   />
                   <View>
-                    <Text
-                      variant="bodyLarge"
-                      style={{
-                        color: Color.neutral900,
-                        fontWeight: "600",
-                        textTransform: "capitalize",
-                      }}
-                    >
+                    <Text style={styles.playerName}>
                       {getFriendName(friend)}
                     </Text>
                     {friend.profile.email && (
-                      <Text variant="bodySmall" style={{ color: Color.neutral500 }}>
+                      <Text style={styles.playerEmail}>
                         {friend.profile.email}
                       </Text>
                     )}
@@ -413,7 +389,11 @@ export default function StartRoundScreen() {
                     color={Color.primary}
                   />
                 ) : (
-                  <FontAwesome5 name="circle" size={20} color={Color.neutral300} />
+                  <FontAwesome5
+                    name="circle"
+                    size={20}
+                    color={Color.neutral300}
+                  />
                 )}
               </View>
             </Pressable>
@@ -422,23 +402,16 @@ export default function StartRoundScreen() {
 
         {/* Empty friends message */}
         {friends.length === 0 && (
-          <View className="items-center py-8">
-            <Text
-              variant="bodyMedium"
-              style={{ color: Color.neutral400, textAlign: "center" }}
-            >
-              No friends yet. Add friends from the Friends tab to play
-              together!
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              No friends yet. Add friends from the Friends tab to play together!
             </Text>
           </View>
         )}
       </ScrollView>
 
       {/* Sticky Footer */}
-      <View
-        className="px-4 pt-4 pb-14"
-        style={{ borderTopWidth: 1, borderTopColor: Color.neutral200 }}
-      >
+      <View style={styles.stickyFooter}>
         <Button
           mode="contained"
           buttonColor={Color.primary}
@@ -446,7 +419,8 @@ export default function StartRoundScreen() {
           onPress={handleStartRound}
           loading={isStarting}
           disabled={isStarting}
-          style={{ borderRadius: Radius.lg }}
+          style={{ borderRadius: Radius.lg, padding: 5 }}
+          labelStyle={{ fontFamily: Font.bold }}
         >
           Start Round ({totalPlayers}{" "}
           {totalPlayers === 1 ? "player" : "players"})
@@ -457,13 +431,17 @@ export default function StartRoundScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  section: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+  },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.md,
-    textTransform: "uppercase",
   },
   searchbar: {
     backgroundColor: "transparent",
@@ -474,7 +452,7 @@ const styles = StyleSheet.create({
   courseCard: {
     padding: Space.lg,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     marginBottom: Space.lg,
@@ -486,13 +464,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   courseName: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 17,
     color: Color.neutral900,
+    textTransform: "capitalize",
+  },
+  courseSubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+    marginTop: 2,
     textTransform: "capitalize",
   },
   playerCard: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     padding: Space.lg,
@@ -503,7 +489,40 @@ const styles = StyleSheet.create({
     ...Shadow.sm,
   },
   playerCardSelected: {
-    borderColor: Color.primary,
+    borderColor: Color.primaryBorder,
     backgroundColor: Color.primaryLight,
+  },
+  playerYouText: {
+    fontFamily: Font.semiBold,
+    fontSize: 16,
+    color: Color.neutral900,
+  },
+  playerName: {
+    fontFamily: Font.semiBold,
+    fontSize: 16,
+    color: Color.neutral900,
+    textTransform: "capitalize",
+  },
+  playerEmail: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: Space.xxl,
+  },
+  emptyText: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral400,
+    textAlign: "center",
+  },
+  stickyFooter: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+    paddingBottom: 56,
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
   },
 });

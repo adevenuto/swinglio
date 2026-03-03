@@ -1,4 +1,4 @@
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { parseTeeboxes, Teebox } from "@/hooks/use-course-search";
 import { CityResult, useCourses } from "@/hooks/use-courses";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
@@ -336,7 +336,7 @@ export default function CourseEditorScreen() {
 
   if (isLoadingCourse) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -344,12 +344,12 @@ export default function CourseEditorScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={100}
     >
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: Space.lg, paddingBottom: 60 }}
       >
@@ -364,7 +364,7 @@ export default function CourseEditorScreen() {
             mode="outlined"
             value={name}
             onChangeText={setName}
-            style={{ marginBottom: Space.md }}
+            style={{ marginBottom: Space.md, fontFamily: Font.regular }}
           />
           <TextInput
             label="Street"
@@ -372,7 +372,7 @@ export default function CourseEditorScreen() {
             value={street}
             onChangeText={setStreet}
             multiline
-            style={{ marginBottom: Space.md }}
+            style={{ marginBottom: Space.md, fontFamily: Font.regular }}
           />
 
           {/* City search */}
@@ -387,7 +387,7 @@ export default function CourseEditorScreen() {
                 marginBottom: showCityResults && cityResults.length > 0 ? 0 : Space.md,
               },
             ]}
-            inputStyle={{ color: Color.neutral900, fontSize: 14 }}
+            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900, fontSize: 14 }}
           />
           {showCityResults && cityResults.length > 0 && (
             <ScrollView
@@ -406,7 +406,7 @@ export default function CourseEditorScreen() {
                 >
                   <Text
                     onPress={() => selectCity(city)}
-                    style={{ color: Color.neutral900 }}
+                    style={{ fontFamily: Font.regular, color: Color.neutral900 }}
                   >
                     {city.name}, {city.state_abbr}
                   </Text>
@@ -594,7 +594,7 @@ export default function CourseEditorScreen() {
                       marginBottom: Space.sm,
                     }}
                   >
-                    <Text variant="labelMedium" style={{ color: Color.neutral500 }}>
+                    <Text style={{ fontFamily: Font.medium, fontSize: 14, color: Color.neutral500 }}>
                       Secondary Color
                     </Text>
                     {selectedTeebox.secondaryColor && (
@@ -606,8 +606,7 @@ export default function CourseEditorScreen() {
                         }
                       >
                         <Text
-                          variant="labelSmall"
-                          style={{ color: Color.danger }}
+                          style={{ fontFamily: Font.medium, fontSize: 12, color: Color.danger }}
                         >
                           Clear
                         </Text>
@@ -697,7 +696,7 @@ export default function CourseEditorScreen() {
                   alignItems: "center",
                 }}
               >
-                <Text variant="bodyMedium" style={{ color: Color.neutral500 }}>
+                <Text style={{ fontFamily: Font.medium, fontSize: 15, color: Color.neutral500 }}>
                   Holes:
                 </Text>
                 <Chip
@@ -725,26 +724,22 @@ export default function CourseEditorScreen() {
                 }}
               >
                 <Text
-                  variant="labelSmall"
-                  style={{ width: 40, color: Color.neutral500, fontWeight: "600" }}
+                  style={{ width: 40, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
                 >
                   Hole
                 </Text>
                 <Text
-                  variant="labelSmall"
-                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
+                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
                 >
                   Par
                 </Text>
                 <Text
-                  variant="labelSmall"
-                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
+                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
                 >
                   Yardage
                 </Text>
                 <Text
-                  variant="labelSmall"
-                  style={{ flex: 1, color: Color.neutral500, fontWeight: "600" }}
+                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
                 >
                   Hdcp
                 </Text>
@@ -768,11 +763,11 @@ export default function CourseEditorScreen() {
                     }}
                   >
                     <Text
-                      variant="bodyMedium"
                       style={{
                         width: 40,
+                        fontFamily: Font.semiBold,
+                        fontSize: 15,
                         color: Color.neutral900,
-                        fontWeight: "600",
                       }}
                     >
                       {i + 1}
@@ -835,6 +830,7 @@ export default function CourseEditorScreen() {
           loading={isSaving}
           disabled={isSaving}
           style={{ marginBottom: Space.md, borderRadius: Radius.lg }}
+          labelStyle={{ fontFamily: Font.bold }}
         >
           {isEdit ? "Save Course" : "Create Course"}
         </Button>
@@ -845,6 +841,7 @@ export default function CourseEditorScreen() {
             textColor={Color.danger}
             onPress={handleDelete}
             style={{ marginBottom: Space.xl }}
+            labelStyle={{ fontFamily: Font.medium }}
           >
             Delete Course
           </Button>
@@ -855,17 +852,23 @@ export default function CourseEditorScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Color.neutral50,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Color.neutral50,
+  },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.lg,
-    textTransform: "uppercase",
   },
   section: {
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     padding: Space.lg,
     marginBottom: Space.lg,

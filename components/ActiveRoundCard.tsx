@@ -1,4 +1,4 @@
-import { Color, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { ActiveRound } from "@/hooks/use-active-rounds";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
@@ -29,10 +29,10 @@ export default function ActiveRoundCard({ rounds }: Props) {
         >
           <View style={styles.row}>
             <View style={styles.leftColumn}>
-              <Text variant="titleMedium" style={styles.courseName}>
+              <Text style={styles.courseName}>
                 {round.courses?.name || "Unknown Course"}
               </Text>
-              <Text variant="bodyMedium" style={styles.subtitle}>
+              <Text style={styles.subtitle}>
                 {round.courses?.name}
                 {(round.teebox_data as any)?.name
                   ? ` · ${(round.teebox_data as any).name} tees`
@@ -44,7 +44,7 @@ export default function ActiveRoundCard({ rounds }: Props) {
                 <MaterialCommunityIcons
                   name="golf-cart"
                   size={22}
-                  color="#22c55e"
+                  color={Color.primary}
                 />
               </View>
               <Text style={styles.badgeLabel}>Play now</Text>
@@ -58,17 +58,13 @@ export default function ActiveRoundCard({ rounds }: Props) {
 
 const styles = StyleSheet.create({
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Color.neutral400,
-    letterSpacing: 0.5,
+    ...Type.caption,
     marginBottom: Space.sm,
-    textTransform: "uppercase",
   },
   card: {
     padding: Space.lg,
     borderWidth: 1,
-    borderColor: Color.neutral300,
+    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,
@@ -83,7 +79,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   courseName: {
-    fontWeight: "700",
+    fontFamily: Font.bold,
+    fontSize: 17,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
@@ -96,17 +93,19 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: Color.white,
     borderWidth: 2,
-    borderColor: "#22c55e",
+    borderColor: Color.primaryBorder,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeLabel: {
+    fontFamily: Font.semiBold,
     fontSize: 10,
-    fontWeight: "600",
     color: Color.neutral500,
     marginTop: 2,
   },
   subtitle: {
+    fontFamily: Font.regular,
+    fontSize: 14,
     color: Color.neutral500,
     textTransform: "capitalize",
   },

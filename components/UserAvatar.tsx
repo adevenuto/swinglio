@@ -1,3 +1,4 @@
+import { Color, Font } from "@/constants/design-tokens";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Image, View } from "react-native";
@@ -17,7 +18,7 @@ export default function UserAvatar({ avatarUrl, size }: Props) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: "#e5e5e5",
+          backgroundColor: Color.neutral100,
         }}
       />
     );
@@ -35,7 +36,7 @@ export default function UserAvatar({ avatarUrl, size }: Props) {
       <MaterialCommunityIcons
         name="account-circle"
         size={size}
-        color="#d4d4d4"
+        color={Color.neutral300}
       />
     </View>
   );

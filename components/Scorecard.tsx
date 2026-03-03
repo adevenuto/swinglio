@@ -1,4 +1,4 @@
-import { Color, Radius } from "@/constants/design-tokens";
+import { Color, Font, Radius } from "@/constants/design-tokens";
 import { Teebox } from "@/hooks/use-course-search";
 import { getContrastColor } from "@/lib/color-contrast";
 import { ScoreDetails } from "@/types/scoring";
@@ -31,13 +31,13 @@ export type ScorecardRef = {
 const FIXED_COL_WIDTH = 120;
 const CELL_WIDTH = 56;
 const CELL_HEIGHT = 44;
-const BORDER_COLOR = "#f1f1f1";
+const BORDER_COLOR = Color.neutral200;
 const CELL_PADDING = 7;
 const FALLBACK_TEEBOX_COLOR = "#677079";
-const HIGHLIGHT_BG = "#f9fafb";
-const HIGHLIGHT_BORDER = "#d4d4d4";
+const HIGHLIGHT_BG = Color.neutral50;
+const HIGHLIGHT_BORDER = Color.neutral300;
 const SYMBOL_SIZE = 28;
-const SYMBOL_COLOR = "#1a1a1a";
+const SYMBOL_COLOR = Color.neutral900;
 
 // --- Column definitions ---
 
@@ -116,7 +116,6 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
 
     useImperativeHandle(ref, () => ({
       scrollToHole: (holeNumber: number) => {
-        // Calculate the x offset: each column is CELL_WIDTH, find index of the hole
         const colIndex = columns.findIndex(
           (c) => c.type === "hole" && c.number === holeNumber,
         );
@@ -216,51 +215,44 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       let inner: React.ReactNode;
 
       if (diff === 0) {
-        // Par — plain number
         inner = <Text style={styles.cellText}>{score}</Text>;
       } else if (diff === -1) {
-        // Birdie — circle border
         inner = (
           <View style={symbolStyles.circle}>
             <Text style={styles.cellText}>{score}</Text>
           </View>
         );
       } else if (diff === -2) {
-        // Eagle — solid circle
         inner = (
           <View style={symbolStyles.circleSolid}>
-            <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+            <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
           </View>
         );
       } else if (diff <= -3) {
-        // Albatross+ — solid circle with frame
         inner = (
           <View style={symbolStyles.circleFrame}>
             <View style={symbolStyles.circleSolid}>
-              <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+              <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
             </View>
           </View>
         );
       } else if (diff === 1) {
-        // Bogey — square border
         inner = (
           <View style={symbolStyles.square}>
             <Text style={styles.cellText}>{score}</Text>
           </View>
         );
       } else if (diff === 2) {
-        // Double bogey — solid square
         inner = (
           <View style={symbolStyles.squareSolid}>
-            <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+            <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
           </View>
         );
       } else {
-        // Triple bogey+ — solid square with frame
         inner = (
           <View style={symbolStyles.squareFrame}>
             <View style={symbolStyles.squareSolid}>
-              <Text style={[styles.cellText, { color: "#fff" }]}>{score}</Text>
+              <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
             </View>
           </View>
         );
@@ -310,9 +302,9 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
           return cell;
         }
         if (col.type === "out") {
-          return renderDataCell("OUT", "out", "#fafafa");
+          return renderDataCell("OUT", "out", Color.neutral100);
         }
-        return renderDataCell("IN", "in", "#fafafa");
+        return renderDataCell("IN", "in", Color.neutral100);
       });
 
     const buildTeeboxRow = () =>
@@ -346,18 +338,18 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
           return renderDataCell(
             par,
             `par-${col.key}`,
-            hl ? HIGHLIGHT_BG : "#fafafa",
+            hl ? HIGHLIGHT_BG : Color.neutral100,
             undefined,
             hl ? HIGHLIGHT_BORDER : undefined,
           );
         }
         if (col.type === "out") {
           const total = sumField(teeboxData.holes, front, "par");
-          return renderDataCell(total, "par-out", "#fafafa");
+          return renderDataCell(total, "par-out", Color.neutral100);
         }
         const inKeys = holeCount > 9 ? back : allKeys;
         const total = sumField(teeboxData.holes, inKeys, "par");
-        return renderDataCell(total, "par-in", "#fafafa");
+        return renderDataCell(total, "par-in", Color.neutral100);
       });
 
     const buildPlayerRow = (player: ScorecardPlayer) => {
@@ -414,7 +406,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
               {teeboxData.name}
             </Text>
           </View>
-          {renderFixedCell("Par", "#fafafa")}
+          {renderFixedCell("Par", Color.neutral100)}
           {players.map((p) => {
             const isCurrentUser = p.golfer_id === currentUserId;
             const inSkins = p.score_details?.inSkins === true;
@@ -425,7 +417,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
                   style={[
                     styles.cellText,
                     { textTransform: "capitalize" },
-                    isCurrentUser && { fontWeight: "700" },
+                    isCurrentUser && { fontFamily: Font.bold },
                   ]}
                   numberOfLines={1}
                 >
@@ -506,8 +498,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cellText: {
+    fontFamily: Font.medium,
     fontSize: 18,
-    color: "#1a1a1a",
+    color: Color.neutral900,
   },
   skinsIndicator: {
     position: "absolute" as const,
@@ -516,7 +509,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 4,
-    backgroundColor: "#16a34a",
+    backgroundColor: Color.primary,
   },
 });
 

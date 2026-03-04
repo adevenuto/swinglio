@@ -17,6 +17,7 @@ import {
 } from "@/contexts/gameplay-context";
 import { supabase } from "@/lib/supabase";
 import { getCourseImageSource } from "@/utils/golf-image";
+import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -218,7 +219,10 @@ function GameplayScreenContent() {
               resizeMode="cover"
             />
             {/* Dark overlay at bottom of image */}
-            <View style={gameStyles.imageOverlay} />
+            <LinearGradient
+              colors={["transparent", "rgba(0,0,0,0.65)"]}
+              style={gameStyles.imageOverlay}
+            />
             {/* Course name on overlay */}
             <Text style={gameStyles.courseNameOverlay} numberOfLines={1}>
               {round.courses?.name || "Unknown"}
@@ -392,8 +396,7 @@ const gameStyles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 44,
-    backgroundColor: "rgba(0,0,0,0.40)",
+    height: 80,
   },
   courseNameOverlay: {
     position: "absolute",

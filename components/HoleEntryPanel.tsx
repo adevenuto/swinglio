@@ -17,10 +17,8 @@ import {
 } from "@/types/scoring";
 import Feather from "@expo/vector-icons/Feather";
 import React, {
-  forwardRef,
   useCallback,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -35,10 +33,6 @@ import DPad from "./DPad";
 import Stepper, { CountStepperRow } from "./Stepper";
 
 // === Types ===
-
-export type HoleEntryPanelRef = {
-  saveCurrentHole: () => void;
-};
 
 type HoleEntryPanelProps = {
   holeNumber: number;
@@ -99,27 +93,20 @@ function getScoreColor(diff: number): string {
 
 // === Component ===
 
-const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
-  (
-    {
-      holeNumber,
-      par,
-      yardage,
-      currentScore,
-      currentStats,
-      onSave,
-      disabled = false,
-    },
-    ref,
-  ) => {
+function HoleEntryPanel({
+  holeNumber,
+  par,
+  yardage,
+  currentScore,
+  currentStats,
+  onSave,
+  disabled = false,
+}: HoleEntryPanelProps) {
     const parNum = parseInt(par, 10) || 4;
     const isPar3 = parNum === 3;
 
     // --- Local editing state ---
     const [score, setScore] = useState<number>(parNum);
-    const [hasScoreEntry, setHasScoreEntry] = useState(
-      currentScore !== "" && currentScore != null,
-    );
     const [fairway, setFairway] = useState<FairwayResult>(null);
     const [puttsCount, setPuttsCount] = useState<number>(
       currentStats?.putts ?? 2,
@@ -154,22 +141,72 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       opacity: translateX.value === 0 ? 1 : Animation.slideMinOpacity,
     }));
 
-    // Re-initialize when holeNumber changes
+    // Stable refs for use in hole-initialization effect
+    const currentScoreRef = useRef(currentScore);
+    currentScoreRef.current = currentScore;
+    const currentStatsRef = useRef(currentStats);
+    currentStatsRef.current = currentStats;
+    const parNumRef = useRef(parNum);
+    parNumRef.current = parNum;
+    const onSaveRef = useRef(onSave);
+    onSaveRef.current = onSave;
+
+    // Push current state to context (optimistic update)
+    const pushUpdate = useCallback(
+      (overrides?: {
+        score?: number;
+        putts?: number;
+        hasPutts?: boolean;
+        fairway?: FairwayResult;
+        bunkers?: BunkerEntry[];
+        penalties?: PenaltyEntry[];
+      }) => {
+        const s = overrides?.score ?? score;
+        const p = overrides?.putts ?? puttsCount;
+        const hp = overrides?.hasPutts ?? hasPuttsEntry;
+        const f = overrides?.fairway ?? fairway;
+        const b = overrides?.bunkers ?? bunkers;
+        const pen = overrides?.penalties ?? penalties;
+        onSave({
+          score: String(s),
+          stats: {
+            fairway: f,
+            putts: hp ? p : null,
+            gir: calculateGIR(s, hp ? p : null, parNum),
+            bunkers: b,
+            penalties: pen,
+          },
+        });
+      },
+      [score, puttsCount, hasPuttsEntry, fairway, bunkers, penalties, parNum, onSave],
+    );
+
+    // Re-initialize when holeNumber changes + auto-populate par
     useEffect(() => {
-      if (currentScore && currentScore !== "") {
-        setScore(parseInt(currentScore, 10) || parNum);
-        setHasScoreEntry(true);
-      } else {
-        setScore(parNum);
-        setHasScoreEntry(false);
-      }
-      const stats = currentStats ?? createDefaultHoleStats();
+      const cs = currentScoreRef.current;
+      const pn = parNumRef.current;
+      const stats = currentStatsRef.current ?? createDefaultHoleStats();
+
+      const scoreVal = cs ? parseInt(cs, 10) : pn;
+      setScore(scoreVal);
       setFairway(stats.fairway);
       setPuttsCount(stats.putts ?? 2);
       setHasPuttsEntry(stats.putts != null);
       setBunkers([...stats.bunkers]);
       setPenalties([...stats.penalties]);
-    }, [holeNumber, currentScore, currentStats, parNum]);
+
+      // Auto-populate: push par (or existing score) to context immediately
+      onSaveRef.current({
+        score: String(scoreVal),
+        stats: {
+          fairway: stats.fairway,
+          putts: stats.putts,
+          gir: calculateGIR(scoreVal, stats.putts, pn),
+          bunkers: stats.bunkers,
+          penalties: stats.penalties,
+        },
+      });
+    }, [holeNumber]);
 
     // Effective putts for GIR calculation
     const effectivePutts = hasPuttsEntry ? puttsCount : null;
@@ -182,73 +219,48 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
     const scoreColor = getScoreColor(displayScoreDiff);
     const scoreLabel = getScoreLabel(displayScoreDiff);
 
-    // Build save payload
-    const buildPayload = useCallback(
-      () => ({
-        score: hasScoreEntry ? String(score) : "",
-        stats: {
-          fairway,
-          putts: hasPuttsEntry ? puttsCount : null,
-          gir: calculateGIR(score, hasPuttsEntry ? puttsCount : null, parNum),
-          bunkers,
-          penalties,
-        },
-      }),
-      [
-        score,
-        hasScoreEntry,
-        fairway,
-        puttsCount,
-        hasPuttsEntry,
-        parNum,
-        bunkers,
-        penalties,
-      ],
-    );
-
-    // Expose save to parent
-    useImperativeHandle(
-      ref,
-      () => ({
-        saveCurrentHole: () => {
-          onSave(buildPayload());
-        },
-      }),
-      [onSave, buildPayload],
-    );
-
     // Score stepper helpers
     const incrementScore = () => {
-      setScore((s) => Math.min(s + 1, 15));
-      setHasScoreEntry(true);
+      const next = Math.min(score + 1, 15);
+      setScore(next);
+      pushUpdate({ score: next });
     };
     const decrementScore = () => {
-      setScore((s) => Math.max(s - 1, 1));
-      setHasScoreEntry(true);
+      const next = Math.max(score - 1, 1);
+      setScore(next);
+      pushUpdate({ score: next });
     };
 
     // Putts stepper helpers
     const incrementPutts = () => {
-      setPuttsCount((c) => Math.min(c + 1, 10));
+      const next = Math.min(puttsCount + 1, 10);
+      setPuttsCount(next);
       setHasPuttsEntry(true);
+      pushUpdate({ putts: next, hasPutts: true });
     };
     const decrementPutts = () => {
-      setPuttsCount((c) => Math.max(c - 1, 0));
+      const next = Math.max(puttsCount - 1, 0);
+      setPuttsCount(next);
       setHasPuttsEntry(true);
+      pushUpdate({ putts: next, hasPutts: true });
     };
 
     // Fairway toggle
     const toggleFairway = (value: FairwayResult) => {
-      setFairway((prev) => (prev === value ? null : value));
+      const next = fairway === value ? null : value;
+      setFairway(next);
+      pushUpdate({ fairway: next });
     };
 
     const handleBunkerChange = (type: BunkerEntry["type"], delta: number) => {
       setBunkers((prev) => {
         const current = countByType(prev, type);
         const next = Math.max(0, current + delta);
-        return setCountForType(prev, type, next, (t) => ({
+        const updated = setCountForType(prev, type, next, (t) => ({
           type: t as BunkerEntry["type"],
         }));
+        pushUpdate({ bunkers: updated });
+        return updated;
       });
     };
 
@@ -256,9 +268,11 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
       setPenalties((prev) => {
         const current = countByType(prev, type);
         const next = Math.max(0, current + delta);
-        return setCountForType(prev, type, next, (t) => ({
+        const updated = setCountForType(prev, type, next, (t) => ({
           type: t as PenaltyEntry["type"],
         }));
+        pushUpdate({ penalties: updated });
+        return updated;
       });
     };
 
@@ -272,6 +286,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
               style={[styles.dpadWrapper, isPar3 && { opacity: 0.25 }]}
               pointerEvents={isPar3 ? "none" : "auto"}
             >
+              <Text style={styles.stepperLabel}>Tee Shot Accuracy</Text>
               <DPad
                 size={150}
                 value={fairway}
@@ -295,7 +310,6 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
                   value={score}
                   onIncrement={incrementScore}
                   onDecrement={decrementScore}
-                  variant="primary"
                   direction="vertical"
                   disabled={disabled}
                   valueColor={scoreColor}
@@ -312,7 +326,6 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
                   value={puttsCount}
                   onIncrement={incrementPutts}
                   onDecrement={decrementPutts}
-                  variant="primary"
                   direction="vertical"
                   disabled={disabled}
                 />
@@ -393,10 +406,7 @@ const HoleEntryPanel = forwardRef<HoleEntryPanelRef, HoleEntryPanelProps>(
         </Animated.View>
       </View>
     );
-  },
-);
-
-HoleEntryPanel.displayName = "HoleEntryPanel";
+}
 
 export default HoleEntryPanel;
 

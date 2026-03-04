@@ -1,4 +1,4 @@
-import HoleEntryPanel, { HoleEntryPanelRef } from "@/components/HoleEntryPanel";
+import HoleEntryPanel from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
 import Scorecard, { ScorecardRef } from "@/components/Scorecard";
 import {
@@ -57,13 +57,13 @@ function GameplayScreenContent() {
     teeboxHoleData,
     scorecardPlayers,
     fetchRound,
-    saveHole,
+    updateHole,
+    flushPersist,
     setActiveHole,
     handleQuitRound,
   } = useGameplay();
 
   const scorecardRef = useRef<ScorecardRef>(null);
-  const holeEntryRef = useRef<HoleEntryPanelRef>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -112,37 +112,37 @@ function GameplayScreenContent() {
     [setActiveHole],
   );
 
-  // Tapping a hole number on the scorecard — save current, then jump
+  // Tapping a hole number on the scorecard — flush persist, then jump
   const handleHolePress = useCallback(
     (holeNumber: number) => {
-      holeEntryRef.current?.saveCurrentHole();
+      flushPersist();
       setActiveHole(holeNumber);
       scorecardRef.current?.scrollToHole(holeNumber);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     },
-    [setActiveHole],
+    [setActiveHole, flushPersist],
   );
 
   // Swipe gestures for HoleEntryPanel
   const swipeToNext = useCallback(() => {
     if (activeHole < holeCount) {
-      holeEntryRef.current?.saveCurrentHole();
+      flushPersist();
       const next = activeHole + 1;
       setActiveHole(next);
       scorecardRef.current?.scrollToHole(next);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
-  }, [activeHole, holeCount, setActiveHole]);
+  }, [activeHole, holeCount, setActiveHole, flushPersist]);
 
   const swipeToPrev = useCallback(() => {
     if (activeHole > 1) {
-      holeEntryRef.current?.saveCurrentHole();
+      flushPersist();
       const prev = activeHole - 1;
       setActiveHole(prev);
       scorecardRef.current?.scrollToHole(prev);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
-  }, [activeHole, setActiveHole]);
+  }, [activeHole, setActiveHole, flushPersist]);
 
   const swipeGesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
@@ -156,14 +156,14 @@ function GameplayScreenContent() {
 
   // Flush current hole then show quit/finish modal
   const onFinishRound = useCallback(() => {
-    holeEntryRef.current?.saveCurrentHole();
+    flushPersist();
     handleQuitRound();
-  }, [handleQuitRound]);
+  }, [handleQuitRound, flushPersist]);
 
-  // Save current hole (used by HoleNavigation)
+  // Flush persist (used by HoleNavigation)
   const saveCurrentHole = useCallback(() => {
-    holeEntryRef.current?.saveCurrentHole();
-  }, []);
+    flushPersist();
+  }, [flushPersist]);
 
   if (isLoading) {
     return (
@@ -190,7 +190,7 @@ function GameplayScreenContent() {
       <View style={gameStyles.navHeader}>
         <Pressable
           onPress={() => {
-            holeEntryRef.current?.saveCurrentHole();
+            flushPersist();
             router.back();
           }}
           style={gameStyles.navBack}
@@ -267,13 +267,12 @@ function GameplayScreenContent() {
               style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}
             >
               <HoleEntryPanel
-                ref={holeEntryRef}
                 holeNumber={activeHole}
                 par={teeboxHoleData.par}
                 yardage={teeboxHoleData.length}
                 currentScore={activeHoleData?.score ?? ""}
                 currentStats={activeHoleData?.stats}
-                onSave={saveHole}
+                onSave={updateHole}
               />
             </View>
           </GestureDetector>

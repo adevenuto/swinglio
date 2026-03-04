@@ -10,38 +10,28 @@ type StepperProps = {
   value: number;
   onIncrement: () => void;
   onDecrement: () => void;
-  variant?: "primary" | "outline";
+  size?: "lg" | "sm";
   direction?: "vertical" | "horizontal";
   disabled?: boolean;
   valueColor?: string;
   style?: ViewStyle;
 };
 
-// === Variant config ===
+// === Size config ===
 
-const VARIANT_CONFIG = {
-  primary: {
+const SIZE_CONFIG = {
+  lg: {
     buttonSize: 40,
-    buttonBg: Color.primary,
-    buttonBorder: Color.primary,
-    pressedBg: "#0E4528",
-    iconColor: Color.white,
     iconSize: 20,
     valueFontFamily: Font.bold,
     valueFontSize: 32,
-    defaultValueColor: Color.neutral900,
     dimOnZero: false,
   },
-  outline: {
+  sm: {
     buttonSize: 32,
-    buttonBg: Color.white,
-    buttonBorder: Color.neutral300,
-    pressedBg: Color.neutral100,
-    iconColor: Color.neutral900,
     iconSize: 16,
     valueFontFamily: Font.semiBold,
     valueFontSize: 16,
-    defaultValueColor: Color.neutral900,
     dimOnZero: true,
   },
 } as const;
@@ -52,20 +42,30 @@ export default function Stepper({
   value,
   onIncrement,
   onDecrement,
-  variant = "primary",
+  size = "lg",
   direction = "vertical",
   disabled = false,
   valueColor,
   style,
 }: StepperProps) {
-  const config = VARIANT_CONFIG[variant];
-  const btnStyles = BUTTON_STYLES[variant];
+  const config = SIZE_CONFIG[size];
+
+  const btnStyle = {
+    width: config.buttonSize,
+    height: config.buttonSize,
+    borderRadius: config.buttonSize / 2,
+    borderWidth: 1,
+    borderColor: Color.primary,
+    backgroundColor: Color.primary,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+  };
 
   const resolvedValueColor =
     valueColor ??
     (config.dimOnZero && value === 0
       ? Color.neutral400
-      : config.defaultValueColor);
+      : Color.neutral900);
 
   const valueElement = (
     <Text
@@ -73,7 +73,7 @@ export default function Stepper({
         fontFamily: config.valueFontFamily,
         fontSize: config.valueFontSize,
         color: resolvedValueColor,
-        minWidth: variant === "primary" ? 40 : 20,
+        minWidth: size === "lg" ? 40 : 20,
         textAlign: "center",
       }}
     >
@@ -89,11 +89,11 @@ export default function Stepper({
           disabled={disabled}
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
-          <View style={btnStyles.base}>
+          <View style={btnStyle}>
             <Feather
               name="minus"
               size={config.iconSize}
-              color={config.iconColor}
+              color={Color.white}
             />
           </View>
         </Pressable>
@@ -103,11 +103,11 @@ export default function Stepper({
           disabled={disabled}
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
-          <View style={btnStyles.base}>
+          <View style={btnStyle}>
             <Feather
               name="plus"
               size={config.iconSize}
-              color={config.iconColor}
+              color={Color.white}
             />
           </View>
         </Pressable>
@@ -123,11 +123,11 @@ export default function Stepper({
         disabled={disabled}
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
-        <View style={btnStyles.base}>
+        <View style={btnStyle}>
           <Feather
             name="plus"
             size={config.iconSize}
-            color={config.iconColor}
+            color={Color.white}
           />
         </View>
       </Pressable>
@@ -137,11 +137,11 @@ export default function Stepper({
         disabled={disabled}
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
-        <View style={btnStyles.base}>
+        <View style={btnStyle}>
           <Feather
             name="minus"
             size={config.iconSize}
-            color={config.iconColor}
+            color={Color.white}
           />
         </View>
       </Pressable>
@@ -173,7 +173,7 @@ export function CountStepperRow({
         value={count}
         onIncrement={onIncrement}
         onDecrement={onDecrement}
-        variant="outline"
+        size="sm"
         direction="horizontal"
         disabled={disabled}
       />
@@ -183,45 +183,13 @@ export function CountStepperRow({
 
 // === Styles ===
 
-const primaryButtonStyles = StyleSheet.create({
-  base: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Color.primary,
-    backgroundColor: Color.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
-
-const outlineButtonStyles = StyleSheet.create({
-  base: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    backgroundColor: Color.white,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
-
-const BUTTON_STYLES = {
-  primary: primaryButtonStyles,
-  outline: outlineButtonStyles,
-};
-
 const verticalStyles = StyleSheet.create({
   pill: {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "space-around",
     width: 58,
-    minHeight: 120,
-    // margin: "auto",
+    minHeight: 140,
     alignSelf: "stretch",
     borderRadius: Radius.full,
     borderWidth: 1,

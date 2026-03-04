@@ -359,12 +359,26 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
           const score = holes[col.key]?.score ?? "";
           const par = teeboxData.holes[col.key]?.par ?? "";
           const hl = col.number === currentHole;
-          return renderScoreCell(
+          const cell = renderScoreCell(
             score,
             par,
             `${player.id}-${col.key}`,
             hl,
           );
+          if (onHolePress) {
+            return (
+              <Pressable
+                key={`${player.id}-hn-${col.key}`}
+                onPress={() => onHolePress(col.number)}
+                style={({ pressed }) =>
+                  pressed ? { opacity: 0.5 } : undefined
+                }
+              >
+                {cell}
+              </Pressable>
+            );
+          }
+          return cell;
         }
         if (col.type === "out") {
           const total = sumField(holes, front, "score");

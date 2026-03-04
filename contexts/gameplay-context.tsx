@@ -80,7 +80,8 @@ type GameplayContextType = {
 
   // Actions
   fetchRound: () => Promise<void>;
-  saveHole: (data: { score: string; stats: HoleStats }) => Promise<void>;
+  updateHole: (data: { score: string; stats: HoleStats }) => void;
+  flushPersist: () => Promise<void>;
   setActiveHole: (hole: number) => void;
   handleQuitRound: () => void;
   quitWithStatus: (
@@ -208,9 +209,42 @@ export function GameplayProvider({
     [players, user?.id],
   );
 
-  // --- Save hole ---
-  const saveHole = useCallback(
-    async (data: { score: string; stats: HoleStats }) => {
+  // --- Debounced persist mechanism ---
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const persistHole = useCallback(async () => {
+    const me = playersRef.current.find((p) => p.golfer_id === user?.id);
+    if (!me) return;
+    const { error } = await supabase
+      .from("scores")
+      .update({ score_details: me.score_details })
+      .eq("id", me.id);
+    if (error) Alert.alert("Error", "Failed to save. Please try again.");
+  }, [user?.id]);
+
+  const schedulePersist = useCallback(() => {
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => persistHole(), 1000);
+  }, [persistHole]);
+
+  const flushPersist = useCallback(async () => {
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    }
+    await persistHole();
+  }, [persistHole]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    };
+  }, []);
+
+  // --- Update hole (optimistic only, schedules debounced persist) ---
+  const updateHole = useCallback(
+    (data: { score: string; stats: HoleStats }) => {
       const currentMyScore = playersRef.current.find(
         (p) => p.golfer_id === user?.id,
       );
@@ -218,22 +252,18 @@ export function GameplayProvider({
 
       const holeKey = `hole-${activeHole}`;
 
-      const updatedHoleData = {
-        ...currentMyScore.score_details.holes[holeKey],
-        score: data.score,
-        stats: data.stats,
-      };
-
       const updatedScoreDetails = {
         ...currentMyScore.score_details,
         holes: {
           ...currentMyScore.score_details.holes,
-          [holeKey]: updatedHoleData,
+          [holeKey]: {
+            ...currentMyScore.score_details.holes[holeKey],
+            score: data.score,
+            stats: data.stats,
+          },
         },
       };
 
-      // Optimistic update — playersRef is updated synchronously inside updatePlayers
-      const prevPlayers = playersRef.current;
       updatePlayers((prev) =>
         prev.map((p) =>
           p.id === currentMyScore.id
@@ -242,17 +272,9 @@ export function GameplayProvider({
         ),
       );
 
-      const { error } = await supabase
-        .from("scores")
-        .update({ score_details: updatedScoreDetails })
-        .eq("id", currentMyScore.id);
-
-      if (error) {
-        updatePlayers(prevPlayers);
-        Alert.alert("Error", "Failed to save. Please try again.");
-      }
+      schedulePersist();
     },
-    [user?.id, round, activeHole, updatePlayers],
+    [user?.id, round, activeHole, updatePlayers, schedulePersist],
   );
 
   // --- Get holes scored (reads from ref — always current) ---
@@ -436,7 +458,8 @@ export function GameplayProvider({
       teeboxHoleData,
       scorecardPlayers,
       fetchRound,
-      saveHole,
+      updateHole,
+      flushPersist,
       setActiveHole,
       handleQuitRound,
       quitWithStatus,
@@ -456,7 +479,8 @@ export function GameplayProvider({
       teeboxHoleData,
       scorecardPlayers,
       fetchRound,
-      saveHole,
+      updateHole,
+      flushPersist,
       handleQuitRound,
       quitWithStatus,
       getHolesScored,

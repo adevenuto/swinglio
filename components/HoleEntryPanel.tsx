@@ -228,12 +228,19 @@ function HoleEntryPanel({
     const decrementScore = () => {
       const next = Math.max(score - 1, 1);
       setScore(next);
-      pushUpdate({ score: next });
+      const maxPutts = Math.max(next - 1, 0);
+      if (hasPuttsEntry && puttsCount > maxPutts) {
+        setPuttsCount(maxPutts);
+        pushUpdate({ score: next, putts: maxPutts, hasPutts: true });
+      } else {
+        pushUpdate({ score: next });
+      }
     };
 
     // Putts stepper helpers
     const incrementPutts = () => {
-      const next = Math.min(puttsCount + 1, 10);
+      const maxPutts = Math.max(score - 1, 0);
+      const next = Math.min(puttsCount + 1, maxPutts);
       setPuttsCount(next);
       setHasPuttsEntry(true);
       pushUpdate({ putts: next, hasPutts: true });

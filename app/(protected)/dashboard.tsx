@@ -81,7 +81,8 @@ export default function Dashboard() {
     const { count } = await supabase
       .from("scores")
       .select("*", { count: "exact", head: true })
-      .eq("golfer_id", user.id);
+      .eq("golfer_id", user.id)
+      .neq("player_status", "withdrew");
     setTotalRounds(count ?? 0);
   }, [user?.id]);
 

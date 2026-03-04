@@ -16,10 +16,12 @@ import {
   useGameplay,
 } from "@/contexts/gameplay-context";
 import { supabase } from "@/lib/supabase";
+import { getCourseImageSource } from "@/utils/golf-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -49,6 +51,7 @@ function GameplayScreenContent() {
     activeHole,
     isLoading,
     isQuitting,
+    featuredImageUrl,
     myScore,
     myFinished,
     holeCount,
@@ -204,27 +207,41 @@ function GameplayScreenContent() {
         </Pressable>
       </View>
 
-      {/* Course info card */}
+      {/* Course header with image */}
       <View style={gameStyles.courseCardWrapper}>
         <View style={gameStyles.courseCard}>
-          <Text style={gameStyles.courseCardTitle}>
-            {round.courses?.name || "Unknown"}
-          </Text>
-          {(round.teebox_data as any)?.name && (
-            <Text style={gameStyles.courseCardSubtitle}>
-              {(round.teebox_data as any).name} tees
+          {/* Image area */}
+          <View style={gameStyles.imageArea}>
+            <Image
+              source={getCourseImageSource(round.course_id, featuredImageUrl)}
+              style={gameStyles.courseImage}
+              resizeMode="cover"
+            />
+            {/* Dark overlay at bottom of image */}
+            <View style={gameStyles.imageOverlay} />
+            {/* Course name on overlay */}
+            <Text style={gameStyles.courseNameOverlay} numberOfLines={1}>
+              {round.courses?.name || "Unknown"}
             </Text>
-          )}
-          {teeboxHoleData && (
-            <View style={gameStyles.holeBadgeContainer}>
-              <View style={gameStyles.holeBadge}>
-                <Text style={gameStyles.holeBadgeTitle}>HOLE {activeHole}</Text>
-                <Text style={gameStyles.holeBadgeSubtitle}>
-                  Par {teeboxHoleData.par} · {teeboxHoleData.length} yd
-                </Text>
-              </View>
-            </View>
-          )}
+          </View>
+
+          {/* Info line below image */}
+          <View style={gameStyles.infoLine}>
+            {teeboxHoleData && (
+              <Text style={gameStyles.infoLineText}>Par {teeboxHoleData.par}</Text>
+            )}
+            <Text
+              style={[gameStyles.infoLineText, gameStyles.infoLineTextCenter]}
+            >
+              Hole {activeHole}
+              {teeboxHoleData ? ` · ${teeboxHoleData.length} yd` : ''}
+            </Text>
+            {(round.teebox_data as any)?.name && (
+              <Text style={gameStyles.infoLineText}>
+                {(round.teebox_data as any).name} Tees
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -352,62 +369,57 @@ const gameStyles = StyleSheet.create({
   },
   courseCardWrapper: {
     paddingHorizontal: Space.lg,
-    marginBottom: Space.xxxl,
+    marginBottom: Space.md,
   },
   courseCard: {
-    paddingTop: Space.xl,
-    paddingHorizontal: Space.lg,
-    paddingBottom: Space.xxl,
     borderWidth: 1,
     borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
-    alignItems: "center",
+    overflow: "hidden",
     ...Shadow.sm,
   },
-  courseCardTitle: {
-    fontFamily: Font.bold,
-    fontSize: 22,
-    color: Color.neutral900,
-    textTransform: "capitalize",
-    textAlign: "center",
+  imageArea: {
+    height: 120,
+    position: "relative",
   },
-  courseCardSubtitle: {
-    fontFamily: Font.regular,
-    fontSize: 15,
-    color: Color.neutral500,
-    marginTop: Space.xs,
-    textTransform: "capitalize",
-    textAlign: "center",
+  courseImage: {
+    width: "100%",
+    height: "100%",
   },
-  holeBadgeContainer: {
+  imageOverlay: {
     position: "absolute",
-    bottom: -26,
+    bottom: 0,
     left: 0,
     right: 0,
-    alignItems: "center",
+    height: 44,
+    backgroundColor: "rgba(0,0,0,0.40)",
   },
-  holeBadge: {
-    backgroundColor: Color.white,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    paddingVertical: Space.sm,
-    paddingHorizontal: Space.xl,
-    alignItems: "center",
-    ...Shadow.md,
-  },
-  holeBadgeTitle: {
+  courseNameOverlay: {
+    position: "absolute",
+    bottom: 10,
+    left: Space.lg,
+    right: Space.lg,
     fontFamily: Font.bold,
-    fontSize: 16,
-    color: Color.neutral900,
-    letterSpacing: 1.5,
+    fontSize: 28,
+    color: Color.white,
+    textTransform: "capitalize",
   },
-  holeBadgeSubtitle: {
-    fontFamily: Font.semiBold,
-    fontSize: 13,
+  infoLine: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: Space.sm,
+    paddingBottom: Space.sm,
+    paddingHorizontal: Space.lg,
+  },
+  infoLineText: {
+    fontFamily: Font.medium,
+    fontSize: 16,
     color: Color.neutral500,
-    marginTop: 2,
+  },
+  infoLineTextCenter: {
+    fontSize: 20,
   },
   scorecardLabel: {
     ...Type.caption,

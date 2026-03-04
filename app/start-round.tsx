@@ -1,3 +1,4 @@
+import CourseCard from "@/components/CourseCard";
 import UserAvatar from "@/components/UserAvatar";
 import {
   Color,
@@ -34,7 +35,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { Button, Chip, List, Searchbar, Text } from "react-native-paper";
+import { Button, Chip, Searchbar, Text } from "react-native-paper";
 
 function buildScoreDetails(teebox: Teebox): ScoreDetails {
   const holes: Record<string, HoleData> = {};
@@ -189,23 +190,15 @@ export default function StartRoundScreen() {
             style={{ marginTop: Space.sm, paddingHorizontal: Space.lg }}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
-              <List.Item
-                title={item.name}
-                titleStyle={{
-                  color: Color.neutral900,
-                  fontFamily: Font.semiBold,
-                }}
+              <CourseCard
+                courseId={item.id}
+                name={item.name}
                 description={
                   [item.street, item.state, item.postal_code]
                     .filter(Boolean)
                     .join(", ") || undefined
                 }
-                descriptionStyle={{
-                  color: Color.neutral500,
-                  fontFamily: Font.regular,
-                }}
                 onPress={() => handleSelectCourse(item)}
-                left={(props) => <List.Icon {...props} icon="golf" />}
               />
             )}
             ListEmptyComponent={
@@ -229,13 +222,10 @@ export default function StartRoundScreen() {
               />
             ) : nearbyCourses.length > 0 ? (
               nearbyCourses.map((item) => (
-                <List.Item
+                <CourseCard
                   key={item.id}
-                  title={item.name}
-                  titleStyle={{
-                    color: Color.neutral900,
-                    fontFamily: Font.semiBold,
-                  }}
+                  courseId={item.id}
+                  name={item.name}
                   description={
                     [
                       item.street,
@@ -247,12 +237,7 @@ export default function StartRoundScreen() {
                       .filter(Boolean)
                       .join("  ·  ") || undefined
                   }
-                  descriptionStyle={{
-                    color: Color.neutral500,
-                    fontFamily: Font.regular,
-                  }}
                   onPress={() => handleSelectCourse(item)}
-                  left={(props) => <List.Icon {...props} icon="map-marker" />}
                 />
               ))
             ) : (
@@ -278,6 +263,8 @@ export default function StartRoundScreen() {
                 mode="outlined"
                 onPress={handleChangeCourse}
                 compact
+                textColor={Color.primary}
+                style={{ borderColor: Color.primary }}
                 labelStyle={{ fontFamily: Font.medium }}
               >
                 Change
@@ -292,9 +279,10 @@ export default function StartRoundScreen() {
             {teeboxes.map((tb) => (
               <Chip
                 key={tb.name}
-                mode="outlined"
+                mode="flat"
                 onPress={() => setSelectedTeebox(tb)}
-                textStyle={{ fontFamily: Font.medium }}
+                style={{ backgroundColor: Color.primary }}
+                textStyle={{ fontFamily: Font.medium, color: Color.white }}
               >
                 {tb.name.charAt(0).toUpperCase() + tb.name.slice(1)}
               </Chip>

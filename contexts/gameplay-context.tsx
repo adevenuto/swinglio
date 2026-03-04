@@ -68,6 +68,7 @@ type GameplayContextType = {
   activeHole: number;
   isLoading: boolean;
   isQuitting: boolean;
+  featuredImageUrl: string | null;
 
   // Derived
   myScore: PlayerScore | undefined;
@@ -114,6 +115,7 @@ export function GameplayProvider({
   const [activeHole, setActiveHole] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isQuitting, setIsQuitting] = useState(false);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(null);
 
   // Synchronous ref mirror — always up-to-date, even before React re-renders
   const playersRef = useRef<PlayerScore[]>([]);
@@ -152,6 +154,19 @@ export function GameplayProvider({
 
     if (roundData) {
       setRound(roundData as unknown as RoundData);
+
+      // Fetch featured course image (table may not exist yet)
+      try {
+        const { data: imgData } = await supabase
+          .from("course_images")
+          .select("image_url")
+          .eq("course_id", (roundData as any).course_id)
+          .eq("is_featured", true)
+          .maybeSingle();
+        setFeaturedImageUrl(imgData?.image_url ?? null);
+      } catch {
+        // course_images table may not exist yet — ignore
+      }
     }
 
     const { data: scoreData } = await supabase
@@ -450,6 +465,7 @@ export function GameplayProvider({
       activeHole,
       isLoading,
       isQuitting,
+      featuredImageUrl,
       myScore,
       myFinished,
       holeCount,
@@ -471,6 +487,7 @@ export function GameplayProvider({
       activeHole,
       isLoading,
       isQuitting,
+      featuredImageUrl,
       myScore,
       myFinished,
       holeCount,

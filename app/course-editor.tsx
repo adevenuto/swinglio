@@ -1,10 +1,13 @@
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import { CourseImage, useCourseImages } from "@/hooks/use-course-images";
 import { parseTeeboxes, Teebox } from "@/hooks/use-course-search";
 import { CityResult, useCourses } from "@/hooks/use-courses";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -52,6 +55,7 @@ export default function CourseEditorScreen() {
     checkCourseInUse,
     searchCities,
   } = useCourses();
+  const { fetchImages, uploadImage, deleteImage, setFeatured, pickImage } = useCourseImages();
 
   // Course details
   const [name, setName] = useState("");
@@ -76,6 +80,10 @@ export default function CourseEditorScreen() {
   const [teeboxes, setTeeboxes] = useState<Teebox[]>([]);
   const [selectedTeeboxIndex, setSelectedTeeboxIndex] = useState(0);
   const [holeCount, setHoleCount] = useState(18);
+
+  // Course images
+  const [courseImages, setCourseImages] = useState<CourseImage[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // UI state
   const [isLoadingCourse, setIsLoadingCourse] = useState(false);
@@ -121,8 +129,11 @@ export default function CourseEditorScreen() {
         setTeeboxes([makeEmptyTeebox(0, 18)]);
       }
       setIsLoadingCourse(false);
+
+      // Load course images
+      fetchImages(Number(courseId)).then(setCourseImages);
     });
-  }, [courseId]);
+  }, [courseId, fetchImages]);
 
   // City search
   const handleCitySearch = useCallback(
@@ -251,6 +262,65 @@ export default function CourseEditorScreen() {
         }
         return { ...t, holes: newHoles };
       }),
+    );
+  };
+
+  // Course image handlers
+  const handleAddPhoto = () => {
+    Alert.alert("Add Photo", "Choose a source", [
+      {
+        text: "Take Photo",
+        onPress: async () => {
+          const uri = await pickImage("camera");
+          if (uri) await handleUploadImage(uri);
+        },
+      },
+      {
+        text: "Choose from Gallery",
+        onPress: async () => {
+          const uri = await pickImage("gallery");
+          if (uri) await handleUploadImage(uri);
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const handleUploadImage = async (uri: string) => {
+    if (!courseId) return;
+    setIsUploadingImage(true);
+    const img = await uploadImage(Number(courseId), uri);
+    if (img) {
+      setCourseImages((prev) => [...prev, img]);
+    }
+    setIsUploadingImage(false);
+  };
+
+  const handleDeleteImage = (img: CourseImage) => {
+    Alert.alert("Delete Photo", "Remove this photo?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await deleteImage(img.id, img.image_url);
+          const updated = courseImages.filter((i) => i.id !== img.id);
+          // If deleted image was featured and others remain, auto-feature the first
+          if (img.is_featured && updated.length > 0) {
+            await setFeatured(img.course_id, updated[0].id);
+            updated[0] = { ...updated[0], is_featured: true };
+          }
+          setCourseImages(updated);
+        },
+      },
+    ]);
+  };
+
+  const handleSetFeatured = async (img: CourseImage) => {
+    if (img.is_featured) return;
+    await setFeatured(img.course_id, img.id);
+    setCourseImages((prev) =>
+      prev.map((i) => ({ ...i, is_featured: i.id === img.id })),
     );
   };
 
@@ -471,7 +541,67 @@ export default function CourseEditorScreen() {
           </View>
         </View>
 
-        {/* Section 2: Layout Data - Teeboxes + Holes */}
+        {/* Section 2: Course Photos (edit mode only) */}
+        {isEdit && (
+          <View style={styles.section}>
+            <View style={{ flexDirection: "row", alignItems: "baseline", marginBottom: Space.lg }}>
+              <Text style={styles.sectionLabel}>Course Photos</Text>
+              <Text style={{ fontFamily: Font.regular, fontSize: 12, color: Color.neutral400, marginLeft: Space.sm }}>
+                (max 3)
+              </Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: Space.sm }}
+            >
+              {courseImages.map((img) => (
+                <View key={img.id} style={styles.photoThumb}>
+                  <Image
+                    source={{ uri: img.image_url }}
+                    style={styles.photoThumbImage}
+                    resizeMode="cover"
+                  />
+                  {/* Featured star */}
+                  <Pressable
+                    onPress={() => handleSetFeatured(img)}
+                    style={styles.photoStarBtn}
+                  >
+                    <MaterialIcons
+                      name={img.is_featured ? "star" : "star-outline"}
+                      size={18}
+                      color={img.is_featured ? Color.accent : Color.white}
+                    />
+                  </Pressable>
+                  {/* Delete button */}
+                  <Pressable
+                    onPress={() => handleDeleteImage(img)}
+                    style={styles.photoDeleteBtn}
+                  >
+                    <MaterialIcons name="close" size={16} color={Color.white} />
+                  </Pressable>
+                </View>
+              ))}
+
+              {courseImages.length < 3 && (
+                <Pressable
+                  onPress={handleAddPhoto}
+                  style={styles.photoAddBtn}
+                  disabled={isUploadingImage}
+                >
+                  {isUploadingImage ? (
+                    <ActivityIndicator size="small" color={Color.neutral400} />
+                  ) : (
+                    <MaterialIcons name="add" size={28} color={Color.neutral400} />
+                  )}
+                </Pressable>
+              )}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Section 3: Layout Data - Teeboxes + Holes */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>
             Teeboxes & Holes
@@ -890,6 +1020,49 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: Radius.md,
     marginBottom: Space.md,
     maxHeight: 160,
+  },
+  photoThumb: {
+    width: 100,
+    height: 75,
+    borderRadius: Radius.sm,
+    overflow: "hidden",
+    position: "relative",
+  },
+  photoThumbImage: {
+    width: "100%",
+    height: "100%",
+  },
+  photoStarBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 10,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoDeleteBtn: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 10,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoAddBtn: {
+    width: 100,
+    height: 75,
+    borderRadius: Radius.sm,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: Color.neutral300,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

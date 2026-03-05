@@ -1,11 +1,10 @@
+import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
 import Scorecard, { ScorecardRef } from "@/components/Scorecard";
 import {
   Color,
   Font,
-  Radius,
-  Shadow,
   Space,
   Type,
 } from "@/constants/design-tokens";
@@ -16,13 +15,10 @@ import {
   useGameplay,
 } from "@/contexts/gameplay-context";
 import { supabase } from "@/lib/supabase";
-import { getCourseImageSource } from "@/utils/golf-image";
-import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -208,45 +204,18 @@ function GameplayScreenContent() {
         </Pressable>
       </View>
 
-      {/* Course header with image */}
+      {/* Course header */}
       <View style={gameStyles.courseCardWrapper}>
-        <View style={gameStyles.courseCard}>
-          {/* Image area */}
-          <View style={gameStyles.imageArea}>
-            <Image
-              source={getCourseImageSource(round.course_id, featuredImageUrl)}
-              style={gameStyles.courseImage}
-              resizeMode="cover"
-            />
-            {/* Dark overlay at bottom of image */}
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.65)"]}
-              style={gameStyles.imageOverlay}
-            />
-            {/* Course name on overlay */}
-            <Text style={gameStyles.courseNameOverlay} numberOfLines={1}>
-              {round.courses?.name || "Unknown"}
-            </Text>
-          </View>
-
-          {/* Info line below image */}
-          <View style={gameStyles.infoLine}>
-            {teeboxHoleData && (
-              <Text style={gameStyles.infoLineText}>Par {teeboxHoleData.par}</Text>
-            )}
-            <Text
-              style={[gameStyles.infoLineText, gameStyles.infoLineTextCenter]}
-            >
-              Hole {activeHole}
-              {teeboxHoleData ? ` · ${teeboxHoleData.length} yd` : ''}
-            </Text>
-            {(round.teebox_data as any)?.name && (
-              <Text style={gameStyles.infoLineText}>
-                {(round.teebox_data as any).name} Tees
-              </Text>
-            )}
-          </View>
-        </View>
+        <GameplayHeader
+          courseId={round.course_id}
+          courseName={round.courses?.name || "Unknown"}
+          featuredImageUrl={featuredImageUrl}
+          holeCount={holeCount}
+          activeHole={activeHole}
+          par={teeboxHoleData?.par}
+          yardage={teeboxHoleData?.length}
+          teeboxName={(round.teebox_data as any)?.name}
+        />
       </View>
 
       {/* Scorecard + HoleEntryPanel */}
@@ -374,55 +343,6 @@ const gameStyles = StyleSheet.create({
   courseCardWrapper: {
     paddingHorizontal: Space.lg,
     marginBottom: Space.md,
-  },
-  courseCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
-    overflow: "hidden",
-    ...Shadow.sm,
-  },
-  imageArea: {
-    height: 120,
-    position: "relative",
-  },
-  courseImage: {
-    width: "100%",
-    height: "100%",
-  },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-  courseNameOverlay: {
-    position: "absolute",
-    bottom: 10,
-    left: Space.lg,
-    right: Space.lg,
-    fontFamily: Font.bold,
-    fontSize: 28,
-    color: Color.white,
-    textTransform: "capitalize",
-  },
-  infoLine: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: Space.sm,
-    paddingBottom: Space.sm,
-    paddingHorizontal: Space.lg,
-  },
-  infoLineText: {
-    fontFamily: Font.medium,
-    fontSize: 16,
-    color: Color.neutral500,
-  },
-  infoLineTextCenter: {
-    fontSize: 20,
   },
   scorecardLabel: {
     ...Type.caption,

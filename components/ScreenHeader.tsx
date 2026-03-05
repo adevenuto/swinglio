@@ -1,89 +1,34 @@
 import { Color, Font, Space } from "@/constants/design-tokens";
-import { useAuth } from "@/contexts/auth-context";
+import { useAppDrawer } from "@/contexts/app-drawer-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
-import { Divider, Menu, Text } from "react-native-paper";
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 
 type ScreenHeaderProps = {
   title: string;
 };
 
 export default function ScreenHeader({ title }: ScreenHeaderProps) {
-  const { isEditor, signOut } = useAuth();
-  const router = useRouter();
-  const [menuVisible, setMenuVisible] = useState(false);
-
-  const handleSignOut = () => {
-    setMenuVisible(false);
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/sign-in");
-        },
-      },
-    ]);
-  };
+  const { openDrawer } = useAppDrawer();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {title}
-      </Text>
+      <Text style={styles.title}>{title}</Text>
 
-      <Menu
-        visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
-        anchor={
-          <Pressable
-            onPress={() => setMenuVisible(true)}
-            style={styles.menuButton}
-          >
-            <MaterialCommunityIcons name="dots-grid" size={30} color={Color.neutral900} />
-          </Pressable>
-        }
-        anchorPosition="bottom"
-        contentStyle={styles.menuContent}
+      <Pressable
+        onPress={openDrawer}
+        style={({ pressed }) => [
+          styles.menuButton,
+          pressed ? { opacity: 0.7 } : undefined,
+        ]}
       >
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false);
-            router.push("/(protected)/profile");
-          }}
-          title="Profile"
-          leadingIcon="account"
+        <MaterialCommunityIcons
+          name="dots-grid"
+          size={30}
+          color={Color.neutral100}
         />
-        {isEditor && (
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-              router.push("/(protected)/editor");
-            }}
-            title="Course Editor"
-            leadingIcon="pencil"
-          />
-        )}
-        <Menu.Item
-          onPress={() => {
-            setMenuVisible(false);
-            router.push("/(protected)/settings");
-          }}
-          title="Settings"
-          leadingIcon="cog"
-        />
-        <Divider />
-        <Menu.Item
-          onPress={handleSignOut}
-          title="Sign Out"
-          leadingIcon="logout"
-          titleStyle={{ color: Color.danger }}
-        />
-      </Menu>
+      </Pressable>
     </View>
   );
 }
@@ -104,8 +49,5 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: Space.sm,
-  },
-  menuContent: {
-    backgroundColor: Color.white,
   },
 });

@@ -184,7 +184,7 @@ function GameplayScreenContent() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.neutral50, paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
     >
       {/* Nav header */}
       <View style={gameStyles.navHeader}>
@@ -314,7 +314,7 @@ const gameStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   navHeader: {
     flexDirection: "row",

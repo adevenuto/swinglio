@@ -157,7 +157,7 @@ export default function PlayerScoresScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   searchbar: {
     backgroundColor: "transparent",

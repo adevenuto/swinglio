@@ -373,7 +373,7 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   container: {
     alignItems: "center",

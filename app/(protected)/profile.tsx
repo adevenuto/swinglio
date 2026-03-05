@@ -334,13 +334,13 @@ export default function Profile() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   navRow: {
     paddingHorizontal: Space.lg,

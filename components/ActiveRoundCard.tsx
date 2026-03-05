@@ -1,6 +1,6 @@
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { ActiveRound } from "@/hooks/use-active-rounds";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -40,14 +40,8 @@ export default function ActiveRoundCard({ rounds }: Props) {
               </Text>
             </View>
             <View style={styles.badgeColumn}>
-              <View style={styles.badge}>
-                <MaterialCommunityIcons
-                  name="golf-cart"
-                  size={22}
-                  color={Color.primary}
-                />
-              </View>
-              <Text style={styles.badgeLabel}>Play now</Text>
+              <Entypo name="chevron-with-circle-right" size={32} color={Color.primary} />
+              <Text style={styles.badgeLabel}>Continue</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -87,21 +81,12 @@ const styles = StyleSheet.create({
   badgeColumn: {
     alignItems: "center",
   },
-  badge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Color.white,
-    borderWidth: 2,
-    borderColor: Color.primaryBorder,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   badgeLabel: {
     fontFamily: Font.semiBold,
-    fontSize: 10,
-    color: Color.neutral500,
+    fontSize: 13,
+    color: Color.primary,
     marginTop: 2,
+    textAlign: "center",
   },
   subtitle: {
     fontFamily: Font.regular,

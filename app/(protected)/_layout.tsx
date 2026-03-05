@@ -1,4 +1,6 @@
+import AppDrawer from "@/components/AppDrawer";
 import BottomTabBar from "@/components/BottomTabBar";
+import { AppDrawerProvider } from "@/contexts/app-drawer-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { usePendingFriendCount } from "@/hooks/use-friends";
@@ -41,6 +43,7 @@ export default function ProtectedLayout() {
   }
 
   return (
+    <AppDrawerProvider>
     <Tabs
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
@@ -112,5 +115,7 @@ export default function ProtectedLayout() {
         }}
       />
     </Tabs>
+    <AppDrawer />
+    </AppDrawerProvider>
   );
 }

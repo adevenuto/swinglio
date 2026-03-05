@@ -449,7 +449,7 @@ export default function StartRoundScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   section: {
     paddingHorizontal: Space.lg,

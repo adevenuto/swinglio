@@ -79,6 +79,8 @@ export const Color = {
   white: "#FFFFFF",
 
   // Semantic
+  // screenBg: "#F7F5F0", // alias for neutral50 — controls all screen + header backgrounds
+  screenBg: "#F7F5F0", // alias for neutral50 — controls all screen + header backgrounds
   danger: "#DC2626",
   dangerLight: "#FEF2F2",
   warning: "#EA580C",

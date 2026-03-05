@@ -50,7 +50,7 @@ const paperTheme = {
   },
 };
 
-const headerStyle = { backgroundColor: Color.white };
+const headerStyle = { backgroundColor: Color.screenBg };
 const headerTintColor = Color.neutral900;
 
 export default function RootLayout() {
@@ -84,6 +84,9 @@ export default function RootLayout() {
                   presentation: "modal",
                   headerShown: true,
                   title: "Modal",
+                  headerStyle,
+                  headerTintColor,
+                  headerShadowVisible: false,
                 }}
               />
               <Stack.Screen

@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: Space.lg,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   title: {
     fontFamily: Font.bold,

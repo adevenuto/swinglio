@@ -1,4 +1,5 @@
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
+import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
@@ -7,7 +8,7 @@ import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -222,7 +223,7 @@ export default function RoundSummaryScreen() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.neutral50, paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
     >
       {/* Header */}
       <View style={s.header}>
@@ -296,28 +297,25 @@ export default function RoundSummaryScreen() {
                       <View style={s.resultTopRow}>
                         <Text style={s.resultName}>{pr.display_name}</Text>
                         {isWd && (
-                          <View style={s.wdBadge}>
-                            <MaterialIcons
-                              name="block"
-                              size={15}
-                              color={Color.danger}
-                            />
-                            <Text style={s.wdBadgeText}>WD</Text>
-                          </View>
+                          <StyledTooltip title="Withdrew">
+                            <View>
+                              <MaterialIcons name="block" size={30} color={Color.danger} />
+                            </View>
+                          </StyledTooltip>
                         )}
                         {pr.player_status === "incomplete" && (
-                          <View style={s.incompleteBadge}>
-                            <MaterialIcons name="warning" size={15} color={Color.warning} />
-                            <Text style={s.incompleteBadgeText}>
-                              Incomplete
-                            </Text>
-                          </View>
+                          <StyledTooltip title="Incomplete">
+                            <View>
+                              <MaterialIcons name="warning" size={30} color={Color.warning} />
+                            </View>
+                          </StyledTooltip>
                         )}
                         {pr.player_status === "completed" && (
-                          <View style={s.completedBadge}>
-                            <SimpleLineIcons name="badge" size={15} color={Color.primary} />
-                            <Text style={s.completedBadgeText}>Completed</Text>
-                          </View>
+                          <StyledTooltip title="Completed">
+                            <View>
+                              <Ionicons name="checkmark-done-circle" size={30} color={Color.primary} />
+                            </View>
+                          </StyledTooltip>
                         )}
                       </View>
                       <View style={s.resultBottomRow}>
@@ -440,7 +438,7 @@ const s = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   header: {
     flexDirection: "row",
@@ -581,47 +579,5 @@ const s = StyleSheet.create({
   },
   attestButton: {
     borderRadius: Radius.lg,
-  },
-  wdBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.dangerLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  wdBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.danger,
-  },
-  incompleteBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.warningLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  incompleteBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.warning,
-  },
-  completedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.primaryLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  completedBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.primary,
   },
 });

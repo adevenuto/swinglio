@@ -1,9 +1,10 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import StyledTooltip from "./StyledTooltip";
 
 type RoundCardProps = {
   courseName: string;
@@ -42,84 +43,105 @@ export default function RoundCard({
   const dateLabel = formatDate(date);
   const subtitle = [teeLabel, dateLabel].filter(Boolean).join(" \u00B7 ");
   const showHoles =
-    holesCompleted != null &&
-    holeCount != null &&
-    holesCompleted < holeCount;
+    holesCompleted != null && holeCount != null && holesCompleted < holeCount;
+
+  const hasBadge =
+    playerStatus === "withdrew" ||
+    playerStatus === "incomplete" ||
+    playerStatus === "completed";
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card}>
-      {/* Row 1: course name | badge */}
-      <View style={styles.cardRow}>
-        <Text style={styles.courseName}>
-          {courseName}
-        </Text>
-        {playerStatus === "withdrew" && (
-          <View style={styles.wdBadge}>
-            <MaterialIcons name="block" size={15} color={Color.danger} />
-            <Text style={styles.wdBadgeText}>WD</Text>
-          </View>
-        )}
-        {playerStatus === "incomplete" && (
-          <View style={styles.incompleteBadge}>
-            <MaterialIcons name="warning" size={15} color={Color.warning} />
-            <Text style={styles.incompleteBadgeText}>Incomplete</Text>
-          </View>
-        )}
-        {playerStatus === "completed" && (
-          <View style={styles.completedBadge}>
-            <SimpleLineIcons name="badge" size={15} color={Color.primary} />
-            <Text style={styles.completedBadgeText}>Completed</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Row 2: tees · date | score + holes */}
-      <View style={styles.cardBottomRow}>
-        <Text style={styles.cardSubtitle}>
-          {subtitle}
-        </Text>
-        <View style={{ alignItems: "flex-end" }}>
-          {playerScore != null && (
-            <View style={styles.scoreContainer}>
-              <Text style={styles.scoreTotal}>{playerScore}</Text>
-              {scoreToPar != null && (
-                <Text
-                  style={[
-                    styles.scoreToPar,
-                    {
-                      color:
-                        scoreToPar > 0
-                          ? Color.danger
-                          : scoreToPar < 0
-                            ? Color.primary
-                            : Color.neutral500,
-                    },
-                  ]}
-                >
-                  ({formatToPar(scoreToPar)})
-                </Text>
-              )}
-            </View>
-          )}
-          {showHoles && (
-            <Text style={styles.holesText}>
-              {holesCompleted} of {holeCount} holes
-            </Text>
-          )}
+    <View style={styles.cardOuter}>
+      {/* Navigation tap target */}
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
+      >
+        {/* Row 1: course name (+ spacer when badge present) */}
+        <View style={styles.cardRow}>
+          <Text style={styles.courseName}>{courseName}</Text>
+          {hasBadge && <View style={styles.badgeSpacer} />}
         </View>
-      </View>
-    </TouchableOpacity>
+
+        {/* Row 2: tees · date | score + holes */}
+        <View style={styles.cardBottomRow}>
+          <Text style={styles.cardSubtitle}>{subtitle}</Text>
+          <View style={styles.scoreContainer}>
+            {showHoles && (
+              <Text style={styles.holesText}>
+                {holesCompleted} of {holeCount} holes
+              </Text>
+            )}
+            {playerScore != null && (
+              <Text style={styles.scoreTotal}>{playerScore}</Text>
+            )}
+            {playerScore != null && scoreToPar != null && (
+              <Text
+                style={[
+                  styles.scoreToPar,
+                  {
+                    color:
+                      scoreToPar > 0
+                        ? Color.danger
+                        : scoreToPar < 0
+                          ? Color.primary
+                          : Color.neutral500,
+                  },
+                ]}
+              >
+                ({formatToPar(scoreToPar)})
+              </Text>
+            )}
+          </View>
+        </View>
+      </Pressable>
+
+      {/* Badge overlay — outside the Pressable so Tooltip long-press works */}
+      {playerStatus === "withdrew" && (
+        <View style={styles.badgeOverlay}>
+          <StyledTooltip title="Withdrew">
+            <View>
+              <MaterialIcons name="block" size={30} color={Color.danger} />
+            </View>
+          </StyledTooltip>
+        </View>
+      )}
+      {playerStatus === "incomplete" && (
+        <View style={styles.badgeOverlay}>
+          <StyledTooltip title="Incomplete">
+            <View>
+              <MaterialIcons name="warning" size={30} color={Color.warning} />
+            </View>
+          </StyledTooltip>
+        </View>
+      )}
+      {playerStatus === "completed" && (
+        <View style={styles.badgeOverlay}>
+          <StyledTooltip title="Completed">
+            <View>
+              <Ionicons
+                name="checkmark-done-circle"
+                size={30}
+                color={Color.primary}
+              />
+            </View>
+          </StyledTooltip>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  cardOuter: {
+    marginBottom: Space.sm,
+  },
   card: {
     padding: Space.lg,
     borderWidth: 1,
     borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
-    marginBottom: Space.sm,
     ...Shadow.sm,
   },
   cardRow: {
@@ -164,48 +186,14 @@ const styles = StyleSheet.create({
     fontFamily: Font.regular,
     fontSize: 12,
     color: Color.neutral400,
-    marginTop: 2,
   },
-  wdBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.dangerLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
+  badgeSpacer: {
+    width: 30,
+    height: 30,
   },
-  wdBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.danger,
-  },
-  incompleteBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.warningLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  incompleteBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.warning,
-  },
-  completedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: Color.primaryLight,
-    paddingHorizontal: Space.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-  },
-  completedBadgeText: {
-    fontFamily: Font.bold,
-    fontSize: 12,
-    color: Color.primary,
+  badgeOverlay: {
+    position: "absolute",
+    top: Space.lg,
+    right: Space.lg,
   },
 });

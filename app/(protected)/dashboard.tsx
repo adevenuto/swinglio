@@ -9,6 +9,7 @@ import {
   Space,
   Type,
 } from "@/constants/design-tokens";
+import { useAppDrawer } from "@/contexts/app-drawer-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
@@ -30,7 +31,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Divider, Menu, Snackbar, Text } from "react-native-paper";
+import { Button, Snackbar, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatDate(dateStr: string): string {
@@ -39,14 +40,14 @@ function formatDate(dateStr: string): string {
 }
 
 export default function Dashboard() {
-  const { user, isEditor, signOut, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const { openDrawer } = useAppDrawer();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [totalRounds, setTotalRounds] = useState(0);
   const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
@@ -246,23 +247,6 @@ export default function Dashboard() {
     Alert.alert("Cover Photo", undefined, options);
   };
 
-  // --- Menu ---
-
-  const handleSignOut = () => {
-    setMenuVisible(false);
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut();
-          router.replace("/(auth)/sign-in");
-        },
-      },
-    ]);
-  };
-
   // --- Derived ---
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
@@ -299,56 +283,17 @@ export default function Dashboard() {
               />
             </View>
 
-            {/* Menu button */}
+            {/* Drawer button */}
             <View style={styles.menuAnchor}>
-              <Menu
-                visible={menuVisible}
-                onDismiss={() => setMenuVisible(false)}
-                anchor={
-                  <Pressable
-                    onPress={() => setMenuVisible(true)}
-                    style={styles.menuButton}
-                  >
-                    <MaterialCommunityIcons name="dots-grid" size={30} color={Color.white} />
-                  </Pressable>
-                }
-                anchorPosition="bottom"
-                contentStyle={styles.menuContent}
+              <Pressable
+                onPress={openDrawer}
+                style={({ pressed }) => [
+                  styles.menuButton,
+                  pressed ? { opacity: 0.7 } : undefined,
+                ]}
               >
-                <Menu.Item
-                  onPress={() => {
-                    setMenuVisible(false);
-                    router.push("/(protected)/profile");
-                  }}
-                  title="Profile"
-                  leadingIcon="account"
-                />
-                {isEditor && (
-                  <Menu.Item
-                    onPress={() => {
-                      setMenuVisible(false);
-                      router.push("/(protected)/editor");
-                    }}
-                    title="Course Editor"
-                    leadingIcon="pencil"
-                  />
-                )}
-                <Menu.Item
-                  onPress={() => {
-                    setMenuVisible(false);
-                    router.push("/(protected)/settings");
-                  }}
-                  title="Settings"
-                  leadingIcon="cog"
-                />
-                <Divider />
-                <Menu.Item
-                  onPress={handleSignOut}
-                  title="Sign Out"
-                  leadingIcon="logout"
-                  titleStyle={{ color: Color.danger }}
-                />
-              </Menu>
+                <MaterialCommunityIcons name="dots-grid" size={30} color={Color.white} />
+              </Pressable>
             </View>
           </Pressable>
 
@@ -497,7 +442,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   // --- Hero ---
   banner: {
@@ -530,9 +475,6 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: Space.sm,
-  },
-  menuContent: {
-    backgroundColor: Color.white,
   },
   profileRow: {
     flexDirection: "row",

@@ -140,7 +140,7 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Color.neutral50,
+    backgroundColor: Color.screenBg,
   },
   container: {
     flex: 1,

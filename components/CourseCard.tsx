@@ -1,5 +1,5 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
-import { getGolfImage } from "@/utils/golf-image";
+import { getCourseImageSource } from "@/utils/golf-image";
 import React from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -8,6 +8,7 @@ type Props = {
   courseId: number;
   name: string;
   description?: string;
+  featuredImageUrl?: string | null;
   onPress: () => void;
 };
 
@@ -15,11 +16,12 @@ export default function CourseCard({
   courseId,
   name,
   description,
+  featuredImageUrl,
   onPress,
 }: Props) {
   return (
     <Pressable onPress={onPress} style={styles.card}>
-      <Image source={getGolfImage(courseId)} style={styles.image} />
+      <Image source={getCourseImageSource(courseId, featuredImageUrl)} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>
           {name}

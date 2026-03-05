@@ -72,6 +72,32 @@ export default function StartRoundScreen() {
     new Set(),
   );
   const [isStarting, setIsStarting] = useState(false);
+  const [featuredImages, setFeaturedImages] = useState<Record<number, string>>(
+    {},
+  );
+
+  useEffect(() => {
+    const courseIds = [
+      ...courseResults.map((c) => c.id),
+      ...nearbyCourses.map((c) => c.id),
+    ];
+    const uniqueIds = [...new Set(courseIds)];
+    if (uniqueIds.length === 0) return;
+
+    supabase
+      .from("course_images")
+      .select("course_id, image_url")
+      .eq("is_featured", true)
+      .in("course_id", uniqueIds)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<number, string> = {};
+        for (const row of data) {
+          map[row.course_id] = row.image_url;
+        }
+        setFeaturedImages((prev) => ({ ...prev, ...map }));
+      });
+  }, [courseResults, nearbyCourses]);
 
   useEffect(() => {
     if (selectedTeebox) {
@@ -198,6 +224,7 @@ export default function StartRoundScreen() {
                     .filter(Boolean)
                     .join(", ") || undefined
                 }
+                featuredImageUrl={featuredImages[item.id]}
                 onPress={() => handleSelectCourse(item)}
               />
             )}
@@ -237,6 +264,7 @@ export default function StartRoundScreen() {
                       .filter(Boolean)
                       .join("  ·  ") || undefined
                   }
+                  featuredImageUrl={featuredImages[item.id]}
                   onPress={() => handleSelectCourse(item)}
                 />
               ))

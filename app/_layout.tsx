@@ -19,7 +19,6 @@ import {
   configureFonts,
 } from "react-native-paper";
 import "react-native-reanimated";
-import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
 

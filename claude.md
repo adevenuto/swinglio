@@ -18,7 +18,8 @@
 ## Color Rules
 
 - `Color.primary` (#15603A dark green) — CTAs, active states, selected indicators
-- `Color.accent` (#C4973B gold) — highlighted metrics, stat values
+- `Color.accent` (#D3CF37 chartreuse) — highlighted metrics fills/borders
+- `Color.accentDark` (#C4973B) — accent text on white backgrounds (warm gold)
 - `Color.neutral50` — screen backgrounds
 - `Color.white` — cards, inputs, modals
 - Never invent colors — use the neutral scale (`neutral900` through `neutral50`) for text hierarchy

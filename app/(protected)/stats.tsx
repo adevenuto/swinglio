@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   percentText: {
     fontFamily: Font.bold,
     fontSize: 18,
-    color: Color.accent,
+    color: Color.accentDark,
   },
   attestLabel: {
     fontFamily: Font.regular,

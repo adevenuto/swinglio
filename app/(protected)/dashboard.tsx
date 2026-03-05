@@ -15,6 +15,7 @@ import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { usePendingAttestations } from "@/hooks/use-pending-attestations";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
 import { supabase } from "@/lib/supabase";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -308,7 +309,7 @@ export default function Dashboard() {
                     onPress={() => setMenuVisible(true)}
                     style={styles.menuButton}
                   >
-                    <MaterialIcons name="menu" size={26} color={Color.white} />
+                    <MaterialCommunityIcons name="dots-grid" size={30} color={Color.white} />
                   </Pressable>
                 }
                 anchorPosition="bottom"
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
     right: Space.sm,
   },
   menuButton: {
-    padding: Space.xs,
+    padding: Space.sm,
   },
   menuContent: {
     backgroundColor: Color.white,
@@ -578,7 +579,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: Font.bold,
     fontSize: 20,
-    color: Color.accent,
+    color: Color.accentDark,
   },
   statLabel: {
     fontFamily: Font.regular,

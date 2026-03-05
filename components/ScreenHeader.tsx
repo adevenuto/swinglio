@@ -1,6 +1,6 @@
 import { Color, Font, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
@@ -44,7 +44,7 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
             onPress={() => setMenuVisible(true)}
             style={styles.menuButton}
           >
-            <MaterialIcons name="menu" size={26} color={Color.neutral900} />
+            <MaterialCommunityIcons name="dots-grid" size={30} color={Color.neutral900} />
           </Pressable>
         }
         anchorPosition="bottom"
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     color: Color.neutral900,
   },
   menuButton: {
-    padding: Space.xs,
+    padding: Space.sm,
   },
   menuContent: {
     backgroundColor: Color.white,

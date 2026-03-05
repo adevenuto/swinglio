@@ -62,26 +62,27 @@ export const Color = {
   primaryLight: "#E8F0EC",
   primaryBorder: "#5BA67A",
 
-  // Accent (gold / champagne)
-  accent: "#C4973B",
-  accentLight: "#FBF6EE",
+  // Accent (chartreuse/yellow)
+  accent: "#D3CF37",
+  accentDark: "#C4973B",
+  accentLight: "#F9F8E4",
 
-  // Neutrals
-  neutral900: "#111517",
-  neutral700: "#3D4549",
-  neutral500: "#6B7681",
-  neutral400: "#94A0AC",
-  neutral300: "#D5DAE0",
-  neutral200: "#E8EAED",
-  neutral100: "#F3F4F6",
-  neutral50: "#F9FAFB",
+  // Neutrals (pure gray, no blue tint)
+  neutral900: "#2B2B2B",
+  neutral700: "#525252",
+  neutral500: "#787878",
+  neutral400: "#A8A8A8",
+  neutral300: "#C8C8C7",
+  neutral200: "#DCDCDB",
+  neutral100: "#E8E8E7",
+  neutral50: "#F7F5F0",
   white: "#FFFFFF",
 
   // Semantic
-  danger: "#C53030",
+  danger: "#DC2626",
   dangerLight: "#FEF2F2",
-  warning: "#D97706",
-  warningLight: "#FFFBEB",
+  warning: "#EA580C",
+  warningLight: "#FFF7ED",
   info: "#2563EB",
 } as const;
 
@@ -129,7 +130,7 @@ export const Type = {
     fontFamily: Font.semiBold,
     fontSize: 13,
     lineHeight: 16,
-    color: Color.neutral400,
+    color: Color.neutral500,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   } as TextStyle,

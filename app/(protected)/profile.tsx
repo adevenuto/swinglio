@@ -463,6 +463,6 @@ const styles = StyleSheet.create({
   attestCircleText: {
     fontFamily: Font.bold,
     fontSize: 13,
-    color: Color.accent,
+    color: Color.accentDark,
   },
 });

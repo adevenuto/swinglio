@@ -8,11 +8,12 @@ type GameplayHeaderProps = {
   courseId: number;
   courseName: string;
   featuredImageUrl?: string | null;
-  holeCount: number;
-  activeHole: number;
+  holeCount?: number;
+  activeHole?: number;
   par?: string;
   yardage?: string;
   teeboxName?: string;
+  subtitle?: string;
 };
 
 export default function GameplayHeader({
@@ -24,6 +25,7 @@ export default function GameplayHeader({
   par,
   yardage,
   teeboxName,
+  subtitle,
 }: GameplayHeaderProps) {
   return (
     <View style={styles.container}>
@@ -36,32 +38,38 @@ export default function GameplayHeader({
         <Text style={styles.courseName} numberOfLines={1}>
           {courseName}
         </Text>
-        <Text style={styles.holeCount}>{holeCount} Holes</Text>
-        <Text style={styles.statsLine}>
-          {par != null && (
-            <>
-              <Text style={styles.statsLabel}>Par: </Text>
-              <Text style={styles.statsValue}>{par}</Text>
-              <Text style={styles.statsLabel}>{"   "}</Text>
-            </>
-          )}
-          <Text style={styles.statsLabel}>Hole: </Text>
-          <Text style={styles.statsValue}>{activeHole}</Text>
-          {yardage != null && (
-            <>
-              <Text style={styles.statsLabel}>{"   "}</Text>
-              <Text style={styles.statsValue}>{yardage}</Text>
-              <Text style={styles.statsLabel}> yd</Text>
-            </>
-          )}
-          {teeboxName != null && (
-            <>
-              <Text style={styles.statsLabel}> · </Text>
-              <Text style={styles.statsValue}>{teeboxName}</Text>
-              <Text style={styles.statsLabel}> Tees</Text>
-            </>
-          )}
-        </Text>
+        {holeCount != null && (
+          <Text style={styles.holeCount}>{holeCount} Holes</Text>
+        )}
+        {subtitle != null ? (
+          <Text style={styles.statsLabel}>{subtitle}</Text>
+        ) : activeHole != null ? (
+          <Text style={styles.statsLine}>
+            {par != null && (
+              <>
+                <Text style={styles.statsLabel}>Par: </Text>
+                <Text style={styles.statsValue}>{par}</Text>
+                <Text style={styles.statsLabel}>{"   "}</Text>
+              </>
+            )}
+            <Text style={styles.statsLabel}>Hole: </Text>
+            <Text style={styles.statsValue}>{activeHole}</Text>
+            {yardage != null && (
+              <>
+                <Text style={styles.statsLabel}>{"   "}</Text>
+                <Text style={styles.statsValue}>{yardage}</Text>
+                <Text style={styles.statsLabel}> yd</Text>
+              </>
+            )}
+            {teeboxName != null && (
+              <>
+                <Text style={styles.statsLabel}> · </Text>
+                <Text style={styles.statsValue}>{teeboxName}</Text>
+                <Text style={styles.statsLabel}> Tees</Text>
+              </>
+            )}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

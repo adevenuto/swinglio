@@ -1,3 +1,4 @@
+import GameplayHeader from "@/components/GameplayHeader";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
@@ -74,6 +75,7 @@ export default function RoundSummaryScreen() {
   const [players, setPlayers] = useState<PlayerScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(null);
 
   const {
     attestations,
@@ -95,6 +97,18 @@ export default function RoundSummaryScreen() {
 
     if (roundData) {
       setRound(roundData as unknown as RoundData);
+
+      try {
+        const { data: imgData } = await supabase
+          .from("course_images")
+          .select("image_url")
+          .eq("course_id", roundData.course_id)
+          .eq("is_featured", true)
+          .maybeSingle();
+        setFeaturedImageUrl(imgData?.image_url ?? null);
+      } catch {
+        /* table may not exist */
+      }
     }
 
     const { data: scoreData } = await supabase
@@ -251,18 +265,18 @@ export default function RoundSummaryScreen() {
         }
       >
         {/* Course info card */}
-        <View style={s.courseCard}>
-          <Text style={s.courseName}>{round.courses?.name || "Unknown"}</Text>
-          {(round.teebox_data as any)?.name && (
-            <Text style={s.teeboxName}>
-              {(round.teebox_data as any).name} tees
-            </Text>
-          )}
-          <Text style={s.dateText}>
-            {resultsData?.completed_at
-              ? formatDate(resultsData.completed_at)
-              : formatDate(round.created_at)}
-          </Text>
+        <View style={{ paddingHorizontal: Space.lg }}>
+          <GameplayHeader
+            courseId={round.course_id}
+            courseName={round.courses?.name || "Unknown"}
+            featuredImageUrl={featuredImageUrl}
+            holeCount={
+              round.teebox_data?.holes
+                ? Object.keys(round.teebox_data.holes).length
+                : undefined
+            }
+            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${resultsData?.completed_at ? formatDate(resultsData.completed_at) : formatDate(round.created_at)}`}
+          />
         </View>
 
         {/* Scorecard */}
@@ -462,36 +476,6 @@ const s = StyleSheet.create({
     fontFamily: Font.bold,
     fontSize: 17,
     color: Color.neutral900,
-  },
-  courseCard: {
-    marginHorizontal: Space.lg,
-    padding: Space.xl,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
-    alignItems: "center",
-    ...Shadow.sm,
-  },
-  courseName: {
-    fontFamily: Font.bold,
-    fontSize: 22,
-    color: Color.neutral900,
-    textTransform: "capitalize",
-    textAlign: "center",
-  },
-  teeboxName: {
-    fontFamily: Font.regular,
-    fontSize: 15,
-    color: Color.neutral500,
-    marginTop: Space.xs,
-    textTransform: "capitalize",
-  },
-  dateText: {
-    fontFamily: Font.regular,
-    fontSize: 13,
-    color: Color.neutral400,
-    marginTop: Space.xs,
   },
   sectionLabel: {
     ...Type.caption,

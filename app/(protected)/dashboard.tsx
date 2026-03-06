@@ -20,7 +20,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -251,8 +251,89 @@ export default function Dashboard() {
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
+  const incompleteRounds = useMemo(
+    () => recentRounds.filter((r) => r.player_status === "incomplete"),
+    [recentRounds],
+  );
+  const completedRounds = useMemo(
+    () => recentRounds.filter((r) => r.player_status === "completed"),
+    [recentRounds],
+  );
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
+      {/* Hero Section (fixed) */}
+      <View>
+        {/* Banner */}
+        <Pressable onPress={handleCoverPress} style={styles.banner}>
+          {coverUrl ? (
+            <Image source={{ uri: coverUrl }} style={styles.bannerImage} />
+          ) : (
+            <View style={styles.bannerFallback} />
+          )}
+
+          {/* Camera edit icon */}
+          <View style={styles.cameraIcon}>
+            <MaterialIcons
+              name="photo-camera"
+              size={18}
+              color={Color.white}
+            />
+          </View>
+
+          {/* Drawer button */}
+          <View style={styles.menuAnchor}>
+            <Pressable
+              onPress={openDrawer}
+              style={({ pressed }) => [
+                styles.menuButton,
+                pressed ? { opacity: 0.7 } : undefined,
+              ]}
+            >
+              <MaterialCommunityIcons name="dots-grid" size={30} color={Color.white} />
+            </Pressable>
+          </View>
+        </Pressable>
+
+        {/* Avatar + Name row */}
+        <View style={styles.profileRow}>
+          <View style={styles.avatarBorder}>
+            <UserAvatar
+              avatarUrl={avatarUrl}
+              firstName={firstName}
+              size={80}
+            />
+          </View>
+          <View style={styles.nameContainer}>
+            {fullName ? (
+              <Text style={styles.nameText}>{fullName}</Text>
+            ) : null}
+            <Text style={styles.greetingText}>Welcome back</Text>
+          </View>
+        </View>
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{totalRounds}</Text>
+            <Text style={styles.statLabel}>Rounds</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{"\u2014"}</Text>
+            <Text style={styles.statLabel}>Handicap</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
+              {totalRounds > 0 ? `${attPct}%` : "\u2014"}
+            </Text>
+            <Text style={styles.statLabel}>Attested</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Scrollable Dashboard Content */}
       <ScrollView
         style={{ flex: 1 }}
         refreshControl={
@@ -264,78 +345,6 @@ export default function Dashboard() {
           />
         }
       >
-        {/* Hero Section */}
-        <View>
-          {/* Banner */}
-          <Pressable onPress={handleCoverPress} style={styles.banner}>
-            {coverUrl ? (
-              <Image source={{ uri: coverUrl }} style={styles.bannerImage} />
-            ) : (
-              <View style={styles.bannerFallback} />
-            )}
-
-            {/* Camera edit icon */}
-            <View style={styles.cameraIcon}>
-              <MaterialIcons
-                name="photo-camera"
-                size={18}
-                color={Color.white}
-              />
-            </View>
-
-            {/* Drawer button */}
-            <View style={styles.menuAnchor}>
-              <Pressable
-                onPress={openDrawer}
-                style={({ pressed }) => [
-                  styles.menuButton,
-                  pressed ? { opacity: 0.7 } : undefined,
-                ]}
-              >
-                <MaterialCommunityIcons name="dots-grid" size={30} color={Color.white} />
-              </Pressable>
-            </View>
-          </Pressable>
-
-          {/* Avatar + Name row */}
-          <View style={styles.profileRow}>
-            <View style={styles.avatarBorder}>
-              <UserAvatar
-                avatarUrl={avatarUrl}
-                firstName={firstName}
-                size={80}
-              />
-            </View>
-            <View style={styles.nameContainer}>
-              {fullName ? (
-                <Text style={styles.nameText}>{fullName}</Text>
-              ) : null}
-              <Text style={styles.greetingText}>Welcome back</Text>
-            </View>
-          </View>
-
-          {/* Stats row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{totalRounds}</Text>
-              <Text style={styles.statLabel}>Rounds</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{"\u2014"}</Text>
-              <Text style={styles.statLabel}>Handicap</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {totalRounds > 0 ? `${attPct}%` : "\u2014"}
-              </Text>
-              <Text style={styles.statLabel}>Attested</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Dashboard Content */}
         <View style={styles.contentContainer}>
           <View style={styles.contentInner}>
             {activeRounds.length === 0 && (
@@ -395,7 +404,7 @@ export default function Dashboard() {
             <View style={{ marginTop: Space.xl }}>
               <Text style={styles.sectionLabel}>Recent Activity</Text>
 
-              {recentRounds.length === 0 ? (
+              {completedRounds.length === 0 ? (
                 <View
                   style={{ alignItems: "center", paddingVertical: Space.xl }}
                 >
@@ -404,7 +413,7 @@ export default function Dashboard() {
                   </Text>
                 </View>
               ) : (
-                recentRounds.map((round) => (
+                completedRounds.map((round) => (
                   <RoundCard
                     key={round.id}
                     courseName={round.courses?.name || "Unknown Course"}
@@ -425,6 +434,32 @@ export default function Dashboard() {
                 ))
               )}
             </View>
+
+            {/* Incomplete Rounds */}
+            {incompleteRounds.length > 0 && (
+              <View style={{ marginTop: Space.xl }}>
+                <Text style={styles.sectionLabel}>Incomplete Rounds</Text>
+                {incompleteRounds.map((round) => (
+                  <RoundCard
+                    key={round.id}
+                    courseName={round.courses?.name || "Unknown Course"}
+                    playerStatus={round.player_status}
+                    teeboxName={(round.teebox_data as any)?.name}
+                    date={round.created_at}
+                    playerScore={round.player_score}
+                    scoreToPar={round.score_to_par}
+                    holesCompleted={round.holes_completed}
+                    holeCount={round.hole_count}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/round-summary",
+                        params: { roundId: round.id },
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -446,7 +481,7 @@ const styles = StyleSheet.create({
   },
   // --- Hero ---
   banner: {
-    height: 225,
+    height: 170,
     width: "100%",
     position: "relative",
   },
@@ -538,6 +573,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: "center",
     paddingHorizontal: Space.xxl,
+    paddingBottom: Space.xxl,
   },
   contentInner: {
     width: "100%",

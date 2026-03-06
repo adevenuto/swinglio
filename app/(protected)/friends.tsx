@@ -170,6 +170,23 @@ export default function FriendsScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
+      <ScreenHeader title="Friends" />
+
+      {/* Pinned search bar */}
+      <View style={styles.searchBarWrapper}>
+        <View style={styles.searchBarInner}>
+          <Searchbar
+            placeholder="Search by name or email..."
+            onChangeText={search}
+            value={query}
+            loading={isSearching}
+            mode="bar"
+            style={styles.searchbar}
+            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
+          />
+        </View>
+      </View>
+
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -182,20 +199,8 @@ export default function FriendsScreen() {
           />
         }
       >
-        <ScreenHeader title="Friends" />
         <View style={styles.container}>
           <View style={styles.inner}>
-
-            {/* Search bar */}
-            <Searchbar
-              placeholder="Search by name or email..."
-              onChangeText={search}
-              value={query}
-              loading={isSearching}
-              mode="bar"
-              style={styles.searchbar}
-              inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
-            />
 
             {/* Search results */}
             {showSearchResults && (
@@ -387,12 +392,20 @@ const styles = StyleSheet.create({
     ...Type.caption,
     marginBottom: Space.sm,
   },
+  searchBarWrapper: {
+    paddingHorizontal: Space.xxl,
+    paddingBottom: Space.md,
+    alignItems: "center",
+  },
+  searchBarInner: {
+    width: "100%",
+    maxWidth: 448,
+  },
   searchbar: {
     backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: Color.neutral300,
     borderRadius: Radius.full,
-    marginBottom: Space.lg,
   },
   card: {
     borderWidth: 1,

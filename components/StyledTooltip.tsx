@@ -35,7 +35,7 @@ type Props = {
 
 function getPosition(
   { children, tooltip, measured }: Measurement,
-  _component: React.ReactElement
+  _component: React.ReactElement,
 ): {} | { left: number; top: number } {
   if (!measured) return {};
 

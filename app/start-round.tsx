@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import {
   Course,
+  courseHasRatings,
   parseTeeboxes,
   Teebox,
   useCourseSearch,
@@ -110,7 +111,6 @@ export default function StartRoundScreen() {
     const parsed = parseTeeboxes(course.layout_data);
     setTeeboxes(parsed);
     setSelectedTeebox(parsed.length === 1 ? parsed[0] : null);
-    clearCourseSearch();
   };
 
   const handleChangeCourse = () => {
@@ -150,6 +150,7 @@ export default function StartRoundScreen() {
         course_id: selectedCourse.id,
         teebox_data: selectedTeebox,
         status: "active",
+        date_played: new Date().toISOString().split("T")[0],
       })
       .select()
       .single();
@@ -225,6 +226,7 @@ export default function StartRoundScreen() {
                     .join(", ") || undefined
                 }
                 featuredImageUrl={featuredImages[item.id]}
+                missingRatings={!courseHasRatings(item.layout_data)}
                 onPress={() => handleSelectCourse(item)}
               />
             )}
@@ -265,6 +267,7 @@ export default function StartRoundScreen() {
                       .join("  ·  ") || undefined
                   }
                   featuredImageUrl={featuredImages[item.id]}
+                  missingRatings={!courseHasRatings(item.layout_data)}
                   onPress={() => handleSelectCourse(item)}
                 />
               ))

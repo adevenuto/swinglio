@@ -85,3 +85,9 @@ export function parseTeeboxes(layoutData: string | null): Teebox[] {
     return [];
   }
 }
+
+/** Returns true if at least one teebox has both slope and courseRating */
+export function courseHasRatings(layoutData: string | null): boolean {
+  const teeboxes = parseTeeboxes(layoutData);
+  return teeboxes.some((t) => t.slope != null && t.courseRating != null);
+}

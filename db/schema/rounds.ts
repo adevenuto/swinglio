@@ -1,4 +1,4 @@
-import { bigserial, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigserial, date, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { courses } from './courses';
 import { profiles } from './profiles';
 
@@ -9,6 +9,7 @@ export const rounds = pgTable('rounds', {
   teeboxData: jsonb('teebox_data').notNull(),
   status: text('status').notNull().default('active'),
   resultsData: jsonb('results_data'),
+  datePlayed: date('date_played'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

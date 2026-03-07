@@ -17,10 +17,9 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator, Snackbar, Text } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, refreshProfile } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -181,6 +180,7 @@ export default function Profile() {
     }
 
     setAvatarUrl(publicUrl);
+    await refreshProfile();
     setSnackbar({ visible: true, message: "Photo updated" });
   };
 
@@ -195,6 +195,7 @@ export default function Profile() {
       .eq("id", user.id);
 
     setAvatarUrl(null);
+    await refreshProfile();
     setSnackbar({ visible: true, message: "Photo removed" });
   };
 
@@ -225,7 +226,7 @@ export default function Profile() {
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
+    <View style={styles.screen}>
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -327,7 +328,7 @@ export default function Profile() {
       >
         {snackbar.message}
       </Snackbar>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
   },
   navRow: {
     paddingHorizontal: Space.lg,
-    paddingTop: Space.md,
+    paddingTop: Space.lg,
   },
   backButton: {
     flexDirection: "row",

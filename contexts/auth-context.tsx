@@ -12,11 +12,14 @@ type AuthContextType = {
   isLoading: boolean;
   role: string | null;
   isEditor: boolean;
+  avatarUrl: string | null;
+  displayName: string | null;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,14 +32,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
-  const fetchRole = async (userId: string) => {
+  const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, avatar_url, first_name, display_name")
       .eq("id", userId)
       .single();
     setRole(data?.role ?? null);
+    setAvatarUrl(data?.avatar_url ?? null);
+    setDisplayName(data?.display_name || data?.first_name || null);
   };
 
   useEffect(() => {
@@ -44,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchRole(session.user.id);
+      if (session?.user) fetchProfile(session.user.id);
       setIsLoading(false);
     });
 
@@ -57,9 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchRole(session.user.id);
+        fetchProfile(session.user.id);
       } else {
         setRole(null);
+        setAvatarUrl(null);
+        setDisplayName(null);
       }
 
       // Resolve the auth promise when sign in is complete
@@ -199,7 +208,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     setRole(null);
+    setAvatarUrl(null);
+    setDisplayName(null);
     await supabase.auth.signOut();
+  };
+
+  const refreshProfile = async () => {
+    if (user?.id) await fetchProfile(user.id);
   };
 
   const refreshUser = async () => {
@@ -223,11 +238,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         role,
         isEditor: role === "editor",
+        avatarUrl,
+        displayName,
         signUp,
         signIn,
         signInWithGoogle,
         signOut,
         refreshUser,
+        refreshProfile,
       }}
     >
       {children}

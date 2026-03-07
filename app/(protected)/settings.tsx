@@ -4,11 +4,10 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
+    <View style={styles.screen}>
       <View style={styles.navRow}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
@@ -19,7 +18,7 @@ export default function SettingsScreen() {
         <Text style={styles.title}>Settings</Text>
         <Text style={styles.subtitle}>Coming soon</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -30,7 +29,7 @@ const styles = StyleSheet.create({
   },
   navRow: {
     paddingHorizontal: Space.lg,
-    paddingTop: Space.md,
+    paddingTop: Space.lg,
   },
   backButton: {
     flexDirection: "row",

@@ -6,7 +6,6 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EditorScreen() {
   const { isEditor } = useAuth();
@@ -16,20 +15,20 @@ export default function EditorScreen() {
 
   if (!isEditor) {
     return (
-      <SafeAreaView style={styles.screen} edges={["top"]}>
+      <View style={styles.screen}>
         <View style={styles.centeredContainer}>
           <Text style={{ fontFamily: Font.medium, fontSize: 16, color: Color.neutral500 }}>
             Access denied
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const showResults = query.length >= 2;
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
+    <View style={styles.screen}>
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -101,7 +100,7 @@ export default function EditorScreen() {
             ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -118,7 +117,7 @@ const styles = StyleSheet.create({
   },
   navRow: {
     paddingHorizontal: Space.lg,
-    paddingTop: Space.md,
+    paddingTop: Space.lg,
   },
   backButton: {
     flexDirection: "row",

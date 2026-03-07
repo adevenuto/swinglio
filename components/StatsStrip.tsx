@@ -1,0 +1,159 @@
+import UserAvatar from "@/components/UserAvatar";
+import { Color, Font, Space } from "@/constants/design-tokens";
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import Svg, { Circle } from "react-native-svg";
+
+export type StatItem = {
+  key: string;
+  value: string;
+  label: string;
+  progress?: number; // 0–100; if present, renders SVG progress ring
+};
+
+type Props = {
+  items: StatItem[];
+  avatarUrl?: string | null;
+  onAvatarPress?: () => void;
+};
+
+const CIRCLE_SIZE = 56;
+const STROKE_WIDTH = 3;
+const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2; // 26.5
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+function ProgressRing({ progress }: { progress: number }) {
+  const clamped = Math.max(0, Math.min(100, progress));
+  const offset = CIRCUMFERENCE - (clamped / 100) * CIRCUMFERENCE;
+
+  return (
+    <Svg
+      width={CIRCLE_SIZE}
+      height={CIRCLE_SIZE}
+      style={styles.progressSvg}
+    >
+      {/* Track */}
+      <Circle
+        cx={CIRCLE_SIZE / 2}
+        cy={CIRCLE_SIZE / 2}
+        r={RADIUS}
+        stroke={Color.neutral200}
+        strokeWidth={STROKE_WIDTH}
+        fill="none"
+      />
+      {/* Filled arc */}
+      <Circle
+        cx={CIRCLE_SIZE / 2}
+        cy={CIRCLE_SIZE / 2}
+        r={RADIUS}
+        stroke={Color.primary}
+        strokeWidth={STROKE_WIDTH}
+        fill="none"
+        strokeDasharray={`${CIRCUMFERENCE}`}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        rotation={-90}
+        origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}
+      />
+    </Svg>
+  );
+}
+
+export default function StatsStrip({ items, avatarUrl, onAvatarPress }: Props) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+      style={styles.scrollView}
+    >
+      {/* Avatar — first item */}
+      <Pressable
+        onPress={onAvatarPress}
+        style={({ pressed }) => [
+          styles.item,
+          pressed ? { opacity: 0.7 } : undefined,
+        ]}
+      >
+        <UserAvatar avatarUrl={avatarUrl} firstName={null} size={CIRCLE_SIZE} />
+      </Pressable>
+
+      {/* Stat badges */}
+      {items.map((item) => (
+        <View key={item.key} style={styles.item}>
+          <View style={styles.badgeWrapper}>
+            {item.progress != null ? (
+              <>
+                <ProgressRing progress={item.progress} />
+                <View style={styles.valueOverlay}>
+                  <Text style={styles.progressValue}>{item.value}</Text>
+                </View>
+              </>
+            ) : (
+              <View style={styles.plainBadge}>
+                <Text style={styles.plainValue}>{item.value}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.label}>{item.label}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    paddingLeft: Space.xxl,
+    paddingRight: Space.lg,
+    paddingVertical: Space.lg,
+    gap: Space.md,
+    alignItems: "flex-start",
+  },
+  item: {
+    alignItems: "center",
+  },
+  badgeWrapper: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  plainBadge: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    backgroundColor: Color.white,
+    borderWidth: 2,
+    borderColor: Color.neutral200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  plainValue: {
+    fontFamily: Font.bold,
+    fontSize: 16,
+    color: Color.neutral900,
+  },
+  progressSvg: {
+    position: "absolute",
+  },
+  valueOverlay: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressValue: {
+    fontFamily: Font.bold,
+    fontSize: 14,
+    color: Color.neutral900,
+  },
+  label: {
+    fontFamily: Font.medium,
+    fontSize: 12,
+    color: Color.neutral500,
+    marginTop: Space.xs,
+  },
+});

@@ -1,5 +1,7 @@
 import AppDrawer from "@/components/AppDrawer";
 import BottomTabBar from "@/components/BottomTabBar";
+import BrandHeader from "@/components/BrandHeader";
+import { Color } from "@/constants/design-tokens";
 import { AppDrawerProvider } from "@/contexts/app-drawer-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
@@ -9,6 +11,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Redirect, Tabs, useFocusEffect } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProtectedLayout() {
   const { user, isLoading } = useAuth();
@@ -44,6 +47,11 @@ export default function ProtectedLayout() {
 
   return (
     <AppDrawerProvider>
+    <SafeAreaView
+      edges={["top"]}
+      style={{ flex: 1, backgroundColor: Color.screenBg }}
+    >
+    <BrandHeader />
     <Tabs
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
@@ -115,6 +123,7 @@ export default function ProtectedLayout() {
         }}
       />
     </Tabs>
+    </SafeAreaView>
     <AppDrawer />
     </AppDrawerProvider>
   );

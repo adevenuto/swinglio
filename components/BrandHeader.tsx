@@ -5,16 +5,16 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
-type ScreenHeaderProps = {
-  title: string;
-};
+const BRAND_NAME = "Swinglio";
 
-export default function ScreenHeader({ title }: ScreenHeaderProps) {
+export default function BrandHeader() {
   const { openDrawer } = useAppDrawer();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.leftSpacer} />
+
+      <Text style={styles.brandName}>{BRAND_NAME}</Text>
 
       <Pressable
         onPress={openDrawer}
@@ -25,8 +25,8 @@ export default function ScreenHeader({ title }: ScreenHeaderProps) {
       >
         <MaterialCommunityIcons
           name="dots-grid"
-          size={30}
-          color={Color.neutral100}
+          size={24}
+          color={Color.neutral400}
         />
       </Pressable>
     </View>
@@ -39,13 +39,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Space.lg,
-    paddingVertical: Space.md,
+    height: 48,
+    backgroundColor: Color.screenBg,
+    borderBottomWidth: 1,
+    borderBottomColor: Color.neutral200,
   },
-  title: {
+  brandName: {
     fontFamily: Font.bold,
     fontSize: 22,
-    lineHeight: 28,
     color: Color.neutral900,
+  },
+  leftSpacer: {
+    width: 40,
   },
   menuButton: {
     padding: Space.sm,

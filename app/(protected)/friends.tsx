@@ -1,4 +1,3 @@
-import ScreenHeader from "@/components/ScreenHeader";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
@@ -18,7 +17,6 @@ import {
   View,
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -169,9 +167,7 @@ export default function FriendsScreen() {
     pendingSent.length === 0;
 
   return (
-    <SafeAreaView style={styles.screen} edges={["top"]}>
-      <ScreenHeader title="Friends" />
-
+    <View style={styles.screen}>
       {/* Pinned search bar */}
       <View style={styles.searchBarWrapper}>
         <View style={styles.searchBarInner}>
@@ -371,7 +367,7 @@ export default function FriendsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -394,6 +390,7 @@ const styles = StyleSheet.create({
   },
   searchBarWrapper: {
     paddingHorizontal: Space.xxl,
+    paddingTop: Space.lg,
     paddingBottom: Space.md,
     alignItems: "center",
   },

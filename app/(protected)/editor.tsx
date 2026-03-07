@@ -95,6 +95,8 @@ export default function EditorScreen() {
                       params: { courseId: String(course.id) },
                     })
                   }
+                  textColor={Color.primary}
+                  style={{ borderColor: Color.primary }}
                   labelStyle={{ fontFamily: Font.medium }}
                 >
                   Edit

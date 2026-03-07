@@ -130,14 +130,43 @@ export function useHandicap(userId: string) {
           continue;
         }
 
-        // Compute par from teebox holes
-        const holeKeys = Object.keys(teebox!.holes || {});
-        if (holeKeys.length === 0) {
+        // Slope must be in USGA valid range (55–155)
+        if (slopeRating < 55 || slopeRating > 155) {
+          excluded.push({ roundId, reason: "invalid_slope" });
+          continue;
+        }
+
+        // Course rating sanity check — no real course has CR outside ~25-85.
+        // 9-hole CR: ~25-42, 18-hole CR: ~55-80. Using 20-90 for margin.
+        if (courseRating < 20 || courseRating > 90) {
+          excluded.push({ roundId, reason: "no_course_rating" });
+          continue;
+        }
+
+        // Scored holes — only holes the player actually completed
+        // Filter out empty (""), null, and zero scores — a valid golf score is always >= 1.
+        // JSONB may return score as number 0 or string "0" for unplayed holes.
+        const scoredHoleKeys = Object.keys(sd.holes).filter((k) => {
+          const s = sd.holes[k].score;
+          const parsed = parseInt(String(s), 10);
+          return s != null && s !== "" && !isNaN(parsed) && parsed > 0;
+        });
+        const scoredHoleCount = scoredHoleKeys.length;
+        if (scoredHoleCount === 0) {
+          excluded.push({ roundId, reason: "total_only" });
+          continue;
+        }
+
+        // Compute par from the SCORED holes only (match keys against teebox)
+        const teeboxHoleKeys = Object.keys(teebox!.holes || {});
+        if (teeboxHoleKeys.length === 0) {
           excluded.push({ roundId, reason: "no_par" });
           continue;
         }
-        const par = holeKeys.reduce((sum, k) => {
-          const p = parseInt(teebox!.holes[k].par, 10);
+        const par = scoredHoleKeys.reduce((sum, k) => {
+          const teeHole = teebox!.holes[k];
+          if (!teeHole) return sum;
+          const p = parseInt(teeHole.par, 10);
           return sum + (isNaN(p) ? 0 : p);
         }, 0);
         if (par === 0) {
@@ -149,9 +178,8 @@ export function useHandicap(userId: string) {
         // 9-hole courseRating is typically 28-40; if it's > par × 1.5 on a
         // ≤9-hole round, the API provided the 18-hole value — halve it
         // per USGA approximation.
-        const holeCount = holeKeys.length;
         let adjCourseRating = courseRating;
-        if (holeCount <= 9 && courseRating > par * 1.5) {
+        if (scoredHoleCount <= 9 && courseRating > par * 1.5) {
           adjCourseRating = courseRating / 2;
         }
 
@@ -183,13 +211,20 @@ export function useHandicap(userId: string) {
           (round.date_played as string) ||
           (round.created_at as string).split("T")[0];
 
+        // --- DEBUG: remove after verifying handicap is correct ---
+        console.log(`[HANDICAP DEBUG] Round ${roundId}: ` +
+          `scoredHoles=${scoredHoleCount}, par=${par}, gross=${grossScore}, ` +
+          `AGS=${adjustedGrossScore}, CR=${courseRating}, adjCR=${adjCourseRating}, ` +
+          `slope=${slopeRating}, diff=${differential.toFixed(2)}`);
+        // --- END DEBUG ---
+
         eligible.push({
           roundId,
           datePlayed,
           courseRating: adjCourseRating,
           slopeRating,
           par,
-          holeCount,
+          holeCount: scoredHoleCount,
           grossScore,
           adjustedGrossScore,
           wasAdjusted,
@@ -200,8 +235,14 @@ export function useHandicap(userId: string) {
       }
 
       // 5. Calculate handicap index
+      // --- DEBUG: remove after verifying handicap is correct ---
+      console.log(`[HANDICAP DEBUG] Eligible: ${eligible.length}, Excluded: ${excluded.length} (${excluded.map(e => `${e.roundId}:${e.reason}`).join(', ')})`);
+      // --- END DEBUG ---
       const handicapResult = calculateHandicapIndex(eligible);
       handicapResult.excludedRounds = excluded;
+      // --- DEBUG: remove after verifying handicap is correct ---
+      console.log(`[HANDICAP DEBUG] Result: index=${handicapResult.handicapIndex}, method="${handicapResult.methodDescription}"`);
+      // --- END DEBUG ---
 
       // 6. Cache to profile
       if (handicapResult.handicapIndex != null) {

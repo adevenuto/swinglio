@@ -60,16 +60,6 @@ export default function ProtectedLayout() {
       initialRouteName="dashboard"
     >
       <Tabs.Screen
-        name="friends"
-        options={{
-          title: "Friends",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="group" size={size} color={color} />
-          ),
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
-        }}
-      />
-      <Tabs.Screen
         name="dashboard"
         options={{
           title: "Dashboard",
@@ -78,6 +68,16 @@ export default function ProtectedLayout() {
           ),
           tabBarBadge:
             activeRounds.length > 0 ? activeRounds.length : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="group" size={size} color={color} />
+          ),
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
       <Tabs.Screen

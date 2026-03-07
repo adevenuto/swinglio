@@ -3,6 +3,7 @@
 export type ExclusionReason =
   | "no_course_rating"
   | "no_slope"
+  | "invalid_slope"
   | "no_par"
   | "not_attested"
   | "total_only"

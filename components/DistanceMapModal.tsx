@@ -1,4 +1,4 @@
-import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
+import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { distanceInYards } from "@/lib/geo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -105,22 +105,6 @@ export default function DistanceMapModal({
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Hole {holeNumber}</Text>
-          <View style={styles.headerDistanceRow}>
-            <Text style={styles.headerDistance}>
-              {playerToAnchor} yds to target
-            </Text>
-            <Text style={styles.headerDistanceSecondary}>
-              {anchorToGreen} yds to pin
-            </Text>
-          </View>
-          <Text style={styles.headerDistanceTotal}>
-            {distanceYards} yds total
-          </Text>
-        </View>
-
         {/* Map */}
         <View style={styles.mapWrapper}>
           {Mapbox ? (
@@ -130,7 +114,7 @@ export default function DistanceMapModal({
                 styleURL={Mapbox.StyleURL.SatelliteStreet}
                 logoEnabled={false}
                 attributionEnabled={false}
-                compassEnabled
+                compassEnabled={false}
                 zoomEnabled
                 scrollEnabled
               >
@@ -153,13 +137,33 @@ export default function DistanceMapModal({
                 </Mapbox.ShapeSource>
 
                 {/* Player marker — blue dot */}
-                <Mapbox.MarkerView coordinate={[playerLng, playerLat]}>
+                <Mapbox.MarkerView
+                  coordinate={[playerLng, playerLat]}
+                  allowOverlap
+                >
                   <View style={styles.playerDot} />
                 </Mapbox.MarkerView>
 
-                {/* Green center marker — green pin */}
+                {/* Distance label above green center */}
                 <Mapbox.MarkerView
                   coordinate={[greenCenter.lng, greenCenter.lat]}
+                  anchor={{ x: 0.5, y: 1 }}
+                  allowOverlap
+                >
+                  <View style={styles.pillAboveMarker}>
+                    <View style={styles.distancePill}>
+                      <Text style={styles.distancePillText}>
+                        {anchorToGreen} yds
+                      </Text>
+                    </View>
+                  </View>
+                </Mapbox.MarkerView>
+
+                {/* Green center marker */}
+                <Mapbox.MarkerView
+                  coordinate={[greenCenter.lng, greenCenter.lat]}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  allowOverlap
                 >
                   <View style={styles.greenPin}>
                     <MaterialCommunityIcons
@@ -167,6 +171,21 @@ export default function DistanceMapModal({
                       size={18}
                       color={Color.white}
                     />
+                  </View>
+                </Mapbox.MarkerView>
+
+                {/* Distance label above anchor */}
+                <Mapbox.MarkerView
+                  coordinate={anchorCoord}
+                  anchor={{ x: 0.5, y: 1 }}
+                  allowOverlap
+                >
+                  <View style={styles.pillAboveMarker}>
+                    <View style={styles.distancePill}>
+                      <Text style={styles.distancePillText}>
+                        {playerToAnchor} yds
+                      </Text>
+                    </View>
                   </View>
                 </Mapbox.MarkerView>
 
@@ -192,6 +211,34 @@ export default function DistanceMapModal({
                 </Mapbox.PointAnnotation>
               </Mapbox.MapView>
 
+              {/* Top overlay — hole info pill + legend */}
+              <View style={styles.topOverlay}>
+                <Text style={styles.topOverlayText}>
+                  Hole {holeNumber} · {distanceYards} yds
+                </Text>
+              </View>
+
+              {/* Legend */}
+              <View style={styles.legend}>
+                <View style={styles.legendDot} />
+                <Text style={styles.legendText}>Hold & drag to measure</Text>
+              </View>
+
+              {/* Close X button */}
+              <Pressable
+                onPress={onClose}
+                style={({ pressed }) => [
+                  styles.closeCircle,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={24}
+                  color={Color.white}
+                />
+              </Pressable>
+
               {/* Zoom controls */}
               <View style={styles.zoomControls}>
                 <Pressable
@@ -204,7 +251,7 @@ export default function DistanceMapModal({
                   <MaterialCommunityIcons
                     name="plus"
                     size={22}
-                    color={Color.neutral700}
+                    color={Color.white}
                   />
                 </Pressable>
                 <View style={styles.zoomDivider} />
@@ -218,14 +265,9 @@ export default function DistanceMapModal({
                   <MaterialCommunityIcons
                     name="minus"
                     size={22}
-                    color={Color.neutral700}
+                    color={Color.white}
                   />
                 </Pressable>
-              </View>
-
-              {/* Drag hint */}
-              <View style={styles.hintPill}>
-                <Text style={styles.hintText}>Hold & drag target</Text>
               </View>
             </>
           ) : (
@@ -237,24 +279,11 @@ export default function DistanceMapModal({
               />
               <Text style={styles.fallbackTitle}>Map Not Available</Text>
               <Text style={styles.fallbackBody}>
-                Mapbox native code is not linked. Run "npx expo prebuild --clean"
-                then "npx expo run:ios" to enable maps.
+                Mapbox native code is not linked. Run "npx expo prebuild
+                --clean" then "npx expo run:ios" to enable maps.
               </Text>
             </View>
           )}
-        </View>
-
-        {/* Close button */}
-        <View style={styles.actions}>
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={styles.closeText}>Close</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>
@@ -264,42 +293,7 @@ export default function DistanceMapModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.screenBg,
-  },
-  header: {
-    paddingHorizontal: Space.lg,
-    paddingTop: Space.xl,
-    paddingBottom: Space.md,
-    backgroundColor: Color.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Color.neutral200,
-    alignItems: "center",
-  },
-  headerTitle: {
-    ...Type.h3,
-    textAlign: "center",
-  },
-  headerDistanceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Space.md,
-    marginTop: Space.xs,
-  },
-  headerDistance: {
-    fontFamily: Font.semiBold,
-    fontSize: 15,
-    color: Color.accentDark,
-  },
-  headerDistanceSecondary: {
-    fontFamily: Font.regular,
-    fontSize: 14,
-    color: Color.neutral500,
-  },
-  headerDistanceTotal: {
-    fontFamily: Font.regular,
-    fontSize: 12,
-    color: Color.neutral400,
-    marginTop: 2,
+    backgroundColor: Color.neutral900,
   },
   mapWrapper: {
     flex: 1,
@@ -336,11 +330,11 @@ const styles = StyleSheet.create({
     borderColor: Color.white,
   },
   anchorDot: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Color.white,
-    borderWidth: 10,
+    borderWidth: 6,
     borderColor: Color.accentDark,
   },
   greenPin: {
@@ -353,14 +347,53 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Color.white,
   },
+  topOverlay: {
+    position: "absolute",
+    top: Space.xl,
+    alignSelf: "center",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    borderRadius: Radius.lg,
+    paddingVertical: Space.xs,
+    paddingHorizontal: Space.md,
+  },
+  topOverlayText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.white,
+  },
+  closeCircle: {
+    position: "absolute",
+    top: Space.xl,
+    right: Space.md,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pillAboveMarker: {
+    marginBottom: 20,
+  },
+  distancePill: {
+    backgroundColor: "rgba(0,0,0,0.8)",
+    borderRadius: Radius.sm,
+    paddingHorizontal: Space.sm,
+    paddingVertical: 2,
+    flexDirection: "row",
+  },
+  distancePillText: {
+    fontFamily: Font.semiBold,
+    fontSize: 12,
+    color: Color.white,
+    flexShrink: 0,
+  },
   zoomControls: {
     position: "absolute",
     right: Space.md,
     bottom: Space.lg,
-    backgroundColor: Color.white,
+    backgroundColor: "rgba(0,0,0,0.55)",
     borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     overflow: "hidden",
   },
   zoomBtn: {
@@ -371,40 +404,31 @@ const styles = StyleSheet.create({
   },
   zoomDivider: {
     height: 1,
-    backgroundColor: Color.neutral200,
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
-  hintPill: {
+  legend: {
     position: "absolute",
-    left: Space.md,
-    bottom: Space.lg,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    top: Space.xl + 32,
+    alignSelf: "center",
+    backgroundColor: "rgba(0,0,0,0.8)",
     borderRadius: Radius.sm,
-    paddingHorizontal: Space.xs,
+    paddingHorizontal: Space.sm,
     paddingVertical: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
   },
-  hintText: {
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Color.white,
+    borderWidth: 3,
+    borderColor: Color.accentDark,
+  },
+  legendText: {
     fontSize: 12,
     fontFamily: Font.medium,
     color: Color.white,
-  },
-  actions: {
-    paddingHorizontal: Space.lg,
-    paddingTop: Space.md,
-    paddingBottom: Space.xxl,
-    backgroundColor: Color.white,
-    borderTopWidth: 1,
-    borderTopColor: Color.neutral200,
-  },
-  closeBtn: {
-    height: 48,
-    borderRadius: Radius.lg,
-    backgroundColor: Color.neutral100,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeText: {
-    fontFamily: Font.semiBold,
-    fontSize: 15,
-    color: Color.neutral700,
   },
 });

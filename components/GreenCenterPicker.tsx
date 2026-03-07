@@ -1,7 +1,7 @@
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { GreenCenter } from "@/hooks/use-course-search";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -19,6 +19,8 @@ type Props = {
   courseLat: number;
   courseLng: number;
   currentCenter: GreenCenter | null;
+  savedCenters: Record<string, GreenCenter>;
+  isLastHole: boolean;
   onConfirm: (center: GreenCenter) => void;
   onClear: () => void;
   onCancel: () => void;
@@ -30,6 +32,8 @@ export default function GreenCenterPicker({
   courseLat,
   courseLng,
   currentCenter,
+  savedCenters,
+  isLastHole,
   onConfirm,
   onClear,
   onCancel,
@@ -45,6 +49,16 @@ export default function GreenCenterPicker({
       zoomRef.current = currentCenter ? 18 : 17;
     }
   }, [visible, currentCenter]);
+
+  // Re-center camera when hole advances (holeNumber changes while visible)
+  useEffect(() => {
+    if (!visible) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: [courseLng, courseLat],
+      zoomLevel: currentCenter ? 18 : 17,
+      animationDuration: 300,
+    });
+  }, [holeNumber]);
 
   const handleZoom = useCallback((delta: number) => {
     zoomRef.current = Math.min(22, Math.max(10, zoomRef.current + delta));
@@ -103,6 +117,22 @@ export default function GreenCenterPicker({
                   zoomLevel: pin ? 18 : 17,
                 }}
               />
+              {Object.entries(savedCenters)
+                .filter(([key]) => key !== `hole-${holeNumber}`)
+                .map(([key, center]) => {
+                  const num = key.replace("hole-", "");
+                  return (
+                    <Mapbox.MarkerView
+                      key={key}
+                      coordinate={[center.lng, center.lat]}
+                      allowOverlap
+                    >
+                      <View style={styles.savedMarker}>
+                        <Text style={styles.savedMarkerText}>{num}</Text>
+                      </View>
+                    </Mapbox.MarkerView>
+                  );
+                })}
               {pin && (
                 <Mapbox.MarkerView coordinate={[pin.lng, pin.lat]}>
                   <View style={styles.pinOuter}>
@@ -195,7 +225,7 @@ export default function GreenCenterPicker({
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={styles.confirmText}>Save</Text>
+            <Text style={styles.confirmText}>{isLastHole ? "Save" : "Save & Next"}</Text>
           </Pressable>
         </View>
       </View>
@@ -275,6 +305,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderColor: Color.white,
+  },
+  savedMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Color.neutral700,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: Color.white,
+  },
+  savedMarkerText: {
+    fontFamily: Font.bold,
+    fontSize: 11,
+    color: Color.white,
   },
   coordRow: {
     paddingVertical: Space.sm,

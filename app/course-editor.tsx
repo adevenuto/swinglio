@@ -197,6 +197,20 @@ export default function CourseEditorScreen() {
   ) => {
     setTeeboxes((prev) =>
       prev.map((t, i) => {
+        // For handicap, apply the value to ALL teeboxes (not just the current one)
+        if (field === "handicap") {
+          const current = t.holes[holeKey] ?? { par: "4", length: "" };
+          return {
+            ...t,
+            holes: {
+              ...t.holes,
+              [holeKey]: {
+                ...current,
+                handicap: value ? parseInt(value, 10) || undefined : undefined,
+              },
+            },
+          };
+        }
         if (i !== teeboxIdx) return t;
         const current = t.holes[holeKey] ?? { par: "4", length: "" };
         return {
@@ -205,9 +219,7 @@ export default function CourseEditorScreen() {
             ...t.holes,
             [holeKey]: {
               ...current,
-              ...(field === "handicap"
-                ? { handicap: value ? parseInt(value, 10) || undefined : undefined }
-                : { [field]: value }),
+              [field]: value,
             },
           },
         };
@@ -223,6 +235,7 @@ export default function CourseEditorScreen() {
       newHoles[key] = {
         par: firstTeebox?.holes[key]?.par ?? "4",
         length: "",
+        handicap: firstTeebox?.holes[key]?.handicap,
       };
     }
     const newTeebox: Teebox = {
@@ -893,11 +906,13 @@ export default function CourseEditorScreen() {
                 >
                   Yardage
                 </Text>
-                <Text
-                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
-                >
-                  Hdcp
-                </Text>
+                {selectedTeeboxIndex === 0 && (
+                  <Text
+                    style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
+                  >
+                    Hdcp
+                  </Text>
+                )}
                 <View style={{ width: 32 }} />
               </View>
 
@@ -948,16 +963,18 @@ export default function CourseEditorScreen() {
                       style={{ flex: 1, marginRight: Space.md }}
                       dense
                     />
-                    <TextInput
-                      mode="outlined"
-                      value={hole.handicap != null ? String(hole.handicap) : ""}
-                      onChangeText={(v) =>
-                        updateHole(selectedTeeboxIndex, holeKey, "handicap", v)
-                      }
-                      keyboardType="number-pad"
-                      style={{ flex: 1 }}
-                      dense
-                    />
+                    {selectedTeeboxIndex === 0 && (
+                      <TextInput
+                        mode="outlined"
+                        value={hole.handicap != null ? String(hole.handicap) : ""}
+                        onChangeText={(v) =>
+                          updateHole(selectedTeeboxIndex, holeKey, "handicap", v)
+                        }
+                        keyboardType="number-pad"
+                        style={{ flex: 1 }}
+                        dense
+                      />
+                    )}
                     <Pressable
                       onPress={() => setPickerHole(i + 1)}
                       style={({ pressed }) => [
@@ -1044,12 +1061,19 @@ export default function CourseEditorScreen() {
         currentCenter={
           pickerHole ? greenCenters[`hole-${pickerHole}`] ?? null : null
         }
+        savedCenters={greenCenters}
+        isLastHole={pickerHole === holeCount}
         onConfirm={(center) => {
           if (pickerHole) {
             setGreenCenters((prev) => ({
               ...prev,
               [`hole-${pickerHole}`]: center,
             }));
+            if (pickerHole < holeCount) {
+              setPickerHole(pickerHole + 1);
+            } else {
+              setPickerHole(null);
+            }
           }
         }}
         onClear={() => {

@@ -7,6 +7,9 @@ import { Color, Font } from "@/constants/design-tokens";
 
 const CENTER_BUTTON_SIZE = 64;
 
+/** Visual order of tabs — decoupled from definition order in _layout. */
+const TAB_VISUAL_ORDER = ["friends", "dashboard", "stats"];
+
 export default function BottomTabBar({
   state,
   descriptors,
@@ -14,9 +17,17 @@ export default function BottomTabBar({
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
+  // Sort visible routes into the desired visual order
+  const orderedEntries = TAB_VISUAL_ORDER
+    .map((name) => {
+      const index = state.routes.findIndex((r) => r.name === name);
+      return index >= 0 ? { route: state.routes[index], index } : null;
+    })
+    .filter(Boolean) as { route: (typeof state.routes)[number]; index: number }[];
+
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-      {state.routes.map((route, index) => {
+      {orderedEntries.map(({ route, index }) => {
         const { options } = descriptors[route.key];
 
         // Skip hidden tabs (e.g. editor for non-editors)

@@ -1,7 +1,7 @@
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { GreenCenter } from "@/hooks/use-course-search";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -35,13 +35,24 @@ export default function GreenCenterPicker({
   onCancel,
 }: Props) {
   const [pin, setPin] = useState<GreenCenter | null>(currentCenter);
+  const cameraRef = useRef<InstanceType<typeof import("@rnmapbox/maps").default.Camera> | null>(null);
+  const zoomRef = useRef(pin ? 18 : 17);
 
   // Reset pin when modal opens with new data
   React.useEffect(() => {
     if (visible) {
       setPin(currentCenter);
+      zoomRef.current = currentCenter ? 18 : 17;
     }
   }, [visible, currentCenter]);
+
+  const handleZoom = useCallback((delta: number) => {
+    zoomRef.current = Math.min(22, Math.max(10, zoomRef.current + delta));
+    cameraRef.current?.setCamera({
+      zoomLevel: zoomRef.current,
+      animationDuration: 200,
+    });
+  }, []);
 
   const handleMapPress = useCallback((feature: GeoJSON.Feature) => {
     const coords = (feature.geometry as GeoJSON.Point).coordinates;
@@ -74,6 +85,7 @@ export default function GreenCenterPicker({
         {/* Map */}
         <View style={styles.mapWrapper}>
           {Mapbox ? (
+            <>
             <Mapbox.MapView
               style={styles.map}
               styleURL={Mapbox.StyleURL.SatelliteStreet}
@@ -81,8 +93,11 @@ export default function GreenCenterPicker({
               logoEnabled={false}
               attributionEnabled={false}
               compassEnabled
+              zoomEnabled
+              scrollEnabled
             >
               <Mapbox.Camera
+                ref={cameraRef as React.RefObject<InstanceType<typeof Mapbox.Camera>>}
                 defaultSettings={{
                   centerCoordinate: centerCoord,
                   zoomLevel: pin ? 18 : 17,
@@ -100,6 +115,28 @@ export default function GreenCenterPicker({
                 </Mapbox.MarkerView>
               )}
             </Mapbox.MapView>
+            <View style={styles.zoomControls}>
+              <Pressable
+                onPress={() => handleZoom(1)}
+                style={({ pressed }) => [
+                  styles.zoomBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialCommunityIcons name="plus" size={22} color={Color.neutral800} />
+              </Pressable>
+              <View style={styles.zoomDivider} />
+              <Pressable
+                onPress={() => handleZoom(-1)}
+                style={({ pressed }) => [
+                  styles.zoomBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialCommunityIcons name="minus" size={22} color={Color.neutral800} />
+              </Pressable>
+            </View>
+            </>
           ) : (
             <View style={styles.fallback}>
               <MaterialCommunityIcons
@@ -134,7 +171,7 @@ export default function GreenCenterPicker({
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>Close</Text>
           </Pressable>
 
           <Pressable
@@ -158,7 +195,7 @@ export default function GreenCenterPicker({
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={styles.confirmText}>Confirm</Text>
+            <Text style={styles.confirmText}>Save</Text>
           </Pressable>
         </View>
       </View>
@@ -208,6 +245,26 @@ const styles = StyleSheet.create({
     color: Color.neutral500,
     textAlign: "center",
     lineHeight: 20,
+  },
+  zoomControls: {
+    position: "absolute",
+    right: Space.md,
+    bottom: Space.lg,
+    backgroundColor: Color.white,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    overflow: "hidden",
+  },
+  zoomBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  zoomDivider: {
+    height: 1,
+    backgroundColor: Color.neutral200,
   },
   pinOuter: {
     width: 36,

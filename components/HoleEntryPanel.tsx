@@ -188,10 +188,11 @@ function HoleEntryPanel({
       const stats = currentStatsRef.current ?? createDefaultHoleStats();
 
       const scoreVal = cs ? parseInt(cs, 10) : pn;
+      const puttsVal = stats.putts ?? 2;
       setScore(scoreVal);
       setFairway(stats.fairway);
-      setPuttsCount(stats.putts ?? 2);
-      setHasPuttsEntry(stats.putts != null);
+      setPuttsCount(puttsVal);
+      setHasPuttsEntry(true);
       setBunkers([...stats.bunkers]);
       setPenalties([...stats.penalties]);
 
@@ -200,8 +201,8 @@ function HoleEntryPanel({
         score: String(scoreVal),
         stats: {
           fairway: stats.fairway,
-          putts: stats.putts,
-          gir: calculateGIR(scoreVal, stats.putts, pn),
+          putts: puttsVal,
+          gir: calculateGIR(scoreVal, puttsVal, pn),
           bunkers: stats.bunkers,
           penalties: stats.penalties,
         },
@@ -223,17 +224,19 @@ function HoleEntryPanel({
     const incrementScore = () => {
       const next = Math.min(score + 1, 15);
       setScore(next);
-      pushUpdate({ score: next });
+      setHasPuttsEntry(true);
+      pushUpdate({ score: next, hasPutts: true });
     };
     const decrementScore = () => {
       const next = Math.max(score - 1, 1);
       setScore(next);
+      setHasPuttsEntry(true);
       const maxPutts = Math.max(next - 1, 0);
-      if (hasPuttsEntry && puttsCount > maxPutts) {
+      if (puttsCount > maxPutts) {
         setPuttsCount(maxPutts);
         pushUpdate({ score: next, putts: maxPutts, hasPutts: true });
       } else {
-        pushUpdate({ score: next });
+        pushUpdate({ score: next, hasPutts: true });
       }
     };
 
@@ -295,7 +298,7 @@ function HoleEntryPanel({
             >
               <Text style={styles.stepperLabel}>Tee Shot Accuracy</Text>
               <DPad
-                size={150}
+                size={120}
                 value={fairway}
                 onControl={toggleFairway}
                 quadrantColor={Color.neutral200}
@@ -304,7 +307,7 @@ function HoleEntryPanel({
                 selectedIconColor={Color.white}
                 centerBgColor={Color.neutral300}
                 centerTextColor={Color.neutral500}
-                iconSize={24}
+                iconSize={20}
               />
             </View>
 
@@ -449,7 +452,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     justifyContent: "flex-end",
-    gap: Space.xxl,
+    gap: Space.xl,
   },
   stepperColumn: {
     display: "flex",

@@ -8,7 +8,7 @@ const sql = postgres(process.env.DIRECT_URL!);
 const DRY_RUN = process.argv.includes("--dry-run");
 
 function isDuplicatedFront9(
-  holes: Record<string, { par: string; length: string }>,
+  holes: Record<string, { par: string; length: string; handicap?: number }>,
 ): boolean {
   const keys = Object.keys(holes);
   if (keys.length !== 18) return false;
@@ -17,7 +17,11 @@ function isDuplicatedFront9(
     const front = holes[`hole-${i}`];
     const back = holes[`hole-${i + 9}`];
     if (!front || !back) return false;
-    if (front.par !== back.par || front.length !== back.length) return false;
+    if (
+      front.par !== back.par ||
+      front.length !== back.length ||
+      front.handicap !== back.handicap
+    ) return false;
   }
   return true;
 }

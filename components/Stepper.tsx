@@ -21,10 +21,10 @@ type StepperProps = {
 
 const SIZE_CONFIG = {
   lg: {
-    buttonSize: 40,
-    iconSize: 20,
+    buttonSize: 34,
+    iconSize: 18,
     valueFontFamily: Font.bold,
-    valueFontSize: 32,
+    valueFontSize: 26,
     dimOnZero: false,
   },
   sm: {
@@ -188,8 +188,8 @@ const verticalStyles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "space-around",
-    width: 58,
-    minHeight: 140,
+    width: 50,
+    minHeight: 120,
     alignSelf: "stretch",
     borderRadius: Radius.full,
     borderWidth: 1,

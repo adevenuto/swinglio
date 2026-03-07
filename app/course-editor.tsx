@@ -429,6 +429,16 @@ export default function CourseEditorScreen() {
     );
   }
 
+  const pickerFallback = (() => {
+    if (!pickerHole)
+      return { lat: lat ? parseFloat(lat) : 0, lng: lng ? parseFloat(lng) : 0 };
+    for (let i = pickerHole - 1; i >= 1; i--) {
+      const gc = greenCenters[`hole-${i}`];
+      if (gc) return gc;
+    }
+    return { lat: lat ? parseFloat(lat) : 0, lng: lng ? parseFloat(lng) : 0 };
+  })();
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -1029,8 +1039,8 @@ export default function CourseEditorScreen() {
       <GreenCenterPicker
         visible={pickerHole !== null}
         holeNumber={pickerHole ?? 1}
-        courseLat={lat ? parseFloat(lat) : 0}
-        courseLng={lng ? parseFloat(lng) : 0}
+        courseLat={pickerFallback.lat}
+        courseLng={pickerFallback.lng}
         currentCenter={
           pickerHole ? greenCenters[`hole-${pickerHole}`] ?? null : null
         }
@@ -1041,7 +1051,6 @@ export default function CourseEditorScreen() {
               [`hole-${pickerHole}`]: center,
             }));
           }
-          setPickerHole(null);
         }}
         onClear={() => {
           if (pickerHole) {
@@ -1051,7 +1060,6 @@ export default function CourseEditorScreen() {
               return next;
             });
           }
-          setPickerHole(null);
         }}
         onCancel={() => setPickerHole(null)}
       />

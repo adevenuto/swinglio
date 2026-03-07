@@ -209,16 +209,20 @@ async function geocodeWithGoogle(
 /**
  * Detects if an 18-hole array is actually a 9-hole course with front 9
  * duplicated into the back 9. The Golf Course API does this for 9-hole
- * courses — holes 10-18 have identical par + yardage to holes 1-9.
+ * courses — holes 10-18 have identical par, yardage, AND handicap to holes 1-9.
+ * Including handicap prevents false positives on real 18-hole courses where
+ * par+yardage happen to match across nines (handicap assignments are always
+ * structurally different: odd on one nine, even on the other).
  */
 export function isDuplicated9Hole(
-  holes: { par: number; yardage: number }[],
+  holes: { par: number; yardage: number; handicap?: number }[],
 ): boolean {
   if (holes.length !== 18) return false;
   for (let i = 0; i < 9; i++) {
     if (
       holes[i].par !== holes[i + 9].par ||
-      holes[i].yardage !== holes[i + 9].yardage
+      holes[i].yardage !== holes[i + 9].yardage ||
+      holes[i].handicap !== holes[i + 9].handicap
     ) {
       return false;
     }
@@ -282,13 +286,17 @@ export function applyTeeboxEnrichments(
         if (match.totalYardage !== undefined)
           teebox.totalYardage = match.totalYardage;
 
-        // Merge per-hole handicap data
+        // Merge per-hole data (handicap always; par/yardage when local is empty)
         if (match.holes?.length && teebox.holes) {
           for (let h = 0; h < match.holes.length; h++) {
             const holeKey = `hole-${h + 1}`;
-            if (teebox.holes[holeKey] && match.holes[h].handicap != null) {
-              teebox.holes[holeKey].handicap = match.holes[h].handicap;
-            }
+            const local = teebox.holes[holeKey];
+            if (!local) continue;
+            const api = match.holes[h];
+            if (api.handicap != null) local.handicap = api.handicap;
+            if (!local.par && api.par != null) local.par = String(api.par);
+            if (!local.length && api.yardage != null)
+              local.length = String(api.yardage);
           }
         }
       }

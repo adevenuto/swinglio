@@ -3,6 +3,8 @@ import { GreenCenter } from "@/hooks/use-course-search";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Mapbox from "@rnmapbox/maps";
 import React, { useCallback, useState } from "react";
+
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "");
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 

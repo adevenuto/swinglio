@@ -1,6 +1,5 @@
 import { Color, Font } from "@/constants/design-tokens";
 import { AuthProvider } from "@/contexts/auth-context";
-import Mapbox from "@rnmapbox/maps";
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -22,8 +21,6 @@ import {
 import "react-native-reanimated";
 
 SplashScreen.preventAutoHideAsync();
-
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "");
 
 const fontConfig = {
   displayLarge: { fontFamily: Font.bold },

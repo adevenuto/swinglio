@@ -49,7 +49,8 @@
           "isAndroidBackgroundLocationEnabled": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@rnmapbox/maps"
     ],
     "experiments": {
       "typedRoutes": true,

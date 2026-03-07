@@ -1,7 +1,14 @@
+import GreenCenterPicker from "@/components/GreenCenterPicker";
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { CourseImage, useCourseImages } from "@/hooks/use-course-images";
-import { parseTeeboxes, Teebox } from "@/hooks/use-course-search";
+import {
+  GreenCenter,
+  parseGreenCenters,
+  parseTeeboxes,
+  Teebox,
+} from "@/hooks/use-course-search";
 import { CityResult, useCourses } from "@/hooks/use-courses";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -81,6 +88,12 @@ export default function CourseEditorScreen() {
   const [selectedTeeboxIndex, setSelectedTeeboxIndex] = useState(0);
   const [holeCount, setHoleCount] = useState(18);
 
+  // Green centers
+  const [greenCenters, setGreenCenters] = useState<Record<string, GreenCenter>>(
+    {},
+  );
+  const [pickerHole, setPickerHole] = useState<number | null>(null);
+
   // Course images
   const [courseImages, setCourseImages] = useState<CourseImage[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -128,6 +141,7 @@ export default function CourseEditorScreen() {
       } else {
         setTeeboxes([makeEmptyTeebox(0, 18)]);
       }
+      setGreenCenters(parseGreenCenters(data.layout_data));
       setIsLoadingCourse(false);
 
       // Load course images
@@ -337,10 +351,14 @@ export default function CourseEditorScreen() {
 
     setIsSaving(true);
 
-    const layoutData = JSON.stringify({
+    const layoutObj: Record<string, unknown> = {
       teeboxes: teeboxes.map((t, i) => ({ ...t, order: i })),
       hole_count: holeCount,
-    });
+    };
+    if (Object.keys(greenCenters).length > 0) {
+      layoutObj.greenCenters = greenCenters;
+    }
+    const layoutData = JSON.stringify(layoutObj);
 
     const form = {
       name: name.trim(),
@@ -873,6 +891,7 @@ export default function CourseEditorScreen() {
                 >
                   Hdcp
                 </Text>
+                <View style={{ width: 32 }} />
               </View>
 
               {/* Holes grid rows */}
@@ -932,6 +951,23 @@ export default function CourseEditorScreen() {
                       style={{ flex: 1 }}
                       dense
                     />
+                    <Pressable
+                      onPress={() => setPickerHole(i + 1)}
+                      style={({ pressed }) => [
+                        styles.pinBtn,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name="map-marker"
+                        size={20}
+                        color={
+                          greenCenters[holeKey]
+                            ? Color.primary
+                            : Color.neutral300
+                        }
+                      />
+                    </Pressable>
                   </View>
                 );
               })}
@@ -977,6 +1013,37 @@ export default function CourseEditorScreen() {
           </Button>
         )}
       </ScrollView>
+
+      {/* Green Center Picker Modal */}
+      <GreenCenterPicker
+        visible={pickerHole !== null}
+        holeNumber={pickerHole ?? 1}
+        courseLat={lat ? parseFloat(lat) : 0}
+        courseLng={lng ? parseFloat(lng) : 0}
+        currentCenter={
+          pickerHole ? greenCenters[`hole-${pickerHole}`] ?? null : null
+        }
+        onConfirm={(center) => {
+          if (pickerHole) {
+            setGreenCenters((prev) => ({
+              ...prev,
+              [`hole-${pickerHole}`]: center,
+            }));
+          }
+          setPickerHole(null);
+        }}
+        onClear={() => {
+          if (pickerHole) {
+            setGreenCenters((prev) => {
+              const next = { ...prev };
+              delete next[`hole-${pickerHole}`];
+              return next;
+            });
+          }
+          setPickerHole(null);
+        }}
+        onCancel={() => setPickerHole(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -1063,6 +1130,12 @@ const styles = StyleSheet.create({
     borderColor: Color.neutral300,
     alignItems: "center",
     justifyContent: "center",
+  },
+  pinBtn: {
+    width: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: Space.xs,
   },
 });
 

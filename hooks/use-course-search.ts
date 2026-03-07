@@ -27,9 +27,12 @@ export type Teebox = {
   holes: Record<string, { par: string; length: string; handicap?: number }>;
 };
 
+export type GreenCenter = { lat: number; lng: number };
+
 export type LayoutData = {
   teeboxes: Teebox[];
   hole_count: number;
+  greenCenters?: Record<string, GreenCenter>;
 };
 
 export function useCourseSearch() {
@@ -83,6 +86,18 @@ export function parseTeeboxes(layoutData: string | null): Teebox[] {
     return parsed.teeboxes || [];
   } catch {
     return [];
+  }
+}
+
+export function parseGreenCenters(
+  layoutData: string | null,
+): Record<string, GreenCenter> {
+  if (!layoutData) return {};
+  try {
+    const parsed: LayoutData = JSON.parse(layoutData);
+    return parsed.greenCenters ?? {};
+  } catch {
+    return {};
   }
 }
 

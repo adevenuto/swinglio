@@ -22,7 +22,6 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
   Button,
@@ -1002,7 +1001,7 @@ export default function CourseEditorScreen() {
 
       </ScrollView>
 
-      <SafeAreaView edges={["bottom"]} style={styles.stickyFooter}>
+      <View style={styles.stickyFooter}>
         <View style={styles.footerRow}>
           <Button
             mode="outlined"
@@ -1027,7 +1026,7 @@ export default function CourseEditorScreen() {
             {isEdit ? "Save" : "Create"}
           </Button>
         </View>
-      </SafeAreaView>
+      </View>
 
       {/* Green Center Picker Modal */}
       <GreenCenterPicker
@@ -1155,6 +1154,7 @@ const styles = StyleSheet.create({
   stickyFooter: {
     paddingHorizontal: Space.lg,
     paddingTop: Space.md,
+    paddingBottom: Space.xxxl,
     borderTopWidth: 1,
     borderTopColor: Color.neutral200,
     backgroundColor: Color.white,
@@ -1162,7 +1162,6 @@ const styles = StyleSheet.create({
   footerRow: {
     flexDirection: "row",
     gap: Space.sm,
-    paddingBottom: Space.sm,
   },
   footerBtnSecondary: {
     flex: 1,

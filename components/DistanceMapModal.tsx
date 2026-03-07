@@ -1,6 +1,7 @@
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
+import { distanceInYards } from "@/lib/geo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -34,6 +35,27 @@ export default function DistanceMapModal({
   const cameraRef = useRef<any>(null);
   const zoomRef = useRef(17);
 
+  const [anchorCoord, setAnchorCoord] = useState<[number, number]>([
+    (playerLng + greenCenter.lng) / 2,
+    (playerLat + greenCenter.lat) / 2,
+  ]);
+
+  const playerToAnchor = useMemo(
+    () => distanceInYards(playerLat, playerLng, anchorCoord[1], anchorCoord[0]),
+    [playerLat, playerLng, anchorCoord],
+  );
+
+  const anchorToGreen = useMemo(
+    () =>
+      distanceInYards(
+        anchorCoord[1],
+        anchorCoord[0],
+        greenCenter.lat,
+        greenCenter.lng,
+      ),
+    [anchorCoord, greenCenter.lat, greenCenter.lng],
+  );
+
   const handleZoom = useCallback((delta: number) => {
     zoomRef.current = Math.min(22, Math.max(10, zoomRef.current + delta));
     cameraRef.current?.setCamera({
@@ -52,6 +74,7 @@ export default function DistanceMapModal({
           type: "LineString",
           coordinates: [
             [playerLng, playerLat],
+            anchorCoord,
             [greenCenter.lng, greenCenter.lat],
           ],
         },
@@ -59,8 +82,20 @@ export default function DistanceMapModal({
     ],
   };
 
-  const centerLng = (playerLng + greenCenter.lng) / 2;
-  const centerLat = (playerLat + greenCenter.lat) / 2;
+  const bounds = {
+    ne: [
+      Math.max(playerLng, greenCenter.lng),
+      Math.max(playerLat, greenCenter.lat),
+    ] as [number, number],
+    sw: [
+      Math.min(playerLng, greenCenter.lng),
+      Math.min(playerLat, greenCenter.lat),
+    ] as [number, number],
+    paddingTop: 80,
+    paddingBottom: 80,
+    paddingLeft: 80,
+    paddingRight: 80,
+  };
 
   return (
     <Modal
@@ -73,7 +108,17 @@ export default function DistanceMapModal({
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Hole {holeNumber}</Text>
-          <Text style={styles.headerDistance}>{distanceYards} yards to pin</Text>
+          <View style={styles.headerDistanceRow}>
+            <Text style={styles.headerDistance}>
+              {playerToAnchor} yds to target
+            </Text>
+            <Text style={styles.headerDistanceSecondary}>
+              {anchorToGreen} yds to pin
+            </Text>
+          </View>
+          <Text style={styles.headerDistanceTotal}>
+            {distanceYards} yds total
+          </Text>
         </View>
 
         {/* Map */}
@@ -91,10 +136,8 @@ export default function DistanceMapModal({
               >
                 <Mapbox.Camera
                   ref={cameraRef}
-                  defaultSettings={{
-                    centerCoordinate: [centerLng, centerLat],
-                    zoomLevel: 17,
-                  }}
+                  defaultSettings={{ bounds }}
+                  maxZoomLevel={18}
                 />
 
                 {/* Distance line */}
@@ -126,6 +169,27 @@ export default function DistanceMapModal({
                     />
                   </View>
                 </Mapbox.MarkerView>
+
+                {/* Landing-zone anchor — long-press to drag */}
+                <Mapbox.PointAnnotation
+                  id="landing-zone"
+                  coordinate={anchorCoord}
+                  draggable
+                  onDrag={(e: any) => {
+                    const coords = e?.geometry?.coordinates as
+                      | [number, number]
+                      | undefined;
+                    if (coords) setAnchorCoord(coords);
+                  }}
+                  onDragEnd={(e: any) => {
+                    const coords = e?.geometry?.coordinates as
+                      | [number, number]
+                      | undefined;
+                    if (coords) setAnchorCoord(coords);
+                  }}
+                >
+                  <View style={styles.anchorDot} />
+                </Mapbox.PointAnnotation>
               </Mapbox.MapView>
 
               {/* Zoom controls */}
@@ -157,6 +221,11 @@ export default function DistanceMapModal({
                     color={Color.neutral700}
                   />
                 </Pressable>
+              </View>
+
+              {/* Drag hint */}
+              <View style={styles.hintPill}>
+                <Text style={styles.hintText}>Hold & drag target</Text>
               </View>
             </>
           ) : (
@@ -210,11 +279,27 @@ const styles = StyleSheet.create({
     ...Type.h3,
     textAlign: "center",
   },
+  headerDistanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    marginTop: Space.xs,
+  },
   headerDistance: {
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.accentDark,
-    marginTop: Space.xs,
+  },
+  headerDistanceSecondary: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+  },
+  headerDistanceTotal: {
+    fontFamily: Font.regular,
+    fontSize: 12,
+    color: Color.neutral400,
+    marginTop: 2,
   },
   mapWrapper: {
     flex: 1,
@@ -250,6 +335,14 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: Color.white,
   },
+  anchorDot: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Color.white,
+    borderWidth: 10,
+    borderColor: Color.accentDark,
+  },
   greenPin: {
     width: 32,
     height: 32,
@@ -279,6 +372,20 @@ const styles = StyleSheet.create({
   zoomDivider: {
     height: 1,
     backgroundColor: Color.neutral200,
+  },
+  hintPill: {
+    position: "absolute",
+    left: Space.md,
+    bottom: Space.lg,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: Radius.sm,
+    paddingHorizontal: Space.xs,
+    paddingVertical: 2,
+  },
+  hintText: {
+    fontSize: 12,
+    fontFamily: Font.medium,
+    color: Color.white,
   },
   actions: {
     paddingHorizontal: Space.lg,

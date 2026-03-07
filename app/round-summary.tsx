@@ -563,5 +563,6 @@ const s = StyleSheet.create({
   },
   attestButton: {
     borderRadius: Radius.lg,
+    padding: 5,
   },
 });

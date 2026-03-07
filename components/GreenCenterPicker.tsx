@@ -1,12 +1,17 @@
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { GreenCenter } from "@/hooks/use-course-search";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Mapbox from "@rnmapbox/maps";
 import React, { useCallback, useState } from "react";
-
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "");
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+
+let Mapbox: typeof import("@rnmapbox/maps").default | null = null;
+try {
+  Mapbox = require("@rnmapbox/maps").default;
+  Mapbox!.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "");
+} catch {
+  // Native module not linked — fallback UI will show
+}
 
 type Props = {
   visible: boolean;
@@ -68,35 +73,46 @@ export default function GreenCenterPicker({
 
         {/* Map */}
         <View style={styles.mapWrapper}>
-          <Mapbox.MapView
-            style={styles.map}
-            styleURL={Mapbox.StyleURL.SatelliteStreet}
-            onPress={handleMapPress}
-            logoEnabled={false}
-            attributionEnabled={false}
-            compassEnabled
-          >
-            <Mapbox.Camera
-              defaultSettings={{
-                centerCoordinate: centerCoord,
-                zoomLevel: pin ? 18 : 17,
-              }}
-            />
-            {pin && (
-              <Mapbox.PointAnnotation
-                id="green-center-pin"
-                coordinate={[pin.lng, pin.lat]}
-              >
-                <View style={styles.pinOuter}>
-                  <MaterialCommunityIcons
-                    name="flag"
-                    size={22}
-                    color={Color.white}
-                  />
-                </View>
-              </Mapbox.PointAnnotation>
-            )}
-          </Mapbox.MapView>
+          {Mapbox ? (
+            <Mapbox.MapView
+              style={styles.map}
+              styleURL={Mapbox.StyleURL.SatelliteStreet}
+              onPress={handleMapPress}
+              logoEnabled={false}
+              attributionEnabled={false}
+              compassEnabled
+            >
+              <Mapbox.Camera
+                defaultSettings={{
+                  centerCoordinate: centerCoord,
+                  zoomLevel: pin ? 18 : 17,
+                }}
+              />
+              {pin && (
+                <Mapbox.MarkerView coordinate={[pin.lng, pin.lat]}>
+                  <View style={styles.pinOuter}>
+                    <MaterialCommunityIcons
+                      name="flag"
+                      size={22}
+                      color={Color.white}
+                    />
+                  </View>
+                </Mapbox.MarkerView>
+              )}
+            </Mapbox.MapView>
+          ) : (
+            <View style={styles.fallback}>
+              <MaterialCommunityIcons
+                name="map-marker-off"
+                size={48}
+                color={Color.neutral400}
+              />
+              <Text style={styles.fallbackTitle}>Map Not Available</Text>
+              <Text style={styles.fallbackBody}>
+                Mapbox native code is not linked. Run "npx expo prebuild --clean" then "npx expo run:ios" to enable maps.
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Coordinates display */}
@@ -172,6 +188,26 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  fallback: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+  },
+  fallbackTitle: {
+    fontFamily: Font.semiBold,
+    fontSize: 17,
+    color: Color.neutral700,
+    marginTop: Space.md,
+    marginBottom: Space.sm,
+  },
+  fallbackBody: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+    textAlign: "center",
+    lineHeight: 20,
   },
   pinOuter: {
     width: 36,

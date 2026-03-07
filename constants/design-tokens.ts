@@ -1,4 +1,4 @@
-import { Platform, TextStyle } from "react-native";
+import { Platform, TextStyle, ViewStyle } from "react-native";
 
 // === Spacing (8pt grid) ===
 
@@ -149,6 +149,17 @@ export const Type = {
     color: Color.neutral400,
     letterSpacing: 0.5,
   } as TextStyle,
+} as const;
+
+// === Button Styles ===
+
+export const Btn = {
+  /** Full-pill CTA — spread onto Paper Button `style` prop */
+  pill: {
+    borderRadius: Radius.lg,
+    paddingVertical: 6,
+    paddingHorizontal: Space.lg,
+  } as ViewStyle,
 } as const;
 
 // === Animation ===

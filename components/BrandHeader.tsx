@@ -25,8 +25,8 @@ export default function BrandHeader() {
       >
         <MaterialCommunityIcons
           name="dots-grid"
-          size={24}
-          color={Color.neutral400}
+          size={28}
+          color={Color.primary}
         />
       </Pressable>
     </View>

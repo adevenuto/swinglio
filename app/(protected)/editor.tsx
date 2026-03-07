@@ -1,4 +1,4 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import { Btn, Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useCourseSearch } from "@/hooks/use-course-search";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -45,9 +45,12 @@ export default function EditorScreen() {
             <Text style={styles.cardTitle}>Create New Course</Text>
             <Text style={styles.cardSubtitle}>Add a course that doesn't exist yet</Text>
             <Button
-              mode="outlined"
+              mode="contained"
+              buttonColor={Color.primary}
+              textColor={Color.white}
               onPress={() => router.push("/course-editor")}
-              labelStyle={{ fontFamily: Font.medium }}
+              style={Btn.pill}
+              labelStyle={{ fontFamily: Font.bold }}
             >
               Create Course
             </Button>

@@ -1,5 +1,5 @@
 import GreenCenterPicker from "@/components/GreenCenterPicker";
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import { Btn, Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { CourseImage, useCourseImages } from "@/hooks/use-course-images";
 import {
   GreenCenter,
@@ -22,6 +22,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
   Button,
@@ -987,32 +988,46 @@ export default function CourseEditorScreen() {
           )}
         </View>
 
-        {/* Section 3: Actions */}
-        <Button
-          mode="contained"
-          buttonColor={Color.primary}
-          textColor={Color.white}
-          onPress={handleSave}
-          loading={isSaving}
-          disabled={isSaving}
-          style={{ marginBottom: Space.md, borderRadius: Radius.lg }}
-          labelStyle={{ fontFamily: Font.bold }}
-        >
-          {isEdit ? "Save Course" : "Create Course"}
-        </Button>
-
         {isEdit && (
           <Button
             mode="text"
             textColor={Color.danger}
             onPress={handleDelete}
-            style={{ marginBottom: Space.xl }}
+            style={{ marginTop: Space.lg, alignSelf: "center" }}
             labelStyle={{ fontFamily: Font.medium }}
           >
             Delete Course
           </Button>
         )}
+
       </ScrollView>
+
+      <SafeAreaView edges={["bottom"]} style={styles.stickyFooter}>
+        <View style={styles.footerRow}>
+          <Button
+            mode="outlined"
+            onPress={() => router.back()}
+            style={styles.footerBtnSecondary}
+            textColor={Color.neutral900}
+            labelStyle={{ fontFamily: Font.medium }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            mode="contained"
+            buttonColor={Color.primary}
+            textColor={Color.white}
+            onPress={handleSave}
+            loading={isSaving}
+            disabled={isSaving}
+            style={styles.footerBtnPrimary}
+            labelStyle={{ fontFamily: Font.bold }}
+          >
+            {isEdit ? "Save" : "Create"}
+          </Button>
+        </View>
+      </SafeAreaView>
 
       {/* Green Center Picker Modal */}
       <GreenCenterPicker
@@ -1136,6 +1151,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: Space.xs,
+  },
+  stickyFooter: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.md,
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+    backgroundColor: Color.white,
+  },
+  footerRow: {
+    flexDirection: "row",
+    gap: Space.sm,
+    paddingBottom: Space.sm,
+  },
+  footerBtnSecondary: {
+    flex: 1,
+    ...Btn.pill,
+    borderColor: Color.neutral300,
+  },
+  footerBtnPrimary: {
+    flex: 1,
+    ...Btn.pill,
   },
 });
 

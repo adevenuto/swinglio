@@ -209,10 +209,13 @@ export function calculateHandicapIndex(
     };
   }
 
-  // Sort by date descending, take most recent 20
-  const sorted = [...eligibleRounds].sort(
-    (a, b) => new Date(b.datePlayed).getTime() - new Date(a.datePlayed).getTime(),
-  );
+  // Sort by date descending, break ties by roundId descending for determinism
+  const sorted = [...eligibleRounds].sort((a, b) => {
+    const dateDiff =
+      new Date(b.datePlayed).getTime() - new Date(a.datePlayed).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return b.roundId - a.roundId;
+  });
   const recent = sorted.slice(0, 20);
   const count = recent.length;
 

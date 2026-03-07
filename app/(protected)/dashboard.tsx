@@ -134,6 +134,7 @@ export default function Dashboard() {
             ? formatHandicapIndex(handicapResult.handicapIndex)
             : "\u2014",
         label: "Handicap",
+        subtitle: "(est)",
       },
       {
         key: "best",

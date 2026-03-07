@@ -9,6 +9,7 @@ export type StatItem = {
   key: string;
   value: string;
   label: string;
+  subtitle?: string; // small text rendered below value inside badge
   progress?: number; // 0–100; if present, renders SVG progress ring
 };
 
@@ -93,6 +94,9 @@ export default function StatsStrip({ items, avatarUrl, onAvatarPress }: Props) {
             ) : (
               <View style={styles.plainBadge}>
                 <Text style={styles.plainValue}>{item.value}</Text>
+                {item.subtitle ? (
+                  <Text style={styles.badgeSubtitle}>{item.subtitle}</Text>
+                ) : null}
               </View>
             )}
           </View>
@@ -138,6 +142,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Color.neutral900,
   },
+  badgeSubtitle: {
+    fontFamily: Font.medium,
+    fontSize: 9,
+    color: Color.neutral500,
+    marginTop: -1,
+  },
   progressSvg: {
     position: "absolute",
   },
@@ -155,5 +165,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Color.neutral500,
     marginTop: Space.xs,
+    textAlign: "center",
   },
 });

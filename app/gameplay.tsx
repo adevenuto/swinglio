@@ -1,3 +1,4 @@
+import DistanceMapModal from "@/components/DistanceMapModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
@@ -14,10 +15,12 @@ import {
   getCurrentHole,
   useGameplay,
 } from "@/contexts/gameplay-context";
+import { usePlayerLocation } from "@/hooks/use-player-location";
+import { distanceInYards } from "@/lib/geo";
 import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -61,7 +64,25 @@ function GameplayScreenContent() {
     flushPersist,
     setActiveHole,
     handleQuitRound,
+    greenCenters,
+    hasGreenCenters,
   } = useGameplay();
+
+  // GPS distance to pin
+  const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
+  const [showDistanceMap, setShowDistanceMap] = useState(false);
+
+  const activeGreenCenter = greenCenters[`hole-${activeHole}`] ?? null;
+
+  const distanceToPin = useMemo(() => {
+    if (!location || !activeGreenCenter) return null;
+    return distanceInYards(
+      location.latitude,
+      location.longitude,
+      activeGreenCenter.lat,
+      activeGreenCenter.lng,
+    );
+  }, [location, activeGreenCenter]);
 
   const scorecardRef = useRef<ScorecardRef>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -215,6 +236,13 @@ function GameplayScreenContent() {
           par={teeboxHoleData?.par}
           yardage={teeboxHoleData?.length}
           teeboxName={(round.teebox_data as any)?.name}
+          distanceToPin={distanceToPin}
+          distanceLoading={hasGreenCenters && gpsLoading}
+          onDistancePress={
+            distanceToPin != null && activeGreenCenter
+              ? () => setShowDistanceMap(true)
+              : undefined
+          }
         />
       </View>
 
@@ -304,6 +332,18 @@ function GameplayScreenContent() {
             onFinish={onFinishRound}
           />
         </SafeAreaView>
+      )}
+
+      {location && activeGreenCenter && distanceToPin != null && (
+        <DistanceMapModal
+          visible={showDistanceMap}
+          onClose={() => setShowDistanceMap(false)}
+          playerLat={location.latitude}
+          playerLng={location.longitude}
+          greenCenter={activeGreenCenter}
+          holeNumber={activeHole}
+          distanceYards={distanceToPin}
+        />
       )}
     </SafeAreaView>
   );

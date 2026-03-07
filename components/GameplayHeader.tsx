@@ -1,7 +1,8 @@
+import DistanceBadge from "@/components/DistanceBadge";
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { getCourseImageSource } from "@/utils/golf-image";
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
 type GameplayHeaderProps = {
@@ -14,6 +15,9 @@ type GameplayHeaderProps = {
   yardage?: string;
   teeboxName?: string;
   subtitle?: string;
+  distanceToPin?: number | null;
+  distanceLoading?: boolean;
+  onDistancePress?: () => void;
 };
 
 export default function GameplayHeader({
@@ -26,7 +30,12 @@ export default function GameplayHeader({
   yardage,
   teeboxName,
   subtitle,
+  distanceToPin,
+  distanceLoading,
+  onDistancePress,
 }: GameplayHeaderProps) {
+  const showDistance =
+    distanceLoading || (distanceToPin != null && distanceToPin > 0);
   return (
     <View style={styles.container}>
       <Image
@@ -38,38 +47,46 @@ export default function GameplayHeader({
         <Text style={styles.courseName} numberOfLines={1}>
           {courseName}
         </Text>
-        {holeCount != null && (
-          <Text style={styles.holeCount}>{holeCount} Holes</Text>
-        )}
         {subtitle != null ? (
           <Text style={styles.statsLabel}>{subtitle}</Text>
         ) : activeHole != null ? (
           <Text style={styles.statsLine}>
+            <Text style={styles.statsValue}>H{activeHole}</Text>
             {par != null && (
               <>
-                <Text style={styles.statsLabel}>Par: </Text>
-                <Text style={styles.statsValue}>{par}</Text>
-                <Text style={styles.statsLabel}>{"   "}</Text>
+                <Text style={styles.statsSep}> · </Text>
+                <Text style={styles.statsValue}>Par {par}</Text>
               </>
             )}
-            <Text style={styles.statsLabel}>Hole: </Text>
-            <Text style={styles.statsValue}>{activeHole}</Text>
             {yardage != null && (
               <>
-                <Text style={styles.statsLabel}>{"   "}</Text>
-                <Text style={styles.statsValue}>{yardage}</Text>
-                <Text style={styles.statsLabel}> yd</Text>
+                <Text style={styles.statsSep}> · </Text>
+                <Text style={styles.statsValue}>{yardage} yd</Text>
               </>
             )}
             {teeboxName != null && (
               <>
-                <Text style={styles.statsLabel}> · </Text>
+                <Text style={styles.statsSep}> · </Text>
                 <Text style={styles.statsValue}>{teeboxName}</Text>
-                <Text style={styles.statsLabel}> Tees</Text>
               </>
             )}
           </Text>
         ) : null}
+        {showDistance && (
+          <Pressable
+            onPress={onDistancePress}
+            disabled={!onDistancePress || distanceToPin == null}
+            style={({ pressed }) => [
+              styles.distanceRow,
+              pressed && onDistancePress && { opacity: 0.7 },
+            ]}
+          >
+            <DistanceBadge
+              distanceYards={distanceToPin ?? null}
+              loading={!!distanceLoading}
+            />
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -82,13 +99,13 @@ const styles = StyleSheet.create({
     borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
-    padding: Space.lg,
-    gap: Space.lg,
+    padding: Space.md,
+    gap: Space.md,
     ...Shadow.sm,
   },
   thumbnail: {
-    width: 88,
-    height: 88,
+    width: 64,
+    height: 64,
     borderRadius: Radius.sm,
   },
   info: {
@@ -97,29 +114,34 @@ const styles = StyleSheet.create({
   },
   courseName: {
     fontFamily: Font.semiBold,
-    fontSize: 20,
+    fontSize: 17,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
-  holeCount: {
-    fontFamily: Font.regular,
-    fontSize: 17,
-    color: Color.neutral500,
-    marginTop: 4,
-  },
   statsLine: {
-    fontSize: 17,
+    fontSize: 14,
     color: Color.neutral500,
-    marginTop: 4,
+    marginTop: 2,
   },
   statsLabel: {
     fontFamily: Font.regular,
-    fontSize: 17,
+    fontSize: 14,
     color: Color.neutral500,
   },
+  statsSep: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral400,
+  },
   statsValue: {
-    fontFamily: Font.bold,
-    fontSize: 17,
+    fontFamily: Font.semiBold,
+    fontSize: 14,
     color: Color.neutral500,
+  },
+  distanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+    marginTop: 2,
   },
 });

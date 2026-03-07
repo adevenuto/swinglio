@@ -1,5 +1,9 @@
 import { ScorecardPlayer } from "@/components/Scorecard";
 import { useAuth } from "@/contexts/auth-context";
+import {
+  GreenCenter,
+  parseGreenCenters,
+} from "@/hooks/use-course-search";
 import { emit } from "@/lib/events";
 import { buildResultsData, computePlayerResult } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
@@ -78,6 +82,8 @@ type GameplayContextType = {
   activeHoleData: HoleData | undefined;
   teeboxHoleData: { par: string; length: string } | undefined;
   scorecardPlayers: ScorecardPlayer[];
+  greenCenters: Record<string, GreenCenter>;
+  hasGreenCenters: boolean;
 
   // Actions
   fetchRound: () => Promise<void>;
@@ -116,6 +122,9 @@ export function GameplayProvider({
   const [isLoading, setIsLoading] = useState(true);
   const [isQuitting, setIsQuitting] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(null);
+  const [greenCenters, setGreenCenters] = useState<Record<string, GreenCenter>>(
+    {},
+  );
 
   // Synchronous ref mirror — always up-to-date, even before React re-renders
   const playersRef = useRef<PlayerScore[]>([]);
@@ -167,6 +176,20 @@ export function GameplayProvider({
       } catch {
         // course_images table may not exist yet — ignore
       }
+
+      // Fetch green centers from course layout_data
+      try {
+        const { data: courseRow } = await supabase
+          .from("courses")
+          .select("layout_data")
+          .eq("id", (roundData as any).course_id)
+          .single();
+        if (courseRow?.layout_data) {
+          setGreenCenters(parseGreenCenters(courseRow.layout_data));
+        }
+      } catch {
+        // Non-critical — green centers just won't be available
+      }
     }
 
     const { data: scoreData } = await supabase
@@ -201,6 +224,8 @@ export function GameplayProvider({
         : 18,
     [round],
   );
+
+  const hasGreenCenters = Object.keys(greenCenters).length > 0;
 
   const activeHoleKey = `hole-${activeHole}`;
   const activeHoleData = myScore?.score_details?.holes[activeHoleKey];
@@ -473,6 +498,8 @@ export function GameplayProvider({
       activeHoleData,
       teeboxHoleData,
       scorecardPlayers,
+      greenCenters,
+      hasGreenCenters,
       fetchRound,
       updateHole,
       flushPersist,
@@ -495,6 +522,8 @@ export function GameplayProvider({
       activeHoleData,
       teeboxHoleData,
       scorecardPlayers,
+      greenCenters,
+      hasGreenCenters,
       fetchRound,
       updateHole,
       flushPersist,

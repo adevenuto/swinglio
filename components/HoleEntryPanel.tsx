@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: Space.lg,
-    marginBottom: Space.lg,
+    marginBottom: Space.sm,
   },
 
   // D-pad
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     gap: Space.xs,
-    paddingVertical: Space.xs,
+    paddingVertical: 2,
   },
   advancedToggleText: {
     fontFamily: Font.semiBold,

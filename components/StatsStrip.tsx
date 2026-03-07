@@ -29,11 +29,7 @@ function ProgressRing({ progress }: { progress: number }) {
   const offset = CIRCUMFERENCE - (clamped / 100) * CIRCUMFERENCE;
 
   return (
-    <Svg
-      width={CIRCLE_SIZE}
-      height={CIRCLE_SIZE}
-      style={styles.progressSvg}
-    >
+    <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.progressSvg}>
       {/* Track */}
       <Circle
         cx={CIRCLE_SIZE / 2}
@@ -112,7 +108,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   scrollContent: {
-    paddingLeft: Space.xxl,
+    paddingLeft: Space.lg,
     paddingRight: Space.lg,
     paddingVertical: Space.lg,
     gap: Space.md,

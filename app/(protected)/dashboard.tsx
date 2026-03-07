@@ -169,7 +169,7 @@ export default function Dashboard() {
   return (
     <View style={styles.screen}>
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -319,11 +319,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
+  scroll: {
+    flex: 1,
+  },
   // --- Dashboard content ---
   contentContainer: {
     alignItems: "center",
-    paddingHorizontal: Space.xxl,
-    paddingBottom: Space.xxl,
+    paddingHorizontal: Space.lg,
+    paddingBottom: Space.xxxl,
   },
   contentInner: {
     width: "100%",

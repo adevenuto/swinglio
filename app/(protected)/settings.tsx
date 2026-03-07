@@ -43,8 +43,8 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: "center",
-    paddingHorizontal: Space.xxl,
-    paddingTop: Space.xxl,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
   },
   title: {
     fontFamily: Font.bold,

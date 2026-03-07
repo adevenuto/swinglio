@@ -184,7 +184,7 @@ export default function FriendsScreen() {
       </View>
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
@@ -376,9 +376,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
+  scroll: {
+    flex: 1,
+  },
   container: {
     alignItems: "center",
-    paddingHorizontal: Space.xxl,
+    paddingHorizontal: Space.lg,
   },
   inner: {
     width: "100%",
@@ -389,7 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: Space.sm,
   },
   searchBarWrapper: {
-    paddingHorizontal: Space.xxl,
+    paddingHorizontal: Space.lg,
     paddingTop: Space.lg,
     paddingBottom: Space.md,
     alignItems: "center",

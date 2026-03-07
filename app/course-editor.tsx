@@ -26,7 +26,6 @@ import {
   ActivityIndicator,
   Button,
   Chip,
-  Searchbar,
   Text,
   TextInput,
 } from "react-native-paper";
@@ -437,9 +436,9 @@ export default function CourseEditorScreen() {
       keyboardVerticalOffset={100}
     >
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: Space.lg, paddingBottom: 60 }}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Section 1: Course Details */}
         <View style={styles.section}>
@@ -464,44 +463,42 @@ export default function CourseEditorScreen() {
           />
 
           {/* City search */}
-          <Searchbar
-            placeholder="Search city..."
-            value={cityQuery}
-            onChangeText={handleCitySearch}
-            mode="bar"
-            style={[
-              styles.citySearchbar,
-              {
-                marginBottom: showCityResults && cityResults.length > 0 ? 0 : Space.md,
-              },
-            ]}
-            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900, fontSize: 14 }}
-          />
-          {showCityResults && cityResults.length > 0 && (
-            <ScrollView
-              nestedScrollEnabled
-              style={styles.cityDropdown}
-            >
-              {cityResults.map((city) => (
-                <View
-                  key={city.id}
-                  style={{
-                    paddingVertical: Space.sm,
-                    paddingHorizontal: Space.md,
-                    borderBottomWidth: 1,
-                    borderBottomColor: Color.neutral100,
-                  }}
-                >
-                  <Text
+          <View style={styles.citySearchWrapper}>
+            <TextInput
+              label="City *"
+              mode="outlined"
+              value={cityQuery}
+              onChangeText={handleCitySearch}
+              right={<TextInput.Icon icon="magnify" />}
+            />
+            {showCityResults && cityResults.length > 0 && (
+              <ScrollView
+                nestedScrollEnabled
+                style={styles.cityDropdown}
+                keyboardShouldPersistTaps="handled"
+              >
+                {cityResults.map((city) => (
+                  <Pressable
+                    key={city.id}
                     onPress={() => selectCity(city)}
-                    style={{ fontFamily: Font.regular, color: Color.neutral900 }}
+                    style={({ pressed }) => [
+                      {
+                        paddingVertical: Space.sm,
+                        paddingHorizontal: Space.md,
+                        borderBottomWidth: 1,
+                        borderBottomColor: Color.neutral100,
+                      },
+                      pressed && { opacity: 0.7 },
+                    ]}
                   >
-                    {city.name}, {city.state_abbr}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          )}
+                    <Text style={{ fontFamily: Font.regular, color: Color.neutral900 }}>
+                      {city.name}, {city.state_abbr}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </View>
 
           <TextInput
             label="State"
@@ -1067,6 +1064,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+    paddingBottom: Space.xxxl,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
@@ -1086,21 +1091,24 @@ const styles = StyleSheet.create({
     backgroundColor: Color.white,
     ...Shadow.sm,
   },
-  citySearchbar: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: Color.neutral300,
-    borderRadius: Radius.full,
-    height: 48,
+  citySearchWrapper: {
+    position: "relative",
+    zIndex: 10,
+    marginBottom: Space.md,
   },
   cityDropdown: {
+    position: "absolute",
+    top: 56,
+    left: 0,
+    right: 0,
     borderWidth: 1,
     borderTopWidth: 0,
     borderColor: Color.neutral300,
     borderBottomLeftRadius: Radius.md,
     borderBottomRightRadius: Radius.md,
-    marginBottom: Space.md,
     maxHeight: 160,
+    backgroundColor: Color.white,
+    overflow: "hidden",
   },
   photoThumb: {
     width: 100,

@@ -228,7 +228,7 @@ export default function Profile() {
   return (
     <View style={styles.screen}>
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
@@ -337,6 +337,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
+  scroll: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
@@ -359,7 +362,7 @@ const styles = StyleSheet.create({
   },
   container: {
     alignItems: "center",
-    paddingHorizontal: Space.xxl,
+    paddingHorizontal: Space.lg,
   },
   inner: {
     width: "100%",

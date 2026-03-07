@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   inner: {
-    paddingHorizontal: Space.xxl,
+    paddingHorizontal: Space.lg,
   },
   title: {
     fontFamily: Font.bold,

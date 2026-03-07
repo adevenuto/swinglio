@@ -47,6 +47,11 @@ const paperTheme = {
     ...PaperDefaultTheme.colors,
     primary: Color.primary,
     secondaryContainer: Color.neutral100,
+    surface: Color.white,
+    surfaceVariant: Color.white,
+    outline: Color.neutral300,
+    outlineVariant: Color.neutral200,
+    background: Color.neutral50,
   },
 };
 

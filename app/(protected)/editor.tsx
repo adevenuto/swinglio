@@ -30,7 +30,7 @@ export default function EditorScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.navRow}>
@@ -112,11 +112,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
+  scroll: {
+    flex: 1,
+  },
   centeredContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: Space.xxl,
+    paddingHorizontal: Space.lg,
   },
   navRow: {
     paddingHorizontal: Space.lg,

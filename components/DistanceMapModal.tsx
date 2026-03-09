@@ -2,7 +2,7 @@ import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { usePreferences } from "@/contexts/preferences-context";
 import { formatDistance, yardsToUnit, unitLabel } from "@/lib/geo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -41,6 +41,13 @@ export default function DistanceMapModal({
     (playerLng + greenCenter.lng) / 2,
     (playerLat + greenCenter.lat) / 2,
   ]);
+
+  useEffect(() => {
+    setAnchorCoord([
+      (playerLng + greenCenter.lng) / 2,
+      (playerLat + greenCenter.lat) / 2,
+    ]);
+  }, [playerLat, playerLng, greenCenter.lat, greenCenter.lng]);
 
   const playerToAnchor = useMemo(
     () =>

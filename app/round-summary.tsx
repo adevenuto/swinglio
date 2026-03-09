@@ -11,7 +11,7 @@ import { ScoreDetails } from "@/types/scoring";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type RoundData = {
@@ -69,13 +70,14 @@ function formatScoreToPar(score: number): string {
 export default function RoundSummaryScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  const { roundId, completed } = useLocalSearchParams<{ roundId: string; completed?: string }>();
 
   const [round, setRound] = useState<RoundData | null>(null);
   const [players, setPlayers] = useState<PlayerScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(null);
+  const toastFired = useRef(false);
 
   const {
     attestations,
@@ -196,6 +198,22 @@ export default function RoundSummaryScreen() {
     () => resultsData?.players.find((p) => p.golfer_id === user?.id),
     [resultsData, user?.id],
   );
+
+  // Congratulatory toast when arriving from a just-completed round
+  useEffect(() => {
+    if (
+      completed === "1" &&
+      myResult &&
+      myPlayerStatus === "completed" &&
+      !toastFired.current
+    ) {
+      toastFired.current = true;
+      Toast.show({
+        type: "success",
+        text1: `Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`,
+      });
+    }
+  }, [completed, myResult, myPlayerStatus]);
 
   const handleContinueRound = useCallback(async () => {
     if (!user?.id || !roundId || !myScore) return;
@@ -443,6 +461,7 @@ export default function RoundSummaryScreen() {
 
         <View style={{ height: Space.xxxl }} />
       </ScrollView>
+
     </SafeAreaView>
   );
 }

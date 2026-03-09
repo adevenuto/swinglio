@@ -107,7 +107,10 @@ function GameplayScreenContent() {
     if (round?.status === "completed" || round?.status === "incomplete") {
       router.replace({
         pathname: "/round-summary",
-        params: { roundId: String(round.id) },
+        params: {
+          roundId: String(round.id),
+          ...(round.status === "completed" ? { completed: "1" } : {}),
+        },
       });
     }
   }, [round?.status, round?.id, router]);

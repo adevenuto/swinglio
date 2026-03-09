@@ -2,6 +2,7 @@ import { Color, Font, Radius } from "@/constants/design-tokens";
 import { Teebox } from "@/hooks/use-course-search";
 import { getContrastColor } from "@/lib/color-contrast";
 import { ScoreDetails } from "@/types/scoring";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -29,6 +30,7 @@ export type ScorecardRef = {
 // --- Constants ---
 
 const FIXED_COL_WIDTH = 120;
+const SHADOW_WIDTH = 8;
 const CELL_WIDTH = 56;
 const CELL_HEIGHT = 44;
 const BORDER_COLOR = Color.neutral200;
@@ -225,14 +227,18 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       } else if (diff === -2) {
         inner = (
           <View style={symbolStyles.circleSolid}>
-            <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
+            <Text style={[styles.cellText, { color: Color.white }]}>
+              {score}
+            </Text>
           </View>
         );
       } else if (diff <= -3) {
         inner = (
           <View style={symbolStyles.circleFrame}>
             <View style={symbolStyles.circleSolid}>
-              <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
+              <Text style={[styles.cellText, { color: Color.white }]}>
+                {score}
+              </Text>
             </View>
           </View>
         );
@@ -245,14 +251,18 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       } else if (diff === 2) {
         inner = (
           <View style={symbolStyles.squareSolid}>
-            <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
+            <Text style={[styles.cellText, { color: Color.white }]}>
+              {score}
+            </Text>
           </View>
         );
       } else {
         inner = (
           <View style={symbolStyles.squareFrame}>
             <View style={symbolStyles.squareSolid}>
-              <Text style={[styles.cellText, { color: Color.white }]}>{score}</Text>
+              <Text style={[styles.cellText, { color: Color.white }]}>
+                {score}
+              </Text>
             </View>
           </View>
         );
@@ -395,9 +405,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         {/* Fixed left column (sticky) */}
         <View style={styles.fixedColumn}>
           {renderFixedCell("Hole")}
-          <View
-            style={[styles.fixedCell, { backgroundColor: teeboxColor }]}
-          >
+          <View style={[styles.fixedCell, { backgroundColor: teeboxColor }]}>
             {secondaryColor && (
               <View
                 style={{
@@ -441,6 +449,15 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
             );
           })}
         </View>
+
+        {/* Shadow overlay on fixed column edge */}
+        <LinearGradient
+          colors={["rgba(0,0,0,.3)", "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.shadowOverlay}
+          pointerEvents="none"
+        />
 
         {/* Scrollable right area */}
         <ScrollView
@@ -487,6 +504,14 @@ const styles = StyleSheet.create({
   fixedColumn: {
     width: FIXED_COL_WIDTH,
     zIndex: 1,
+  },
+  shadowOverlay: {
+    position: "absolute",
+    left: FIXED_COL_WIDTH,
+    top: 0,
+    bottom: 0,
+    width: SHADOW_WIDTH,
+    zIndex: 2,
   },
   scrollArea: {
     flex: 1,

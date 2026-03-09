@@ -1,5 +1,6 @@
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
-import { distanceInYards } from "@/lib/geo";
+import { usePreferences } from "@/contexts/preferences-context";
+import { formatDistance, yardsToUnit, unitLabel } from "@/lib/geo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
@@ -32,6 +33,7 @@ export default function DistanceMapModal({
   holeNumber,
   distanceYards,
 }: Props) {
+  const { distanceUnit } = usePreferences();
   const cameraRef = useRef<any>(null);
   const zoomRef = useRef(17);
 
@@ -41,19 +43,27 @@ export default function DistanceMapModal({
   ]);
 
   const playerToAnchor = useMemo(
-    () => distanceInYards(playerLat, playerLng, anchorCoord[1], anchorCoord[0]),
-    [playerLat, playerLng, anchorCoord],
+    () =>
+      formatDistance(
+        playerLat,
+        playerLng,
+        anchorCoord[1],
+        anchorCoord[0],
+        distanceUnit,
+      ),
+    [playerLat, playerLng, anchorCoord, distanceUnit],
   );
 
   const anchorToGreen = useMemo(
     () =>
-      distanceInYards(
+      formatDistance(
         anchorCoord[1],
         anchorCoord[0],
         greenCenter.lat,
         greenCenter.lng,
+        distanceUnit,
       ),
-    [anchorCoord, greenCenter.lat, greenCenter.lng],
+    [anchorCoord, greenCenter.lat, greenCenter.lng, distanceUnit],
   );
 
   const handleZoom = useCallback((delta: number) => {
@@ -153,7 +163,7 @@ export default function DistanceMapModal({
                   <View style={styles.pillAboveMarker}>
                     <View style={styles.distancePill}>
                       <Text style={styles.distancePillText}>
-                        {anchorToGreen} yds
+                        {anchorToGreen.value} {anchorToGreen.label}
                       </Text>
                     </View>
                   </View>
@@ -183,7 +193,7 @@ export default function DistanceMapModal({
                   <View style={styles.pillAboveMarker}>
                     <View style={styles.distancePill}>
                       <Text style={styles.distancePillText}>
-                        {playerToAnchor} yds
+                        {playerToAnchor.value} {playerToAnchor.label}
                       </Text>
                     </View>
                   </View>
@@ -214,7 +224,9 @@ export default function DistanceMapModal({
               {/* Top overlay — hole info pill + legend */}
               <View style={styles.topOverlay}>
                 <Text style={styles.topOverlayText}>
-                  Hole {holeNumber} · {distanceYards} yds
+                  Hole {holeNumber} ·{" "}
+                  {yardsToUnit(distanceYards, distanceUnit)}{" "}
+                  {unitLabel(distanceUnit)}
                 </Text>
               </View>
 

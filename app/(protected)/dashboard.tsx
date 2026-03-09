@@ -28,6 +28,7 @@ import {
 } from "react-native";
 import { Button, Snackbar, Text } from "react-native-paper";
 
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -201,6 +202,7 @@ export default function Dashboard() {
               </Button>
             )}
 
+
             <ActiveRoundCard rounds={activeRounds} />
 
             {/* Attestation Requests */}
@@ -247,10 +249,11 @@ export default function Dashboard() {
 
               {completedRounds.length === 0 ? (
                 <View
-                  style={{ alignItems: "center", paddingVertical: Space.xl }}
+                  style={{ alignItems: "center", paddingVertical: Space.sm }}
                 >
                   <Text style={styles.emptyText}>
-                    No rounds played yet {"\u2014"} time to hit the links!
+                    No scores on the board yet. Start a round and let's see
+                    what you've got.
                   </Text>
                 </View>
               ) : (
@@ -343,6 +346,7 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: Radius.lg,
   },
+
   card: {
     padding: Space.lg,
     borderWidth: 1,

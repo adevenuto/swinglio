@@ -96,6 +96,23 @@ export default function SignIn() {
             />
           </View>
 
+          <View style={styles.forgotRow}>
+            <Link href="/(auth)/forgot-password" asChild>
+              <Pressable>
+                {({ pressed }) => (
+                  <Text
+                    style={[
+                      styles.forgotLink,
+                      pressed ? { opacity: 0.7 } : undefined,
+                    ]}
+                  >
+                    Forgot Password?
+                  </Text>
+                )}
+              </Pressable>
+            </Link>
+          </View>
+
           <Pressable
             style={[styles.primaryButton, loading && { opacity: 0.7 }]}
             onPress={handleSignIn}
@@ -187,6 +204,15 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderColor: Color.primary,
     borderWidth: 2,
+  },
+  forgotRow: {
+    alignItems: "flex-end",
+    marginBottom: Space.sm,
+  },
+  forgotLink: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    color: Color.primary,
   },
   primaryButton: {
     height: 52,

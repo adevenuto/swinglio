@@ -3,6 +3,7 @@ import { Session, User } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import Toast from "react-native-toast-message";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -10,6 +11,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  needsOnboarding: boolean;
+  isRecoveryMode: boolean;
   role: string | null;
   isEditor: boolean;
   avatarUrl: string | null;
@@ -20,6 +23,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  clearRecoveryMode: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -44,31 +50,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(data?.role ?? null);
     setAvatarUrl(data?.avatar_url ?? null);
     setDisplayName(data?.display_name || data?.first_name || null);
+    setNeedsOnboarding(!data?.first_name);
   };
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) await fetchProfile(session.user.id);
       setIsLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log("Auth state changed:", _event, session?.user?.email);
+
+      // Set recovery mode before session/user so it's batched in the same render
+      if (_event === "PASSWORD_RECOVERY") {
+        setIsRecoveryMode(true);
+      }
+
+      // Clear recovery mode when password update is confirmed by Supabase.
+      // No need to check isRecoveryMode — setting false when already false is a no-op,
+      // and this avoids stale closure issues since the callback is created once.
+      if (_event === "USER_UPDATED") {
+        setIsRecoveryMode(false);
+        Toast.show({ type: "success", text1: "Password reset successful" });
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       } else {
         setRole(null);
         setAvatarUrl(null);
         setDisplayName(null);
+        setNeedsOnboarding(false);
       }
 
       // Resolve the auth promise when sign in is complete
@@ -128,6 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: "swinglio://",
+      },
     });
     return { error };
   };
@@ -142,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = "testappcline://";
+      const redirectUrl = "swinglio://";
       console.log("Redirect URL:", redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -210,11 +235,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null);
     setAvatarUrl(null);
     setDisplayName(null);
+    setNeedsOnboarding(false);
+    setIsRecoveryMode(false);
     await supabase.auth.signOut();
   };
 
   const refreshProfile = async () => {
     if (user?.id) await fetchProfile(user.id);
+  };
+
+  const clearRecoveryMode = () => {
+    setIsRecoveryMode(false);
   };
 
   const refreshUser = async () => {
@@ -236,6 +267,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        needsOnboarding,
+        isRecoveryMode,
         role,
         isEditor: role === "editor",
         avatarUrl,
@@ -246,6 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         refreshUser,
         refreshProfile,
+        clearRecoveryMode,
       }}
     >
       {children}

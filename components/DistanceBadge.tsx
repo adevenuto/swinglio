@@ -1,4 +1,6 @@
 import { Color, Font, Space } from "@/constants/design-tokens";
+import { usePreferences } from "@/contexts/preferences-context";
+import { unitLabel, yardsToUnit } from "@/lib/geo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -10,7 +12,13 @@ type Props = {
 };
 
 export default function DistanceBadge({ distanceYards, loading }: Props) {
+  const { distanceUnit } = usePreferences();
+
   if (!loading && distanceYards == null) return null;
+
+  const displayValue =
+    distanceYards != null ? yardsToUnit(distanceYards, distanceUnit) : null;
+  const label = unitLabel(distanceUnit);
 
   return (
     <View style={styles.container}>
@@ -22,7 +30,9 @@ export default function DistanceBadge({ distanceYards, loading }: Props) {
       {loading ? (
         <ActivityIndicator size={12} color={Color.accentDark} />
       ) : (
-        <Text style={styles.text}>{distanceYards} yd</Text>
+        <Text style={styles.text}>
+          {displayValue} {label}
+        </Text>
       )}
     </View>
   );

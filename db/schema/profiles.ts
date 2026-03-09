@@ -1,4 +1,4 @@
-import { doublePrecision, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { date, doublePrecision, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(),
@@ -8,6 +8,8 @@ export const profiles = pgTable('profiles', {
   avatarUrl: varchar('avatar_url'),
   coverUrl: varchar('cover_url'),
   email: varchar('email'),
+  birthday: date('birthday'),
+  gender: varchar('gender', { length: 20 }),
   role: varchar('role', { length: 50 }).default('user'),
   handicapIndex: doublePrecision('handicap_index'),
   handicapUpdatedAt: timestamp('handicap_updated_at', { withTimezone: true }),

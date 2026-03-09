@@ -1,6 +1,8 @@
 import AppDrawer from "@/components/AppDrawer";
 import BottomTabBar from "@/components/BottomTabBar";
 import BrandHeader from "@/components/BrandHeader";
+import OnboardingScreen from "@/components/OnboardingScreen";
+import ResetPasswordScreen from "@/components/ResetPasswordScreen";
 import { Color } from "@/constants/design-tokens";
 import { AppDrawerProvider } from "@/contexts/app-drawer-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -14,7 +16,7 @@ import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProtectedLayout() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, needsOnboarding, isRecoveryMode, refreshProfile } = useAuth();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
   const { activeRounds, refresh: refreshActiveRounds } = useActiveRounds(
@@ -43,6 +45,14 @@ export default function ProtectedLayout() {
   // Redirect to sign-in if not authenticated
   if (!user) {
     return <Redirect href="/(auth)/sign-in" />;
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingScreen onComplete={refreshProfile} />;
+  }
+
+  if (isRecoveryMode) {
+    return <ResetPasswordScreen />;
   }
 
   return (

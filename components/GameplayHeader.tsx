@@ -1,5 +1,7 @@
 import DistanceBadge from "@/components/DistanceBadge";
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { usePreferences } from "@/contexts/preferences-context";
+import { unitLabel, yardsToUnit } from "@/lib/geo";
 import { getCourseImageSource } from "@/utils/golf-image";
 import React from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
@@ -34,6 +36,11 @@ export default function GameplayHeader({
   distanceLoading,
   onDistancePress,
 }: GameplayHeaderProps) {
+  const { distanceUnit } = usePreferences();
+  const yardageDisplay =
+    yardage != null
+      ? `${yardsToUnit(Number(yardage), distanceUnit)} ${unitLabel(distanceUnit)}`
+      : null;
   const showDistance =
     distanceLoading || (distanceToPin != null && distanceToPin > 0);
   return (
@@ -58,10 +65,10 @@ export default function GameplayHeader({
                 <Text style={styles.statsValue}>Par {par}</Text>
               </>
             )}
-            {yardage != null && (
+            {yardageDisplay != null && (
               <>
                 <Text style={styles.statsSep}> · </Text>
-                <Text style={styles.statsValue}>{yardage} yd</Text>
+                <Text style={styles.statsValue}>{yardageDisplay}</Text>
               </>
             )}
             {teeboxName != null && (

@@ -1,17 +1,20 @@
-import { Color, Font } from "@/constants/design-tokens";
+import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { AuthProvider } from "@/contexts/auth-context";
+import { PreferencesProvider } from "@/contexts/preferences-context";
 import {
   DMSans_400Regular,
   DMSans_500Medium,
   DMSans_600SemiBold,
   DMSans_700Bold,
 } from "@expo-google-fonts/dm-sans";
+import Feather from "@expo/vector-icons/Feather";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   DefaultTheme as PaperDefaultTheme,
@@ -19,6 +22,7 @@ import {
   configureFonts,
 } from "react-native-paper";
 import "react-native-reanimated";
+import Toast, { BaseToastProps } from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -58,6 +62,54 @@ const paperTheme = {
 const headerStyle = { backgroundColor: Color.screenBg };
 const headerTintColor = Color.neutral900;
 
+const toastConfig = {
+  success: (props: BaseToastProps) => (
+    <View style={toastStyles.container}>
+      <View style={toastStyles.iconWrap}>
+        <Feather name="check-circle" size={20} color={Color.primary} />
+      </View>
+      <Text style={toastStyles.text}>{props.text1}</Text>
+    </View>
+  ),
+  error: (props: BaseToastProps) => (
+    <View style={[toastStyles.container, toastStyles.errorContainer]}>
+      <View style={toastStyles.iconWrap}>
+        <Feather name="alert-circle" size={20} color={Color.danger} />
+      </View>
+      <Text style={toastStyles.text}>{props.text1}</Text>
+    </View>
+  ),
+};
+
+const toastStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Color.white,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    borderLeftWidth: 4,
+    borderLeftColor: Color.primary,
+    borderRadius: Radius.md,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.md,
+    marginHorizontal: Space.lg,
+    ...Shadow.md,
+  },
+  errorContainer: {
+    borderLeftColor: Color.danger,
+  },
+  iconWrap: {
+    marginRight: Space.md,
+  },
+  text: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral900,
+    flex: 1,
+  },
+});
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
@@ -77,6 +129,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
+        <PreferencesProvider>
         <ThemeProvider value={DefaultTheme}>
           <PaperProvider theme={paperTheme}>
             <Stack screenOptions={{ headerShown: false }}>
@@ -145,7 +198,9 @@ export default function RootLayout() {
             <StatusBar style="auto" />
           </PaperProvider>
         </ThemeProvider>
+        </PreferencesProvider>
       </AuthProvider>
+      <Toast config={toastConfig} topOffset={80} />
     </GestureHandlerRootView>
   );
 }

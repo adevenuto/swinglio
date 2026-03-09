@@ -28,9 +28,6 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create a promise to track auth completion
-let authPromise: ((value: any) => void) | null = null;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -85,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        fetchProfile(session.user.id); // fire-and-forget — avoid lock deadlock with setSession()
       } else {
         setRole(null);
         setAvatarUrl(null);
@@ -93,11 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setNeedsOnboarding(false);
       }
 
-      // Resolve the auth promise when sign in is complete
-      if (_event === "SIGNED_IN" && authPromise) {
-        authPromise({ error: null });
-        authPromise = null;
-      }
     });
 
     // Handle incoming deep links
@@ -158,10 +150,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (!error && data?.session?.user) {
+      await fetchProfile(data.session.user.id);
+    }
     return { error };
   };
 
@@ -209,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (access_token && refresh_token) {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
@@ -219,7 +214,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { error: sessionError };
           }
 
-          console.log("Session set successfully!");
+          // Set React state immediately — don't rely on onAuthStateChange timing
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+            await fetchProfile(data.session.user.id);
+          }
+
           return { error: null };
         }
       }

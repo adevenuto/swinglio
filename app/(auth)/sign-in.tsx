@@ -46,6 +46,8 @@ export default function SignIn() {
 
     if (error) {
       Alert.alert("Google Sign In Failed", error.message);
+    } else {
+      router.replace("/(protected)/dashboard");
     }
   };
 

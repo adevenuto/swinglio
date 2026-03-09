@@ -62,7 +62,7 @@ export function useAttestationStats(userId: string) {
       .from("attestations")
       .select("round_id, attester_id")
       .in("round_id", completedIds)
-      .neq("attester_id", userId);
+      .or(`attester_id.neq.${userId},attester_id.is.null`);
 
     // Count unique rounds that received at least one attestation from another player
     const attestedRoundIds = new Set(

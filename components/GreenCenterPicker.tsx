@@ -1,0 +1,380 @@
+import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
+import { GreenCenter } from "@/hooks/use-course-search";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+
+let Mapbox: typeof import("@rnmapbox/maps").default | null = null;
+try {
+  Mapbox = require("@rnmapbox/maps").default;
+  Mapbox!.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "");
+} catch {
+  // Native module not linked — fallback UI will show
+}
+
+type Props = {
+  visible: boolean;
+  holeNumber: number;
+  courseLat: number;
+  courseLng: number;
+  currentCenter: GreenCenter | null;
+  savedCenters: Record<string, GreenCenter>;
+  isLastHole: boolean;
+  onConfirm: (center: GreenCenter) => void;
+  onClear: () => void;
+  onCancel: () => void;
+};
+
+export default function GreenCenterPicker({
+  visible,
+  holeNumber,
+  courseLat,
+  courseLng,
+  currentCenter,
+  savedCenters,
+  isLastHole,
+  onConfirm,
+  onClear,
+  onCancel,
+}: Props) {
+  const [pin, setPin] = useState<GreenCenter | null>(currentCenter);
+  const cameraRef = useRef<InstanceType<typeof import("@rnmapbox/maps").default.Camera> | null>(null);
+  const zoomRef = useRef(pin ? 18 : 17);
+
+  // Reset pin when modal opens with new data
+  React.useEffect(() => {
+    if (visible) {
+      setPin(currentCenter);
+      zoomRef.current = currentCenter ? 18 : 17;
+    }
+  }, [visible, currentCenter]);
+
+  // Re-center camera when hole advances (holeNumber changes while visible)
+  useEffect(() => {
+    if (!visible) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: [courseLng, courseLat],
+      zoomLevel: currentCenter ? 18 : 17,
+      animationDuration: 300,
+    });
+  }, [holeNumber]);
+
+  const handleZoom = useCallback((delta: number) => {
+    zoomRef.current = Math.min(22, Math.max(10, zoomRef.current + delta));
+    cameraRef.current?.setCamera({
+      zoomLevel: zoomRef.current,
+      animationDuration: 200,
+    });
+  }, []);
+
+  const handleMapPress = useCallback((feature: GeoJSON.Feature) => {
+    const coords = (feature.geometry as GeoJSON.Point).coordinates;
+    setPin({ lat: coords[1], lng: coords[0] });
+  }, []);
+
+  const handleConfirm = () => {
+    if (pin) onConfirm(pin);
+  };
+
+  const centerCoord: [number, number] = pin
+    ? [pin.lng, pin.lat]
+    : [courseLng, courseLat];
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            Hole {holeNumber} — Tap Green Center
+          </Text>
+        </View>
+
+        {/* Map */}
+        <View style={styles.mapWrapper}>
+          {Mapbox ? (
+            <>
+            <Mapbox.MapView
+              style={styles.map}
+              styleURL={Mapbox.StyleURL.SatelliteStreet}
+              onPress={handleMapPress}
+              logoEnabled={false}
+              attributionEnabled={false}
+              compassEnabled
+              zoomEnabled
+              scrollEnabled
+            >
+              <Mapbox.Camera
+                ref={cameraRef as React.RefObject<InstanceType<typeof Mapbox.Camera>>}
+                defaultSettings={{
+                  centerCoordinate: centerCoord,
+                  zoomLevel: pin ? 18 : 17,
+                }}
+              />
+              {Object.entries(savedCenters)
+                .filter(([key]) => key !== `hole-${holeNumber}`)
+                .map(([key, center]) => {
+                  const num = key.replace("hole-", "");
+                  return (
+                    <Mapbox.MarkerView
+                      key={key}
+                      coordinate={[center.lng, center.lat]}
+                      allowOverlap
+                    >
+                      <View style={styles.savedMarker}>
+                        <Text style={styles.savedMarkerText}>{num}</Text>
+                      </View>
+                    </Mapbox.MarkerView>
+                  );
+                })}
+              {pin && (
+                <Mapbox.MarkerView coordinate={[pin.lng, pin.lat]}>
+                  <View style={styles.pinOuter}>
+                    <MaterialCommunityIcons
+                      name="flag"
+                      size={22}
+                      color={Color.white}
+                    />
+                  </View>
+                </Mapbox.MarkerView>
+              )}
+            </Mapbox.MapView>
+            <View style={styles.zoomControls}>
+              <Pressable
+                onPress={() => handleZoom(1)}
+                style={({ pressed }) => [
+                  styles.zoomBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialCommunityIcons name="plus" size={22} color={Color.neutral800} />
+              </Pressable>
+              <View style={styles.zoomDivider} />
+              <Pressable
+                onPress={() => handleZoom(-1)}
+                style={({ pressed }) => [
+                  styles.zoomBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialCommunityIcons name="minus" size={22} color={Color.neutral800} />
+              </Pressable>
+            </View>
+            </>
+          ) : (
+            <View style={styles.fallback}>
+              <MaterialCommunityIcons
+                name="map-marker-off"
+                size={48}
+                color={Color.neutral400}
+              />
+              <Text style={styles.fallbackTitle}>Map Not Available</Text>
+              <Text style={styles.fallbackBody}>
+                Mapbox native code is not linked. Run "npx expo prebuild --clean" then "npx expo run:ios" to enable maps.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Coordinates display */}
+        {pin && (
+          <View style={styles.coordRow}>
+            <Text style={styles.coordText}>
+              {pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}
+            </Text>
+          </View>
+        )}
+
+        {/* Bottom actions */}
+        <View style={styles.actions}>
+          <Pressable
+            onPress={onCancel}
+            style={({ pressed }) => [
+              styles.actionBtn,
+              styles.cancelBtn,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={styles.cancelText}>Close</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onClear}
+            style={({ pressed }) => [
+              styles.actionBtn,
+              styles.clearBtn,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={styles.clearText}>Clear</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleConfirm}
+            disabled={!pin}
+            style={({ pressed }) => [
+              styles.actionBtn,
+              styles.confirmBtn,
+              !pin && { opacity: 0.5 },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={styles.confirmText}>{isLastHole ? "Save" : "Save & Next"}</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Color.screenBg,
+  },
+  header: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.xl,
+    paddingBottom: Space.md,
+    backgroundColor: Color.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Color.neutral200,
+  },
+  headerTitle: {
+    ...Type.h3,
+    textAlign: "center",
+  },
+  mapWrapper: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  fallback: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Space.xl,
+  },
+  fallbackTitle: {
+    fontFamily: Font.semiBold,
+    fontSize: 17,
+    color: Color.neutral700,
+    marginTop: Space.md,
+    marginBottom: Space.sm,
+  },
+  fallbackBody: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  zoomControls: {
+    position: "absolute",
+    right: Space.md,
+    bottom: Space.lg,
+    backgroundColor: Color.white,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    overflow: "hidden",
+  },
+  zoomBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  zoomDivider: {
+    height: 1,
+    backgroundColor: Color.neutral200,
+  },
+  pinOuter: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Color.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: Color.white,
+  },
+  savedMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Color.neutral700,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: Color.white,
+  },
+  savedMarkerText: {
+    fontFamily: Font.bold,
+    fontSize: 11,
+    color: Color.white,
+  },
+  coordRow: {
+    paddingVertical: Space.sm,
+    paddingHorizontal: Space.lg,
+    backgroundColor: Color.white,
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+    alignItems: "center",
+  },
+  coordText: {
+    fontFamily: Font.medium,
+    fontSize: 13,
+    color: Color.neutral500,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: Space.md,
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.md,
+    paddingBottom: Space.xxl,
+    backgroundColor: Color.white,
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+  },
+  actionBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: Radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelBtn: {
+    backgroundColor: Color.neutral100,
+  },
+  cancelText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral700,
+  },
+  clearBtn: {
+    borderWidth: 1,
+    borderColor: Color.danger,
+    backgroundColor: Color.white,
+  },
+  clearText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.danger,
+  },
+  confirmBtn: {
+    backgroundColor: Color.primary,
+  },
+  confirmText: {
+    fontFamily: Font.bold,
+    fontSize: 15,
+    color: Color.white,
+  },
+});

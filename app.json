@@ -1,25 +1,32 @@
 {
   "expo": {
-    "name": "testAppCline",
-    "slug": "testAppCline",
+    "name": "Swinglio",
+    "slug": "swinglio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "testappcline",
-    "userInterfaceStyle": "automatic",
+    "scheme": "swinglio",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swinglio.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Swinglio uses your location to find nearby golf courses.",
+        "NSCameraUsageDescription": "Swinglio needs camera access for your profile photo.",
+        "NSPhotoLibraryUsageDescription": "Swinglio needs photo library access for your profile photo."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#15603A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.swinglio.app"
     },
     "web": {
       "output": "static",
@@ -38,7 +45,17 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      "expo-font",
+      "@rnmapbox/maps"
     ],
     "experiments": {
       "typedRoutes": true,

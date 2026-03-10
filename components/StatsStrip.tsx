@@ -17,6 +17,7 @@ type Props = {
   items: StatItem[];
   avatarUrl?: string | null;
   onAvatarPress?: () => void;
+  onItemPress?: (key: string) => void;
 };
 
 const CIRCLE_SIZE = 56;
@@ -57,7 +58,7 @@ function ProgressRing({ progress }: { progress: number }) {
   );
 }
 
-export default function StatsStrip({ items, avatarUrl, onAvatarPress }: Props) {
+export default function StatsStrip({ items, avatarUrl, onAvatarPress, onItemPress }: Props) {
   return (
     <ScrollView
       horizontal
@@ -77,28 +78,47 @@ export default function StatsStrip({ items, avatarUrl, onAvatarPress }: Props) {
       </Pressable>
 
       {/* Stat badges */}
-      {items.map((item) => (
-        <View key={item.key} style={styles.item}>
-          <View style={styles.badgeWrapper}>
-            {item.progress != null ? (
-              <>
-                <ProgressRing progress={item.progress} />
-                <View style={styles.valueOverlay}>
-                  <Text style={styles.progressValue}>{item.value}</Text>
+      {items.map((item) => {
+        const content = (
+          <>
+            <View style={styles.badgeWrapper}>
+              {item.progress != null ? (
+                <>
+                  <ProgressRing progress={item.progress} />
+                  <View style={styles.valueOverlay}>
+                    <Text style={styles.progressValue}>{item.value}</Text>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.plainBadge}>
+                  <Text style={styles.plainValue}>{item.value}</Text>
+                  {item.subtitle ? (
+                    <Text style={styles.badgeSubtitle}>{item.subtitle}</Text>
+                  ) : null}
                 </View>
-              </>
-            ) : (
-              <View style={styles.plainBadge}>
-                <Text style={styles.plainValue}>{item.value}</Text>
-                {item.subtitle ? (
-                  <Text style={styles.badgeSubtitle}>{item.subtitle}</Text>
-                ) : null}
-              </View>
-            )}
+              )}
+            </View>
+            <Text style={styles.label}>{item.label}</Text>
+          </>
+        );
+
+        return onItemPress ? (
+          <Pressable
+            key={item.key}
+            onPress={() => onItemPress(item.key)}
+            style={({ pressed }) => [
+              styles.item,
+              pressed ? { opacity: 0.7 } : undefined,
+            ]}
+          >
+            {content}
+          </Pressable>
+        ) : (
+          <View key={item.key} style={styles.item}>
+            {content}
           </View>
-          <Text style={styles.label}>{item.label}</Text>
-        </View>
-      ))}
+        );
+      })}
     </ScrollView>
   );
 }

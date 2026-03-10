@@ -86,7 +86,8 @@ export default function Profile() {
       current.displayName === savedValues.current.displayName &&
       current.firstName === savedValues.current.firstName &&
       current.lastName === savedValues.current.lastName
-    ) return;
+    )
+      return;
 
     const { error } = await supabase
       .from("profiles")
@@ -110,13 +111,20 @@ export default function Profile() {
     if (source === "camera") {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Camera permission is needed to take photos.");
+        Alert.alert(
+          "Permission Required",
+          "Camera permission is needed to take photos.",
+        );
         return;
       }
     } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Photo library permission is needed.");
+        Alert.alert(
+          "Permission Required",
+          "Photo library permission is needed.",
+        );
         return;
       }
     }
@@ -241,20 +249,27 @@ export default function Profile() {
       >
         <View style={styles.navRow}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+            <MaterialIcons
+              name="chevron-left"
+              size={28}
+              color={Color.neutral900}
+            />
             <Text style={styles.backText}>Back</Text>
           </Pressable>
         </View>
 
         <View style={styles.container}>
           <View style={styles.inner}>
-            <Text style={styles.title}>Profile</Text>
             <Text style={styles.subtitle}>Manage your account</Text>
 
             {/* Avatar */}
             <View style={styles.avatarSection}>
               <Pressable onPress={handleAvatarPress}>
-                <UserAvatar avatarUrl={avatarUrl} firstName={firstName} size={120} />
+                <UserAvatar
+                  avatarUrl={avatarUrl}
+                  firstName={firstName}
+                  size={120}
+                />
               </Pressable>
               <Text style={styles.avatarHint}>Tap to change photo</Text>
             </View>
@@ -382,7 +397,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Color.neutral500,
     textAlign: "center",
-    marginBottom: Space.xxl,
+    marginBottom: Space.md,
   },
   avatarSection: {
     alignItems: "center",

@@ -5,8 +5,9 @@ import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
 import { formatHandicapIndex } from "@/lib/handicap";
 import { useFocusEffect } from "expo-router";
+import HandicapInfoModal from "@/components/HandicapInfoModal";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -41,6 +42,7 @@ export default function StatsScreen() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const [refreshing, setRefreshing] = useState(false);
+  const [handicapModalVisible, setHandicapModalVisible] = useState(false);
 
   const {
     totalRounds,
@@ -112,25 +114,30 @@ export default function StatsScreen() {
         ) : (
           <>
             {/* ── Handicap Hero ── */}
-            <View style={styles.heroCard}>
-              <View style={styles.heroRow}>
-                <MaterialCommunityIcons
-                  name="golf-tee"
-                  size={22}
-                  color={Color.white}
-                  style={styles.heroIcon}
-                />
-                <Text style={styles.heroLabel}>HANDICAP INDEX</Text>
+            <Pressable
+              onPress={() => setHandicapModalVisible(true)}
+              style={({ pressed }) => pressed ? { opacity: 0.7 } : undefined}
+            >
+              <View style={styles.heroCard}>
+                <View style={styles.heroRow}>
+                  <MaterialCommunityIcons
+                    name="golf-tee"
+                    size={22}
+                    color={Color.white}
+                    style={styles.heroIcon}
+                  />
+                  <Text style={styles.heroLabel}>HANDICAP INDEX</Text>
+                </View>
+                <Text style={styles.heroValue}>
+                  {formatHandicapIndex(hIndex)}
+                </Text>
+                <Text style={styles.heroSub}>
+                  {needMore > 0
+                    ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
+                    : hMethod}
+                </Text>
               </View>
-              <Text style={styles.heroValue}>
-                {formatHandicapIndex(hIndex)}
-              </Text>
-              <Text style={styles.heroSub}>
-                {needMore > 0
-                  ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
-                  : hMethod}
-              </Text>
-            </View>
+            </Pressable>
 
             {/* ── Scoring ── */}
             <Text style={styles.sectionLabel}>SCORING</Text>
@@ -229,6 +236,12 @@ export default function StatsScreen() {
           </>
         )}
       </ScrollView>
+
+      <HandicapInfoModal
+        visible={handicapModalVisible}
+        onClose={() => setHandicapModalVisible(false)}
+        handicapResult={handicapResult}
+      />
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import HandicapInfoModal from "@/components/HandicapInfoModal";
 import RoundCard from "@/components/RoundCard";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
 import {
@@ -39,6 +40,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
+  const [handicapModalVisible, setHandicapModalVisible] = useState(false);
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
   );
@@ -185,6 +187,9 @@ export default function Dashboard() {
           items={statsItems}
           avatarUrl={avatarUrl}
           onAvatarPress={() => router.push("/profile")}
+          onItemPress={(key) => {
+            if (key === "handicap") setHandicapModalVisible(true);
+          }}
         />
 
         <View style={styles.contentContainer}>
@@ -307,6 +312,12 @@ export default function Dashboard() {
           </View>
         </View>
       </ScrollView>
+      <HandicapInfoModal
+        visible={handicapModalVisible}
+        onClose={() => setHandicapModalVisible(false)}
+        handicapResult={handicapResult}
+      />
+
       <Snackbar
         visible={snackbar.visible}
         onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}

@@ -62,6 +62,7 @@ export function useCourseSearch() {
         .from("courses")
         .select("*")
         .ilike("club_name", `%${text.trim()}%`)
+        .not("layout_data", "is", null)
         .limit(20);
 
       if (!error && data) {

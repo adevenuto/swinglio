@@ -42,7 +42,7 @@ async function main() {
           ))
         ) AS distance_miles
       FROM courses c
-      WHERE c.lat IS NOT NULL AND c.lng IS NOT NULL
+      WHERE c.lat IS NOT NULL AND c.lng IS NOT NULL AND c.layout_data IS NOT NULL
       ORDER BY distance_miles
       LIMIT result_limit;
     $$

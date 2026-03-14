@@ -47,7 +47,7 @@ export function usePendingAttestations(userId: string) {
     // 2. Get completed rounds with multiple players
     const { data: roundsData } = await supabase
       .from("rounds")
-      .select("id, created_at, results_data, courses(name)")
+      .select("id, created_at, results_data, courses(club_name)")
       .in("id", roundIds)
       .in("status", ["completed", "incomplete"]);
 
@@ -108,7 +108,7 @@ export function usePendingAttestations(userId: string) {
       const results = r.results_data as any;
       pending.push({
         round_id: r.id,
-        course_name: (r.courses as any)?.name || "Unknown Course",
+        course_name: (r.courses as any)?.club_name || "Unknown Course",
         completed_at: results?.completed_at || r.created_at,
         player_count: count,
       });

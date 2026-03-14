@@ -46,6 +46,17 @@ export class RateLimitError extends Error {
   }
 }
 
+// ---- Display name helper ----
+
+export function buildCourseName(courseName: string, clubName: string): string {
+  const cn = courseName.trim();
+  const cl = clubName.trim();
+  if (cn.toLowerCase() === cl.toLowerCase()) return cn;
+  if (cn.toLowerCase().includes(cl.toLowerCase())) return cn;
+  if (cl.toLowerCase().includes(cn.toLowerCase())) return cl;
+  return `${cl} ${cn}`;
+}
+
 // ---- Golf term stripping ----
 
 /**

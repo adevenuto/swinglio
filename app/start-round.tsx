@@ -219,7 +219,7 @@ export default function StartRoundScreen() {
             renderItem={({ item }) => (
               <CourseCard
                 courseId={item.id}
-                name={item.name}
+                clubName={item.club_name}
                 description={
                   [item.street, item.state, item.postal_code]
                     .filter(Boolean)
@@ -254,7 +254,7 @@ export default function StartRoundScreen() {
                 <CourseCard
                   key={item.id}
                   courseId={item.id}
-                  name={item.name}
+                  clubName={item.club_name}
                   description={
                     [
                       item.street,
@@ -289,7 +289,7 @@ export default function StartRoundScreen() {
         <View style={styles.section}>
           <View style={styles.courseCard}>
             <View style={styles.cardRow}>
-              <Text style={styles.courseName}>{selectedCourse.name}</Text>
+              <Text style={styles.courseName}>{selectedCourse.club_name}</Text>
               <Button
                 mode="outlined"
                 onPress={handleChangeCourse}
@@ -332,7 +332,7 @@ export default function StartRoundScreen() {
         <View style={styles.courseCard}>
           <View style={styles.cardRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.courseName}>{selectedCourse.name}</Text>
+              <Text style={styles.courseName}>{selectedCourse.club_name}</Text>
               <Text style={styles.courseSubtitle}>
                 {selectedTeebox.name} tees
               </Text>

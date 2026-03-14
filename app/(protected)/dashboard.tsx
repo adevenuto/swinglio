@@ -265,7 +265,7 @@ export default function Dashboard() {
                 completedRounds.map((round) => (
                   <RoundCard
                     key={round.id}
-                    courseName={round.courses?.name || "Unknown Course"}
+                    courseName={round.courses?.club_name || "Unknown Course"}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}
@@ -291,7 +291,7 @@ export default function Dashboard() {
                 {incompleteRounds.map((round) => (
                   <RoundCard
                     key={round.id}
-                    courseName={round.courses?.name || "Unknown Course"}
+                    courseName={round.courses?.club_name || "Unknown Course"}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}

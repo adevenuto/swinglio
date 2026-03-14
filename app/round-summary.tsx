@@ -36,7 +36,7 @@ type RoundData = {
     color?: string;
     holes: Record<string, { par: string; length: string }>;
   };
-  courses: { name: string };
+  courses: { club_name: string };
 };
 
 type PlayerScore = {
@@ -92,7 +92,7 @@ export default function RoundSummaryScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(name)",
+        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(club_name)",
       )
       .eq("id", roundId)
       .single();
@@ -286,7 +286,7 @@ export default function RoundSummaryScreen() {
         <View style={{ paddingHorizontal: Space.lg }}>
           <GameplayHeader
             courseId={round.course_id}
-            courseName={round.courses?.name || "Unknown"}
+            courseName={round.courses?.club_name || "Unknown"}
             featuredImageUrl={featuredImageUrl}
             holeCount={
               round.teebox_data?.holes

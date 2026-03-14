@@ -79,7 +79,7 @@ export default function EditorScreen() {
             results.map((course) => (
               <View key={course.id} style={styles.courseRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.courseName}>{course.name}</Text>
+                  <Text style={styles.courseName}>{course.club_name}</Text>
                   <Text style={styles.courseAddress}>
                     {[course.street, course.state, course.postal_code]
                       .filter(Boolean)

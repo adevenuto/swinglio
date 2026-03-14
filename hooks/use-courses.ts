@@ -3,7 +3,8 @@ import { useCallback } from "react";
 
 export type CourseRow = {
   id: number;
-  name: string;
+  club_name: string;
+  course_name: string;
   street: string | null;
   state: string | null;
   postal_code: string | null;
@@ -19,7 +20,8 @@ export type CourseRow = {
 };
 
 export type CourseFormData = {
-  name: string;
+  club_name: string;
+  course_name: string;
   street: string | null;
   postal_code: string | null;
   city_id: number | null;
@@ -74,7 +76,8 @@ export function useCourses() {
     const { data, error } = await supabase
       .from("courses")
       .insert({
-        name: form.name,
+        club_name: form.club_name,
+        course_name: form.course_name,
         street: form.street,
         state: stateText,
         postal_code: form.postal_code,
@@ -108,7 +111,8 @@ export function useCourses() {
       const { error } = await supabase
         .from("courses")
         .update({
-          name: form.name,
+          club_name: form.club_name,
+          course_name: form.course_name,
           street: form.street,
           state: stateText,
           postal_code: form.postal_code,

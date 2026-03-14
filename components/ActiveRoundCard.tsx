@@ -30,10 +30,10 @@ export default function ActiveRoundCard({ rounds }: Props) {
           <View style={styles.row}>
             <View style={styles.leftColumn}>
               <Text style={styles.courseName}>
-                {round.courses?.name || "Unknown Course"}
+                {round.courses?.club_name || "Unknown Course"}
               </Text>
               <Text style={styles.subtitle}>
-                {round.courses?.name}
+                {round.courses?.club_name}
                 {(round.teebox_data as any)?.name
                   ? ` · ${(round.teebox_data as any).name} tees`
                   : ""}

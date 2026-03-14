@@ -4,8 +4,10 @@ import postgres from "postgres";
 const sql = postgres(process.env.DIRECT_URL!);
 
 async function main() {
-  console.log("Creating nearby_courses RPC function...");
+  console.log("Dropping old nearby_courses function...");
+  await sql`DROP FUNCTION IF EXISTS nearby_courses(double precision, double precision, integer)`;
 
+  console.log("Creating nearby_courses RPC function...");
   await sql`
     CREATE OR REPLACE FUNCTION nearby_courses(
       user_lat double precision,
@@ -14,19 +16,24 @@ async function main() {
     )
     RETURNS TABLE (
       id bigint,
-      name varchar,
+      club_name varchar,
+      course_name varchar,
       street varchar,
       state varchar,
       postal_code varchar,
+      city_id bigint,
+      state_id bigint,
       lat double precision,
       lng double precision,
+      phone varchar,
+      website varchar,
       layout_data text,
       distance_miles double precision
     )
     LANGUAGE sql STABLE
     AS $$
       SELECT
-        c.id, c.name, c.street, c.state, c.postal_code, c.lat, c.lng, c.layout_data,
+        c.id, c.club_name, c.course_name, c.street, c.state, c.postal_code, c.city_id, c.state_id, c.lat, c.lng, c.phone, c.website, c.layout_data,
         3959 * acos(
           LEAST(1.0, GREATEST(-1.0,
             cos(radians(user_lat)) * cos(radians(c.lat)) *

@@ -3,7 +3,8 @@ import { useCallback, useRef, useState } from "react";
 
 export type Course = {
   id: number;
-  name: string;
+  club_name: string;
+  course_name: string;
   street: string | null;
   state: string | null;
   postal_code: string | null;
@@ -60,7 +61,7 @@ export function useCourseSearch() {
       const { data, error } = await supabase
         .from("courses")
         .select("*")
-        .ilike("name", `%${text.trim()}%`)
+        .ilike("club_name", `%${text.trim()}%`)
         .limit(20);
 
       if (!error && data) {

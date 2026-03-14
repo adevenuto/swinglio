@@ -8,7 +8,7 @@ export type ActiveRound = {
   teebox_data: { name: string; color?: string };
   status: string;
   created_at: string;
-  courses: { name: string };
+  courses: { club_name: string };
 };
 
 export function useActiveRounds(userId: string) {
@@ -49,7 +49,7 @@ export function useActiveRounds(userId: string) {
     // Fetch active rounds with course info (teebox_data is on rounds now)
     const { data } = await supabase
       .from("rounds")
-      .select("id, course_id, creator_id, teebox_data, status, created_at, courses(name)")
+      .select("id, course_id, creator_id, teebox_data, status, created_at, courses(club_name)")
       .in("id", roundIds)
       .eq("status", "active")
       .order("created_at", { ascending: false });

@@ -10,7 +10,7 @@ export type RecentRound = {
   teebox_data: { name: string; color?: string; holes?: Record<string, { par: string; length: string }> };
   status: string;
   created_at: string;
-  courses: { name: string };
+  courses: { club_name: string };
   player_score: number | null;
   player_status: string;
   score_to_par: number | null;
@@ -58,7 +58,7 @@ export function useRecentRounds(userId: string) {
     const { data } = await supabase
       .from("rounds")
       .select(
-        "id, course_id, creator_id, teebox_data, status, created_at, courses(name)",
+        "id, course_id, creator_id, teebox_data, status, created_at, courses(club_name)",
       )
       .in("id", roundIds)
       .order("created_at", { ascending: false })

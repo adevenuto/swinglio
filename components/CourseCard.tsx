@@ -8,7 +8,7 @@ import { Text } from "react-native-paper";
 
 type Props = {
   courseId: number;
-  name: string;
+  clubName: string;
   description?: string;
   featuredImageUrl?: string | null;
   missingRatings?: boolean;
@@ -17,7 +17,7 @@ type Props = {
 
 export default function CourseCard({
   courseId,
-  name,
+  clubName,
   description,
   featuredImageUrl,
   missingRatings,
@@ -41,7 +41,7 @@ export default function CourseCard({
         />
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={2}>
-            {name}
+            {clubName}
           </Text>
           {description ? (
             <Text style={styles.description} numberOfLines={1}>

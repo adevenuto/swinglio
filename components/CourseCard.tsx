@@ -28,6 +28,7 @@ export default function CourseCard({
   return (
     <Pressable
       onPress={onPress}
+      disabled={missingRatings}
       style={({ pressed }) => [
         styles.card,
         pressed ? { opacity: 0.7 } : undefined,

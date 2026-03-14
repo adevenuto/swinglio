@@ -226,7 +226,12 @@ export default function Dashboard() {
                     style={styles.card}
                   >
                     <View style={styles.cardRow}>
-                      <Text style={styles.courseName}>{pr.course_name}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.courseName}>{pr.course_name}</Text>
+                        {pr.course_name_sub ? (
+                          <Text style={styles.cardSubtitle}>- {pr.course_name_sub}</Text>
+                        ) : null}
+                      </View>
                       <Button
                         mode="contained"
                         buttonColor={Color.primary}
@@ -266,6 +271,7 @@ export default function Dashboard() {
                   <RoundCard
                     key={round.id}
                     courseName={round.courses?.club_name || "Unknown Course"}
+                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}
@@ -292,6 +298,7 @@ export default function Dashboard() {
                   <RoundCard
                     key={round.id}
                     courseName={round.courses?.club_name || "Unknown Course"}
+                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}

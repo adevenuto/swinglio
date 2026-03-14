@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 export type PendingAttestationRound = {
   round_id: number;
   course_name: string;
+  course_name_sub: string | null;
   completed_at: string;
   player_count: number;
 };
@@ -47,7 +48,7 @@ export function usePendingAttestations(userId: string) {
     // 2. Get completed rounds with multiple players
     const { data: roundsData } = await supabase
       .from("rounds")
-      .select("id, created_at, results_data, courses(club_name)")
+      .select("id, created_at, results_data, courses(club_name, course_name)")
       .in("id", roundIds)
       .in("status", ["completed", "incomplete"]);
 
@@ -106,9 +107,12 @@ export function usePendingAttestations(userId: string) {
       if (userIneligibleRounds.has(r.id)) continue; // User withdrew/incomplete — skip
 
       const results = r.results_data as any;
+      const clubName = (r.courses as any)?.club_name || "Unknown Course";
+      const courseName = (r.courses as any)?.course_name || null;
       pending.push({
         round_id: r.id,
-        course_name: (r.courses as any)?.club_name || "Unknown Course",
+        course_name: clubName,
+        course_name_sub: courseName && courseName !== clubName ? courseName : null,
         completed_at: results?.completed_at || r.created_at,
         player_count: count,
       });

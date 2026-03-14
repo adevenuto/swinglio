@@ -343,10 +343,12 @@ async function geocodeWithGoogle(
 /**
  * Detects if an 18-hole array is actually a 9-hole course with front 9
  * duplicated into the back 9. The Golf Course API does this for 9-hole
- * courses — holes 10-18 have identical par, yardage, AND handicap to holes 1-9.
- * Including handicap prevents false positives on real 18-hole courses where
- * par+yardage happen to match across nines (handicap assignments are always
- * structurally different: odd on one nine, even on the other).
+ * courses — holes 10-18 have identical par and yardage to holes 1-9.
+ * Only par + yardage are compared; handicap is intentionally excluded because
+ * the API often assigns standard 18-hole handicap numbering (odd front, even
+ * back) even on duplicated 9-hole courses, causing false negatives.
+ * False positives are astronomically unlikely — a real 18-hole course would
+ * need all 9 holes to match par AND yardage between front and back nines.
  */
 export function isDuplicated9Hole(
   holes: { par: number; yardage: number; handicap?: number }[],
@@ -355,8 +357,7 @@ export function isDuplicated9Hole(
   for (let i = 0; i < 9; i++) {
     if (
       holes[i].par !== holes[i + 9].par ||
-      holes[i].yardage !== holes[i + 9].yardage ||
-      holes[i].handicap !== holes[i + 9].handicap
+      holes[i].yardage !== holes[i + 9].yardage
     ) {
       return false;
     }

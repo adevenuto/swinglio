@@ -9,6 +9,7 @@ import { Text } from "react-native-paper";
 type Props = {
   courseId: number;
   clubName: string;
+  courseName?: string;
   description?: string;
   featuredImageUrl?: string | null;
   missingRatings?: boolean;
@@ -18,11 +19,13 @@ type Props = {
 export default function CourseCard({
   courseId,
   clubName,
+  courseName,
   description,
   featuredImageUrl,
   missingRatings,
   onPress,
 }: Props) {
+  const showCourseName = courseName != null && courseName !== clubName;
   const router = useRouter();
 
   return (
@@ -43,6 +46,11 @@ export default function CourseCard({
           <Text style={styles.title} numberOfLines={2}>
             {clubName}
           </Text>
+          {showCourseName && (
+            <Text style={styles.courseNameSub} numberOfLines={1}>
+              - {courseName}
+            </Text>
+          )}
           {description ? (
             <Text style={styles.description} numberOfLines={1}>
               {description}
@@ -107,6 +115,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Color.neutral900,
     textTransform: "capitalize",
+  },
+  courseNameSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 2,
   },
   description: {
     fontFamily: Font.regular,

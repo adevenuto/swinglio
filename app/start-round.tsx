@@ -220,6 +220,7 @@ export default function StartRoundScreen() {
               <CourseCard
                 courseId={item.id}
                 clubName={item.club_name}
+                courseName={item.course_name}
                 description={
                   [item.street, item.state, item.postal_code]
                     .filter(Boolean)
@@ -255,6 +256,7 @@ export default function StartRoundScreen() {
                   key={item.id}
                   courseId={item.id}
                   clubName={item.club_name}
+                  courseName={item.course_name}
                   description={
                     [
                       item.street,

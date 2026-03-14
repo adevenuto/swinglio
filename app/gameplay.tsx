@@ -233,6 +233,7 @@ function GameplayScreenContent() {
         <GameplayHeader
           courseId={round.course_id}
           courseName={round.courses?.club_name || "Unknown"}
+          courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
           featuredImageUrl={featuredImageUrl}
           holeCount={holeCount}
           activeHole={activeHole}

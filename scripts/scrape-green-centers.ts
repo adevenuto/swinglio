@@ -8,11 +8,13 @@
  *   npx tsx scripts/scrape-green-centers.ts [options]
  *
  * Options:
- *   --course-id <id>   Single course (for testing)
- *   --limit <n>        Max courses to process (default: 10)
- *   --delay <ms>       Delay between hole page loads (default: 3000)
- *   --dry-run          Log results without writing to DB
- *   --diagnostic       Dump all marker data for first hole only (Phase 1)
+ *   --course-id <id>          Single course (for testing)
+ *   --limit <n>               Max courses to process (default: 10)
+ *   --delay <ms>              Delay between hole page loads (default: 3000)
+ *   --course-delay <ms>       Delay between courses (default: 8000)
+ *   --cooldown-interval <n>   Restart browser every N courses (default: 50)
+ *   --dry-run                 Log results without writing to DB
+ *   --diagnostic              Dump all marker data for first hole only (Phase 1)
  */
 
 import "dotenv/config";
@@ -31,6 +33,8 @@ function getArg(name: string): string | undefined {
 const COURSE_ID = getArg("--course-id");
 const LIMIT = parseInt(getArg("--limit") || "10", 10);
 const DELAY_MS = parseInt(getArg("--delay") || "3000", 10);
+const COURSE_DELAY_MS = parseInt(getArg("--course-delay") || "8000", 10);
+const COOLDOWN_INTERVAL = parseInt(getArg("--cooldown-interval") || "50", 10);
 const DRY_RUN = process.argv.includes("--dry-run");
 const DIAGNOSTIC = process.argv.includes("--diagnostic");
 
@@ -446,17 +450,31 @@ async function scrapeCourse(
 }
 
 // ---------------------------------------------------------------------------
+// Browser launcher (DRY helper for launch + restarts)
+// ---------------------------------------------------------------------------
+
+async function launchBrowser(): Promise<Browser> {
+  return puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+}
+
+function isConnectionError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("Connection closed") || msg.includes("net::ERR_CONNECTION");
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
 async function main() {
   console.log("=== GolfTraxx Green Center Scraper ===\n");
   if (DRY_RUN) console.log("** DRY RUN — no DB writes **\n");
+  console.log(`Settings: course-delay=${COURSE_DELAY_MS}ms, cooldown-interval=${COOLDOWN_INTERVAL}\n`);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  let browser = await launchBrowser();
 
   try {
     // ----- Diagnostic mode -----
@@ -506,12 +524,23 @@ async function main() {
 
     let success = 0;
     let failed = 0;
+    let coursesSinceCooldown = 0;
 
     for (let i = 0; i < courses.length; i++) {
       const course = courses[i];
       console.log(
         `[${i + 1}/${courses.length}] ${course.course_name} (id=${course.id}, zip=${course.postal_code})`,
       );
+
+      // --- Periodic cooldown with browser restart ---
+      if (coursesSinceCooldown >= COOLDOWN_INTERVAL) {
+        console.log(`\nCooldown: pausing 60s and restarting browser (after ${COOLDOWN_INTERVAL} courses)...`);
+        await browser.close();
+        await new Promise((r) => setTimeout(r, 60_000));
+        browser = await launchBrowser();
+        coursesSinceCooldown = 0;
+        console.log(`Browser restarted, resuming.\n`);
+      }
 
       try {
         const greenCenters = await scrapeCourse(browser, course);
@@ -544,14 +573,64 @@ async function main() {
           failed++;
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`  => Error: ${msg}\n`);
-        failed++;
+        // --- Connection error: backoff + browser restart + single retry ---
+        if (isConnectionError(err)) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`  => Connection error: ${msg}`);
+          console.log(`  => Pausing 30s and restarting browser for retry...`);
+          try { await browser.close(); } catch { /* already dead */ }
+          await new Promise((r) => setTimeout(r, 30_000));
+          browser = await launchBrowser();
+          coursesSinceCooldown = 0;
+
+          // Retry this course once
+          try {
+            console.log(`  => Retrying ${course.course_name}...`);
+            const greenCenters = await scrapeCourse(browser, course);
+
+            if (greenCenters && Object.keys(greenCenters).length > 0) {
+              if (!DRY_RUN) {
+                let layoutObj: LayoutData;
+                try {
+                  layoutObj = JSON.parse(course.layout_data || "{}") as LayoutData;
+                } catch {
+                  layoutObj = { teeboxes: [], hole_count: 18 };
+                }
+                layoutObj.greenCenters = greenCenters;
+                const updatedLayout = JSON.stringify(layoutObj);
+
+                await sql`
+                  UPDATE courses
+                  SET layout_data = ${updatedLayout},
+                      updated_at = now()
+                  WHERE id = ${course.id}
+                `;
+                console.log(`  => DB updated (on retry)\n`);
+              } else {
+                console.log(`  => Would update DB (dry-run, retry)\n`);
+              }
+              success++;
+            } else {
+              console.log(`  => Skipped on retry (no green centers found)\n`);
+              failed++;
+            }
+          } catch (retryErr) {
+            const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+            console.error(`  => Retry also failed: ${retryMsg}, skipping\n`);
+            failed++;
+          }
+        } else {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`  => Error: ${msg}\n`);
+          failed++;
+        }
       }
+
+      coursesSinceCooldown++;
 
       // Delay between courses
       if (i < courses.length - 1) {
-        await new Promise((r) => setTimeout(r, 5000));
+        await new Promise((r) => setTimeout(r, COURSE_DELAY_MS));
       }
     }
 

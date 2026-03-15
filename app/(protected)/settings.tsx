@@ -19,7 +19,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Snackbar, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
   { value: "yards", label: "Yards" },
@@ -29,8 +30,6 @@ const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { distanceUnit, setDistanceUnit } = usePreferences();
-
-  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
 
   // Change password state
   const [passwordExpanded, setPasswordExpanded] = useState(false);
@@ -50,18 +49,15 @@ export default function SettingsScreen() {
 
   const handleChangePassword = async () => {
     if (!newPassword.trim()) {
-      setSnackbar({ visible: true, message: "Please enter a new password" });
+      Toast.show({ type: "error", text1: "Please enter a new password" });
       return;
     }
     if (newPassword.length < 6) {
-      setSnackbar({
-        visible: true,
-        message: "Password must be at least 6 characters",
-      });
+      Toast.show({ type: "error", text1: "Password must be at least 6 characters" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setSnackbar({ visible: true, message: "Passwords do not match" });
+      Toast.show({ type: "error", text1: "Passwords do not match" });
       return;
     }
 
@@ -75,7 +71,7 @@ export default function SettingsScreen() {
 
     if (signInError) {
       setPasswordLoading(false);
-      setSnackbar({ visible: true, message: "Current password is incorrect" });
+      Toast.show({ type: "error", text1: "Current password is incorrect" });
       return;
     }
 
@@ -83,10 +79,7 @@ export default function SettingsScreen() {
     setPasswordLoading(false);
 
     if (error) {
-      setSnackbar({
-        visible: true,
-        message: error.message || "Failed to update password",
-      });
+      Toast.show({ type: "error", text1: error.message || "Failed to update password" });
       return;
     }
 
@@ -94,7 +87,7 @@ export default function SettingsScreen() {
     setNewPassword("");
     setConfirmPassword("");
     setPasswordExpanded(false);
-    setSnackbar({ visible: true, message: "Password updated" });
+    Toast.show({ type: "success", text1: "Password updated" });
   };
 
   const handleDeleteAccount = () => {
@@ -354,13 +347,6 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
-      <Snackbar
-        visible={snackbar.visible}
-        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
-        duration={2000}
-      >
-        {snackbar.message}
-      </Snackbar>
     </View>
   );
 }

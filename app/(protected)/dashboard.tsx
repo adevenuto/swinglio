@@ -27,7 +27,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Snackbar, Text } from "react-native-paper";
+import { Button, Text } from "react-native-paper";
 
 
 function formatDate(dateStr: string): string {
@@ -39,7 +39,6 @@ export default function Dashboard() {
   const { user, avatarUrl, refreshUser } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
   const [handicapModalVisible, setHandicapModalVisible] = useState(false);
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
@@ -325,13 +324,6 @@ export default function Dashboard() {
         handicapResult={handicapResult}
       />
 
-      <Snackbar
-        visible={snackbar.visible}
-        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
-        duration={2000}
-      >
-        {snackbar.message}
-      </Snackbar>
     </View>
   );
 }

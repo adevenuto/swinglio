@@ -1,3 +1,4 @@
+import SwinglioLogo from "@/assets/images/swinglio.svg";
 import { Color, Font, Space } from "@/constants/design-tokens";
 import { useAppDrawer } from "@/contexts/app-drawer-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -5,16 +6,17 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
-const BRAND_NAME = "Swinglio";
+// const BRAND_NAME = "Swinglio";
 
 export default function BrandHeader() {
   const { openDrawer } = useAppDrawer();
 
   return (
     <View style={styles.container}>
-      <View style={styles.leftSpacer} />
-
-      <Text style={styles.brandName}>{BRAND_NAME}</Text>
+      <View style={styles.logoContainer}>
+        <SwinglioLogo height={36} fill={Color.neutral900} />
+      </View>
+      {/* <Text style={styles.brandName}>{BRAND_NAME}</Text> */}
 
       <Pressable
         onPress={openDrawer}
@@ -37,20 +39,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: Space.lg,
     height: 48,
     backgroundColor: Color.screenBg,
-    borderBottomWidth: 1,
-    borderBottomColor: Color.neutral200,
+    marginBottom: Space.sm,
   },
   brandName: {
     fontFamily: Font.bold,
     fontSize: 22,
     color: Color.neutral900,
   },
-  leftSpacer: {
-    width: 40,
+  logoContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
   },
   menuButton: {
     padding: Space.sm,

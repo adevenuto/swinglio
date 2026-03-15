@@ -64,7 +64,8 @@ export default function CourseEditorScreen() {
   const { fetchImages, uploadImage, deleteImage, setFeatured, pickImage } = useCourseImages();
 
   // Course details
-  const [name, setName] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [courseName, setCourseName] = useState("");
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
@@ -118,7 +119,8 @@ export default function CourseEditorScreen() {
         router.back();
         return;
       }
-      setName(data.name);
+      setClubName(data.club_name);
+      setCourseName(data.course_name);
       setStreet(data.street ?? "");
       setPostalCode(data.postal_code ?? "");
       setPhone(data.phone ?? "");
@@ -352,8 +354,8 @@ export default function CourseEditorScreen() {
 
   // Save
   const handleSave = async () => {
-    if (!name.trim()) {
-      Alert.alert("Validation", "Course name is required.");
+    if (!clubName.trim()) {
+      Alert.alert("Validation", "Club name is required.");
       return;
     }
     if (!cityId || !stateId) {
@@ -373,7 +375,8 @@ export default function CourseEditorScreen() {
     const layoutData = JSON.stringify(layoutObj);
 
     const form = {
-      name: name.trim(),
+      club_name: clubName.trim(),
+      course_name: courseName.trim(),
       street: street.trim() || null,
       postal_code: postalCode.trim() || null,
       city_id: cityId,
@@ -402,7 +405,7 @@ export default function CourseEditorScreen() {
         Alert.alert("Error", error);
         return;
       }
-      Alert.alert("Created", `Course "${data.name}" created.`, [
+      Alert.alert("Created", `Course "${data.club_name}" created.`, [
         { text: "OK", onPress: () => router.back() },
       ]);
     }
@@ -470,10 +473,17 @@ export default function CourseEditorScreen() {
           </Text>
 
           <TextInput
-            label="Name *"
+            label="Club Name *"
             mode="outlined"
-            value={name}
-            onChangeText={setName}
+            value={clubName}
+            onChangeText={setClubName}
+            style={{ marginBottom: Space.md, fontFamily: Font.regular }}
+          />
+          <TextInput
+            label="Course Name"
+            mode="outlined"
+            value={courseName}
+            onChangeText={setCourseName}
             style={{ marginBottom: Space.md, fontFamily: Font.regular }}
           />
           <TextInput

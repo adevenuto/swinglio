@@ -16,7 +16,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ActivityIndicator, Snackbar, Text } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 export default function Profile() {
   const { user, refreshUser, refreshProfile } = useAuth();
@@ -29,7 +30,6 @@ export default function Profile() {
   const [lastName, setLastName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
   const savedValues = useRef({ displayName: "", firstName: "", lastName: "" });
 
   const {
@@ -99,12 +99,12 @@ export default function Profile() {
       .eq("id", user.id);
 
     if (error) {
-      setSnackbar({ visible: true, message: "Failed to save" });
+      Toast.show({ type: "error", text1: "Failed to save" });
       return;
     }
 
     savedValues.current = current;
-    setSnackbar({ visible: true, message: "Profile updated" });
+    Toast.show({ type: "success", text1: "Profile updated" });
   }, [user?.id, displayName, firstName, lastName]);
 
   const pickImage = async (source: "camera" | "gallery") => {
@@ -189,7 +189,7 @@ export default function Profile() {
 
     setAvatarUrl(publicUrl);
     await refreshProfile();
-    setSnackbar({ visible: true, message: "Photo updated" });
+    Toast.show({ type: "success", text1: "Photo updated" });
   };
 
   const removeAvatar = async () => {
@@ -204,7 +204,7 @@ export default function Profile() {
 
     setAvatarUrl(null);
     await refreshProfile();
-    setSnackbar({ visible: true, message: "Photo removed" });
+    Toast.show({ type: "success", text1: "Photo removed" });
   };
 
   const handleAvatarPress = () => {
@@ -336,13 +336,6 @@ export default function Profile() {
           </View>
         </View>
       </ScrollView>
-      <Snackbar
-        visible={snackbar.visible}
-        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
-        duration={2000}
-      >
-        {snackbar.message}
-      </Snackbar>
     </View>
   );
 }

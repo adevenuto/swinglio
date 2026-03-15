@@ -8,6 +8,8 @@ export type EnrichmentResult = {
   website?: string;
   teeboxEnrichments?: TeeboxEnrichment[];
   matchedCourseName?: string;
+  matchedClubName?: string;
+  apiCourseId?: number;
   source: "golfcourseapi" | "google" | "none";
 };
 
@@ -32,6 +34,9 @@ export type CourseInput = {
   postalCode?: string | null;
   cityName?: string;
   stateAbbr?: string;
+  lat?: number | null;
+  lng?: number | null;
+  teeboxNames?: string[];
 };
 
 export class RateLimitError extends Error {
@@ -39,6 +44,92 @@ export class RateLimitError extends Error {
     super("API rate limit exceeded (429)");
     this.name = "RateLimitError";
   }
+}
+
+// ---- Display name helper ----
+
+export function buildCourseName(courseName: string, clubName: string): string {
+  const cn = courseName.trim();
+  const cl = clubName.trim();
+  if (cn.toLowerCase() === cl.toLowerCase()) return cn;
+  if (cn.toLowerCase().includes(cl.toLowerCase())) return cn;
+  if (cl.toLowerCase().includes(cn.toLowerCase())) return cl;
+  return `${cl} ${cn}`;
+}
+
+// ---- Golf term stripping ----
+
+/**
+ * Aggressively strip golf-related terms (full words + abbreviations),
+ * location qualifiers after dashes, and leading "The".
+ * Used for both search query generation and name normalization.
+ */
+function stripGolfTerms(s: string): string {
+  return s
+    .replace(/\b(golf\s*(course|club|links)|country\s*club)\b/gi, "")
+    .replace(/\bg\.?\s*[cl]\.?\b/gi, "")       // Gc, Gl, G.C., G.L.
+    .replace(/\bc\.?\s*c\.?\b/gi, "")           // CC, C.C.
+    .replace(/\bmuni(cipal)?\b/gi, "")          // Muni, Municipal
+    .replace(/\s+-\s+.+$/, "")                  // " - Sun City West" location suffix
+    .replace(/^the\s+/i, "")                    // leading "The"
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+// ---- Search query generation ----
+
+/**
+ * Generate multiple search query variants from a course name.
+ * 1. Full name as-is
+ * 2. Strip venue suffix ("At/Of/- [Venue]") → base name + venue name
+ * 3. First word of name (broadest search — address matching disambiguates)
+ *    For article-led names ("The Hill GC"), falls back to stripGolfTerms.
+ */
+export function generateSearchQueries(name: string): string[] {
+  const queries = [name];
+
+  // Match patterns like "Tuscany Falls At Pebble Creek", "Course Of The Club", "Course - Venue"
+  const suffixMatch = name.match(/^(.+?)\s+(?:at|of|-)\s+(.+)$/i);
+  if (suffixMatch) {
+    const baseName = suffixMatch[1].trim();
+    const venueName = suffixMatch[2].trim();
+    if (baseName && baseName !== name) queries.push(baseName);
+    if (venueName && venueName !== name) queries.push(venueName);
+  }
+
+  // First word: broadest search — address matching handles disambiguation
+  const SKIP_FIRST_WORDS = /^(the|a|an)$/i;
+  const firstWord = name.split(/\s+/)[0];
+  if (firstWord && SKIP_FIRST_WORDS.test(firstWord)) {
+    // Article lead — fall back to stripGolfTerms for a meaningful core name
+    const coreName = stripGolfTerms(name);
+    if (coreName && coreName !== name && !queries.includes(coreName)) {
+      queries.push(coreName);
+    }
+  } else if (firstWord && firstWord.length >= 6 && firstWord !== name && !queries.includes(firstWord)) {
+    queries.push(firstWord);
+  }
+
+  return Array.from(new Set(queries));
+}
+
+// ---- Haversine distance ----
+
+/** Returns distance in km between two lat/lng coordinates */
+export function haversine(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
+  const R = 6371; // Earth radius in km
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 // ---- Main entry point ----
@@ -104,69 +195,112 @@ async function searchGolfCourseApi(
   course: CourseInput,
   apiKey: string,
 ): Promise<EnrichmentResult | null> {
-  try {
-    const url = `${GOLF_API_BASE}/courses?course_name=${encodeURIComponent(course.name)}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Key ${apiKey}` },
-    });
+  const queries = generateSearchQueries(course.name);
 
-    if (res.status === 429) {
-      throw new RateLimitError();
-    }
+  // Build localAddress for address-aware matching
+  const localAddress: {
+    street?: string;
+    postalCode?: string;
+    city?: string;
+    state?: string;
+    lat?: number;
+    lng?: number;
+  } = {};
+  if (course.street) localAddress.street = course.street;
+  if (course.postalCode) localAddress.postalCode = course.postalCode;
+  if (course.cityName) localAddress.city = course.cityName;
+  if (course.stateAbbr) localAddress.state = course.stateAbbr;
+  else if (course.state) localAddress.state = course.state;
+  if (course.lat != null) localAddress.lat = course.lat;
+  if (course.lng != null) localAddress.lng = course.lng;
+  const hasAddress = Object.keys(localAddress).length > 0;
 
-    if (!res.ok) {
-      console.warn(`  Golf API ${res.status}: ${res.statusText}`);
-      return null;
-    }
+  for (let qi = 0; qi < queries.length; qi++) {
+    const query = queries[qi];
+    // Delay between query variants (not before the first one)
+    if (qi > 0) await new Promise((r) => setTimeout(r, 500));
 
-    const data: { courses: ApiCourse[] } = await res.json();
-    if (!data.courses?.length) return null;
-
-    // Find best match by course_name
-    const candidates = data.courses.map((c) => ({
-      ...c,
-      name: c.course_name,
-    }));
-    const match = findBestMatch(course.name, candidates) as (ApiCourse & { name: string }) | null;
-    if (!match) return null;
-
-    // Flatten tees from male/female groups — use male tees primarily (most common for scoring)
-    // Include both genders, dedup by tee_name
-    const allTees: ApiTee[] = [
-      ...(match.tees?.male || []),
-      ...(match.tees?.female || []),
-    ];
-    const seenNames = new Set<string>();
-    const uniqueTees: TeeboxEnrichment[] = [];
-    for (const t of allTees) {
-      const key = t.tee_name.toLowerCase();
-      if (seenNames.has(key)) continue;
-      seenNames.add(key);
-      const rawHoles = t.holes ?? [];
-      const is9Duped = isDuplicated9Hole(rawHoles);
-      uniqueTees.push({
-        name: t.tee_name,
-        slope: t.slope_rating,
-        courseRating: t.course_rating,
-        totalYardage: is9Duped
-          ? Math.round(t.total_yards / 2)
-          : t.total_yards,
-        holes: is9Duped ? rawHoles.slice(0, 9) : rawHoles,
+    try {
+      const url = `${GOLF_API_BASE}/courses?course_name=${encodeURIComponent(query)}`;
+      let res = await fetch(url, {
+        headers: { Authorization: `Key ${apiKey}` },
       });
-    }
 
-    return {
-      lat: match.location?.latitude,
-      lng: match.location?.longitude,
-      teeboxEnrichments: uniqueTees,
-      matchedCourseName: match.course_name,
-      source: "golfcourseapi",
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`  Golf API error: ${msg}`);
-    return null;
+      // Retry once after a pause on 429
+      if (res.status === 429) {
+        console.warn(`  Golf API 429 — pausing 30s then retrying...`);
+        await new Promise((r) => setTimeout(r, 30_000));
+        res = await fetch(url, {
+          headers: { Authorization: `Key ${apiKey}` },
+        });
+        if (res.status === 429) {
+          throw new RateLimitError();
+        }
+      }
+
+      if (!res.ok) {
+        console.warn(`  Golf API ${res.status}: ${res.statusText}`);
+        continue;
+      }
+
+      const data: { courses: ApiCourse[] } = await res.json();
+      if (!data.courses?.length) continue;
+
+      // Find best match using name + address scoring
+      const candidates = data.courses.map((c) => ({
+        ...c,
+        name: c.course_name,
+        clubName: c.club_name,
+      }));
+      const match = findBestMatch(
+        course.name,
+        candidates,
+        hasAddress ? localAddress : undefined,
+        course.teeboxNames,
+      ) as (ApiCourse & { name: string; clubName: string }) | null;
+      if (!match) continue;
+
+      // Flatten tees from male/female groups, dedup by tee_name
+      const allTees: ApiTee[] = [
+        ...(match.tees?.male || []),
+        ...(match.tees?.female || []),
+      ];
+      const seenNames = new Set<string>();
+      const uniqueTees: TeeboxEnrichment[] = [];
+      for (const t of allTees) {
+        const key = t.tee_name.toLowerCase();
+        if (seenNames.has(key)) continue;
+        seenNames.add(key);
+        const rawHoles = t.holes ?? [];
+        const is9Duped = isDuplicated9Hole(rawHoles);
+        uniqueTees.push({
+          name: t.tee_name,
+          slope: t.slope_rating,
+          courseRating: t.course_rating,
+          totalYardage: is9Duped
+            ? Math.round(t.total_yards / 2)
+            : t.total_yards,
+          holes: is9Duped ? rawHoles.slice(0, 9) : rawHoles,
+        });
+      }
+
+      return {
+        lat: match.location?.latitude,
+        lng: match.location?.longitude,
+        teeboxEnrichments: uniqueTees,
+        matchedCourseName: match.course_name,
+        matchedClubName: match.club_name,
+        apiCourseId: match.id,
+        source: "golfcourseapi",
+      };
+    } catch (err: unknown) {
+      if (err instanceof RateLimitError) throw err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`  Golf API error (query="${query}"): ${msg}`);
+    }
   }
+
+  return null;
 }
 
 // ---- Google Geocoding fallback ----
@@ -209,10 +343,12 @@ async function geocodeWithGoogle(
 /**
  * Detects if an 18-hole array is actually a 9-hole course with front 9
  * duplicated into the back 9. The Golf Course API does this for 9-hole
- * courses — holes 10-18 have identical par, yardage, AND handicap to holes 1-9.
- * Including handicap prevents false positives on real 18-hole courses where
- * par+yardage happen to match across nines (handicap assignments are always
- * structurally different: odd on one nine, even on the other).
+ * courses — holes 10-18 have identical par and yardage to holes 1-9.
+ * Only par + yardage are compared; handicap is intentionally excluded because
+ * the API often assigns standard 18-hole handicap numbering (odd front, even
+ * back) even on duplicated 9-hole courses, causing false negatives.
+ * False positives are astronomically unlikely — a real 18-hole course would
+ * need all 9 holes to match par AND yardage between front and back nines.
  */
 export function isDuplicated9Hole(
   holes: { par: number; yardage: number; handicap?: number }[],
@@ -221,8 +357,7 @@ export function isDuplicated9Hole(
   for (let i = 0; i < 9; i++) {
     if (
       holes[i].par !== holes[i + 9].par ||
-      holes[i].yardage !== holes[i + 9].yardage ||
-      holes[i].handicap !== holes[i + 9].handicap
+      holes[i].yardage !== holes[i + 9].yardage
     ) {
       return false;
     }
@@ -372,47 +507,175 @@ function computeTotalYardage(
 export function findBestMatch(
   localName: string,
   candidates: Record<string, unknown>[],
+  localAddress?: {
+    street?: string;
+    postalCode?: string;
+    city?: string;
+    state?: string;
+    lat?: number;
+    lng?: number;
+  },
+  localTeeboxNames?: string[],
 ): Record<string, unknown> | null {
   const normalize = (s: string) =>
-    s
+    stripGolfTerms(s)
       .toLowerCase()
-      .replace(/golf\s*(club|course|links)/gi, "")
-      .replace(/country\s*club/gi, "")
       .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s{2,}/g, " ")
       .trim();
 
   const target = normalize(localName);
   if (!target) return null;
 
-  // Exact normalized match
-  const exact = candidates.find(
-    (c) => normalize(String(c.name || c.courseName || "")) === target,
-  );
-  if (exact) return exact;
-
-  // Contains match
-  const contains = candidates.find((c) => {
-    const n = normalize(String(c.name || c.courseName || ""));
-    return n.includes(target) || target.includes(n);
-  });
-  if (contains) return contains;
-
-  // Levenshtein distance fallback
   let bestCandidate: Record<string, unknown> | null = null;
-  let bestDistance = Infinity;
+  let bestScore = 0;
+
   for (const c of candidates) {
-    const n = normalize(String(c.name || c.courseName || ""));
-    const dist = levenshtein(target, n);
-    if (dist < bestDistance) {
-      bestDistance = dist;
+    const candidateName = normalize(String(c.name || c.courseName || ""));
+
+    // --- Name score (0-100) ---
+    // Try matching against both course_name and club_name, use the better score
+    let nameScore = computeNameScore(target, candidateName);
+
+    // Club name fallback: if candidate has a clubName, try matching against that too
+    const clubName = c.clubName as string | undefined;
+    if (clubName) {
+      const normalizedClub = normalize(clubName);
+      if (normalizedClub) {
+        const clubScore = computeNameScore(target, normalizedClub);
+        nameScore = Math.max(nameScore, clubScore);
+      }
+    }
+
+    // --- Address bonus (0-85), state penalty, geo score ---
+    let addressBonus = 0;
+    let statePenalty = 0;
+    let geoScore = 0;
+    if (localAddress) {
+      // Extract candidate address info from API response shape
+      const loc = c.location as
+        | { address?: string; city?: string; state?: string; latitude?: number; longitude?: number }
+        | undefined;
+
+      if (loc) {
+        // Street number match (+25)
+        if (localAddress.street) {
+          const localNum = localAddress.street.match(/^(\d+)/);
+          const apiAddr = String(loc.address || "");
+          const apiNum = apiAddr.match(/^(\d+)/);
+          if (localNum && apiNum && localNum[1] === apiNum[1]) {
+            addressBonus += 25;
+          }
+        }
+
+        // Postal code match (+30): extract from API address string
+        if (localAddress.postalCode) {
+          const apiAddr = String(loc.address || "");
+          const postalMatch = apiAddr.match(/\b(\d{5})(?:-\d{4})?\b/);
+          if (postalMatch && postalMatch[1] === localAddress.postalCode) {
+            addressBonus += 30;
+          }
+        }
+
+        // City + state match (+15)
+        if (
+          localAddress.city &&
+          localAddress.state &&
+          loc.city &&
+          loc.state
+        ) {
+          if (
+            loc.city.toLowerCase() === localAddress.city.toLowerCase() &&
+            loc.state.toLowerCase() === localAddress.state.toLowerCase()
+          ) {
+            addressBonus += 15;
+          }
+        }
+
+        // State mismatch penalty (-40)
+        if (localAddress.state && loc.state) {
+          if (localAddress.state.toLowerCase() !== loc.state.toLowerCase()) {
+            statePenalty = -40;
+          }
+        }
+
+        // Graduated lat/lng proximity scoring
+        if (
+          localAddress.lat != null &&
+          localAddress.lng != null &&
+          loc.latitude != null &&
+          loc.longitude != null
+        ) {
+          const dist = haversine(
+            localAddress.lat,
+            localAddress.lng,
+            loc.latitude,
+            loc.longitude,
+          );
+          if (dist <= 2) {
+            geoScore = 15;       // very close — strong signal
+          } else if (dist <= 50) {
+            geoScore = 5;        // same metro area
+          } else if (dist > 100) {
+            geoScore = -30;      // almost certainly wrong
+          }
+          // 50-100km: geoScore stays 0 (ambiguous)
+        }
+      }
+    }
+
+    // --- Teebox overlap bonus (0-20) ---
+    let teeboxBonus = 0;
+    if (localTeeboxNames?.length) {
+      const tees = c.tees as { male?: { tee_name: string }[]; female?: { tee_name: string }[] } | undefined;
+      if (tees) {
+        const apiTeeNames = new Set<string>();
+        for (const t of tees.male || []) apiTeeNames.add(t.tee_name.toLowerCase());
+        for (const t of tees.female || []) apiTeeNames.add(t.tee_name.toLowerCase());
+
+        if (apiTeeNames.size > 0) {
+          let matchCount = 0;
+          for (const name of localTeeboxNames) {
+            if (apiTeeNames.has(name.toLowerCase())) matchCount++;
+          }
+          teeboxBonus = Math.round((matchCount / localTeeboxNames.length) * 20);
+        }
+      }
+    }
+
+    const totalScore = nameScore + addressBonus + statePenalty + geoScore + teeboxBonus;
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
       bestCandidate = c;
     }
   }
 
-  const maxLen = Math.max(target.length, 1);
-  if (bestDistance / maxLen <= 0.3) return bestCandidate;
+  // Accept if total score >= 45 (address signals alone can carry the match)
+  if (bestScore >= 45) return bestCandidate;
 
   return null;
+}
+
+/** Compute a name similarity score (0-100) between two normalized strings */
+function computeNameScore(target: string, candidate: string): number {
+  if (candidate === target) return 100;
+
+  // Substring match — scale score by how much of the longer string the shorter covers
+  if (candidate.includes(target) || target.includes(candidate)) {
+    const minLen = Math.min(target.length, candidate.length);
+    const maxLen = Math.max(target.length, candidate.length, 1);
+    const lenRatio = minLen / maxLen;
+    if (lenRatio >= 0.6) return 60;          // substantial overlap
+    if (lenRatio < 0.4) return 25;           // too little overlap ("forest" vs "forest highlands canyon")
+    // Linear interpolation: 0.4 → 30, 0.6 → 60
+    return Math.round(30 + (lenRatio - 0.4) / 0.2 * 30);
+  }
+
+  const dist = levenshtein(target, candidate);
+  const maxLen = Math.max(target.length, candidate.length, 1);
+  const ratio = dist / maxLen;
+  if (ratio <= 0.3) return 40 + Math.round(20 * (1 - ratio / 0.3));
+  return 0;
 }
 
 // ---- Helpers ----

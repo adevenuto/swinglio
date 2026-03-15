@@ -29,81 +29,82 @@ export default function EditorScreen() {
 
   return (
     <View style={styles.screen}>
+      <View style={styles.navRow}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
+      </View>
+      <View style={{ paddingHorizontal: Space.lg }}>
+        {/* Create Section */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Create New Course</Text>
+          <Text style={styles.cardSubtitle}>Add a course that doesn't exist yet</Text>
+          <Button
+            mode="contained"
+            buttonColor={Color.primary}
+            textColor={Color.white}
+            onPress={() => router.push("/course-editor")}
+            style={Btn.pill}
+            labelStyle={{ fontFamily: Font.bold }}
+          >
+            Create Course
+          </Button>
+        </View>
+
+        {/* Edit Section */}
+        <Text style={styles.sectionTitle}>Edit Existing</Text>
+
+        <Searchbar
+          placeholder="Search courses..."
+          onChangeText={search}
+          value={query}
+          loading={isSearching}
+          mode="bar"
+          style={styles.searchbar}
+          inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
+        />
+      </View>
+
       <ScrollView
         style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.navRow}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
-            <Text style={styles.backText}>Back</Text>
-          </Pressable>
-        </View>
-        <View style={{ paddingHorizontal: Space.lg }}>
-          {/* Create Section */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Create New Course</Text>
-            <Text style={styles.cardSubtitle}>Add a course that doesn't exist yet</Text>
-            <Button
-              mode="contained"
-              buttonColor={Color.primary}
-              textColor={Color.white}
-              onPress={() => router.push("/course-editor")}
-              style={Btn.pill}
-              labelStyle={{ fontFamily: Font.bold }}
-            >
-              Create Course
-            </Button>
+        {showResults && results.length === 0 && !isSearching && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No courses found</Text>
           </View>
+        )}
 
-          {/* Edit Section */}
-          <Text style={styles.sectionTitle}>Edit Existing</Text>
-
-          <Searchbar
-            placeholder="Search courses..."
-            onChangeText={search}
-            value={query}
-            loading={isSearching}
-            mode="bar"
-            style={styles.searchbar}
-            inputStyle={{ fontFamily: Font.regular, color: Color.neutral900 }}
-          />
-
-          {showResults && results.length === 0 && !isSearching && (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No courses found</Text>
-            </View>
-          )}
-
-          {showResults &&
-            results.map((course) => (
-              <View key={course.id} style={styles.courseRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.courseName}>{course.name}</Text>
-                  <Text style={styles.courseAddress}>
-                    {[course.street, course.state, course.postal_code]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </Text>
-                </View>
-                <Button
-                  mode="outlined"
-                  compact
-                  onPress={() =>
-                    router.push({
-                      pathname: "/course-editor",
-                      params: { courseId: String(course.id) },
-                    })
-                  }
-                  textColor={Color.primary}
-                  style={{ borderColor: Color.primary }}
-                  labelStyle={{ fontFamily: Font.medium }}
-                >
-                  Edit
-                </Button>
+        {showResults &&
+          results.map((course) => (
+            <View key={course.id} style={styles.courseRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.courseName}>{course.club_name}</Text>
+                <Text style={styles.courseAddress}>
+                  {[course.street, course.state, course.postal_code]
+                    .filter(Boolean)
+                    .join(", ")}
+                </Text>
               </View>
-            ))}
-        </View>
+              <Button
+                mode="outlined"
+                compact
+                onPress={() =>
+                  router.push({
+                    pathname: "/course-editor",
+                    params: { courseId: String(course.id) },
+                  })
+                }
+                textColor={Color.primary}
+                style={{ borderColor: Color.primary }}
+                labelStyle={{ fontFamily: Font.medium }}
+              >
+                Edit
+              </Button>
+            </View>
+          ))}
       </ScrollView>
     </View>
   );
@@ -116,6 +117,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: Space.lg,
+    paddingBottom: Space.xl,
   },
   centeredContainer: {
     flex: 1,

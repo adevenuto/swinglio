@@ -34,7 +34,7 @@ export type RoundData = {
     color?: string;
     holes: Record<string, { par: string; length: string }>;
   };
-  courses: { name: string };
+  courses: { club_name: string; course_name: string };
 };
 
 export type PlayerScore = {
@@ -156,7 +156,7 @@ export function GameplayProvider({
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, creator_id, course_id, status, created_at, teebox_data, courses(name)",
+        "id, creator_id, course_id, status, created_at, teebox_data, courses(club_name, course_name)",
       )
       .eq("id", roundId)
       .single();
@@ -358,7 +358,7 @@ export function GameplayProvider({
 
         const resultsData = buildResultsData(
           playerResults,
-          round.courses?.name || "Unknown",
+          round.courses?.club_name || "Unknown",
           (round.teebox_data as any)?.name || "",
         );
 

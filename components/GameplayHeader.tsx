@@ -10,6 +10,7 @@ import { Text } from "react-native-paper";
 type GameplayHeaderProps = {
   courseId: number;
   courseName: string;
+  courseNameSub?: string | null;
   featuredImageUrl?: string | null;
   holeCount?: number;
   activeHole?: number;
@@ -25,6 +26,7 @@ type GameplayHeaderProps = {
 export default function GameplayHeader({
   courseId,
   courseName,
+  courseNameSub,
   featuredImageUrl,
   holeCount,
   activeHole,
@@ -54,6 +56,11 @@ export default function GameplayHeader({
         <Text style={styles.courseName} numberOfLines={1}>
           {courseName}
         </Text>
+        {courseNameSub ? (
+          <Text style={styles.courseNameSub} numberOfLines={1}>
+            - {courseNameSub}
+          </Text>
+        ) : null}
         {subtitle != null ? (
           <Text style={styles.statsLabel}>{subtitle}</Text>
         ) : activeHole != null ? (
@@ -124,6 +131,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: Color.neutral900,
     textTransform: "capitalize",
+  },
+  courseNameSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 1,
   },
   statsLine: {
     fontSize: 14,

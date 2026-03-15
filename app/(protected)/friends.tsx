@@ -17,11 +17,11 @@ import {
   View,
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
+import Toast from "react-native-toast-message";
 
 export default function FriendsScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-
   const {
     friends,
     pendingReceived,
@@ -77,6 +77,8 @@ export default function FriendsScreen() {
     const { error } = await sendInvite(recipientId);
     if (error) {
       Alert.alert("Error", error);
+    } else {
+      Toast.show({ type: "success", text1: "Friend invite sent!" });
     }
   };
 
@@ -84,6 +86,8 @@ export default function FriendsScreen() {
     const { error } = await acceptInvite(friendRow.id);
     if (error) {
       Alert.alert("Error", "Failed to accept invite.");
+    } else {
+      Toast.show({ type: "success", text1: `You and ${getName(friendRow)} are now friends!` });
     }
   };
 
@@ -367,6 +371,7 @@ export default function FriendsScreen() {
           </View>
         </View>
       </ScrollView>
+
     </View>
   );
 }

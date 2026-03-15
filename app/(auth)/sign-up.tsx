@@ -1,3 +1,4 @@
+import SwinglioLogo from "@/assets/images/swinglio.svg";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -78,7 +79,9 @@ export default function SignUp() {
         style={styles.container}
       >
         <View style={styles.inner}>
-          <Text style={styles.title}>Sign Up</Text>
+          <View style={styles.logoRow}>
+            <SwinglioLogo height={56} fill={Color.neutral900} />
+          </View>
           <Text style={styles.subtitle}>Create your account to get started</Text>
 
           <View style={styles.fieldGroup}>
@@ -189,18 +192,14 @@ const styles = StyleSheet.create({
   inner: {
     paddingHorizontal: Space.lg,
   },
-  title: {
-    fontFamily: Font.bold,
-    fontSize: 28,
-    lineHeight: 34,
-    color: Color.neutral900,
-    textAlign: "center",
-    marginBottom: Space.xs,
+  logoRow: {
+    alignItems: "center",
+    marginBottom: Space.lg,
   },
   subtitle: {
-    fontFamily: Font.regular,
-    fontSize: 15,
-    color: Color.neutral500,
+    fontFamily: Font.medium,
+    fontSize: 16,
+    color: Color.neutral700,
     textAlign: "center",
     marginBottom: Space.xxl,
   },

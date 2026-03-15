@@ -8,7 +8,8 @@ import { Text } from "react-native-paper";
 
 type Props = {
   courseId: number;
-  name: string;
+  clubName: string;
+  courseName?: string;
   description?: string;
   featuredImageUrl?: string | null;
   missingRatings?: boolean;
@@ -17,17 +18,20 @@ type Props = {
 
 export default function CourseCard({
   courseId,
-  name,
+  clubName,
+  courseName,
   description,
   featuredImageUrl,
   missingRatings,
   onPress,
 }: Props) {
+  const showCourseName = courseName != null && courseName !== clubName;
   const router = useRouter();
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={missingRatings}
       style={({ pressed }) => [
         styles.card,
         pressed ? { opacity: 0.7 } : undefined,
@@ -40,8 +44,13 @@ export default function CourseCard({
         />
         <View style={styles.info}>
           <Text style={styles.title} numberOfLines={2}>
-            {name}
+            {clubName}
           </Text>
+          {showCourseName && (
+            <Text style={styles.courseNameSub} numberOfLines={1}>
+              - {courseName}
+            </Text>
+          )}
           {description ? (
             <Text style={styles.description} numberOfLines={1}>
               {description}
@@ -106,6 +115,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Color.neutral900,
     textTransform: "capitalize",
+  },
+  courseNameSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 2,
   },
   description: {
     fontFamily: Font.regular,

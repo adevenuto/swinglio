@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# enrichment script progress
+scripts/.enrich-ratings-progress
+
 # Expo
 .expo/
 dist/

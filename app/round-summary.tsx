@@ -36,7 +36,7 @@ type RoundData = {
     color?: string;
     holes: Record<string, { par: string; length: string }>;
   };
-  courses: { name: string };
+  courses: { club_name: string; course_name: string };
 };
 
 type PlayerScore = {
@@ -92,7 +92,7 @@ export default function RoundSummaryScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(name)",
+        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(club_name, course_name)",
       )
       .eq("id", roundId)
       .single();
@@ -286,7 +286,8 @@ export default function RoundSummaryScreen() {
         <View style={{ paddingHorizontal: Space.lg }}>
           <GameplayHeader
             courseId={round.course_id}
-            courseName={round.courses?.name || "Unknown"}
+            courseName={round.courses?.club_name || "Unknown"}
+            courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
             featuredImageUrl={featuredImageUrl}
             holeCount={
               round.teebox_data?.holes
@@ -354,7 +355,9 @@ export default function RoundSummaryScreen() {
                         <Text style={s.resultSub}>
                           {partialHoles
                             ? `${pr.holes_completed} of ${pr.hole_count} holes`
-                            : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
+                            : pr.hole_count <= 9
+                              ? `${pr.hole_count} holes`
+                              : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
                         </Text>
                         <View style={s.scoreContainer}>
                           <Text style={s.scoreTotal}>{pr.total_score}</Text>

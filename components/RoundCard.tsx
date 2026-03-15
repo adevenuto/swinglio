@@ -8,6 +8,7 @@ import StyledTooltip from "./StyledTooltip";
 
 type RoundCardProps = {
   courseName: string;
+  courseNameSub?: string | null;
   playerStatus: string;
   teeboxName?: string;
   date: string;
@@ -30,6 +31,7 @@ function formatToPar(toPar: number): string {
 
 export default function RoundCard({
   courseName,
+  courseNameSub,
   playerStatus,
   teeboxName,
   date,
@@ -59,7 +61,12 @@ export default function RoundCard({
       >
         {/* Row 1: course name (+ spacer when badge present) */}
         <View style={styles.cardRow}>
-          <Text style={styles.courseName}>{courseName}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.courseName}>{courseName}</Text>
+            {courseNameSub ? (
+              <Text style={styles.courseNameSub}>{courseNameSub}</Text>
+            ) : null}
+          </View>
           {hasBadge && <View style={styles.badgeSpacer} />}
         </View>
 
@@ -153,8 +160,13 @@ const styles = StyleSheet.create({
     fontFamily: Font.bold,
     fontSize: 17,
     color: Color.neutral900,
-    flex: 1,
     textTransform: "capitalize",
+  },
+  courseNameSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 2,
   },
   cardBottomRow: {
     flexDirection: "row",

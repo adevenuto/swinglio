@@ -27,7 +27,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Snackbar, Text } from "react-native-paper";
+import { Button, Text } from "react-native-paper";
 
 
 function formatDate(dateStr: string): string {
@@ -39,7 +39,6 @@ export default function Dashboard() {
   const { user, avatarUrl, refreshUser } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-  const [snackbar, setSnackbar] = useState({ visible: false, message: "" });
   const [handicapModalVisible, setHandicapModalVisible] = useState(false);
   const { activeRounds, refresh: refreshRounds } = useActiveRounds(
     user?.id ?? "",
@@ -226,7 +225,12 @@ export default function Dashboard() {
                     style={styles.card}
                   >
                     <View style={styles.cardRow}>
-                      <Text style={styles.courseName}>{pr.course_name}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.courseName}>{pr.course_name}</Text>
+                        {pr.course_name_sub ? (
+                          <Text style={styles.cardSubtitle}>- {pr.course_name_sub}</Text>
+                        ) : null}
+                      </View>
                       <Button
                         mode="contained"
                         buttonColor={Color.primary}
@@ -265,7 +269,8 @@ export default function Dashboard() {
                 completedRounds.map((round) => (
                   <RoundCard
                     key={round.id}
-                    courseName={round.courses?.name || "Unknown Course"}
+                    courseName={round.courses?.club_name || "Unknown Course"}
+                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}
@@ -291,7 +296,8 @@ export default function Dashboard() {
                 {incompleteRounds.map((round) => (
                   <RoundCard
                     key={round.id}
-                    courseName={round.courses?.name || "Unknown Course"}
+                    courseName={round.courses?.club_name || "Unknown Course"}
+                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
                     playerStatus={round.player_status}
                     teeboxName={(round.teebox_data as any)?.name}
                     date={round.created_at}
@@ -318,13 +324,6 @@ export default function Dashboard() {
         handicapResult={handicapResult}
       />
 
-      <Snackbar
-        visible={snackbar.visible}
-        onDismiss={() => setSnackbar((s) => ({ ...s, visible: false }))}
-        duration={2000}
-      >
-        {snackbar.message}
-      </Snackbar>
     </View>
   );
 }

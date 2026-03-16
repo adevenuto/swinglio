@@ -32,8 +32,8 @@ function getArg(name: string): string | undefined {
 
 const COURSE_ID = getArg("--course-id");
 const LIMIT = parseInt(getArg("--limit") || "10", 10);
-const DELAY_MS = parseInt(getArg("--delay") || "3000", 10);
-const COURSE_DELAY_MS = parseInt(getArg("--course-delay") || "8000", 10);
+const DELAY_MS = parseInt(getArg("--delay") || "1500", 10);
+const COURSE_DELAY_MS = parseInt(getArg("--course-delay") || "4000", 10);
 const COOLDOWN_INTERVAL = parseInt(getArg("--cooldown-interval") || "50", 10);
 const DRY_RUN = process.argv.includes("--dry-run");
 const DIAGNOSTIC = process.argv.includes("--diagnostic");
@@ -43,13 +43,6 @@ const COMMON_SUFFIXES = [
   "Golf Course",
   "Country Club",
   "Golf Resort",
-  "Golf Links",
-  "Golf Centre",
-  "Golf Complex",
-  "Golf Center",
-  "Golf Estate",
-  "Golf Park",
-  "Golf Ranch",
 ];
 
 // ---------------------------------------------------------------------------
@@ -161,6 +154,17 @@ async function scrapeHole(
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     );
 
+    // Block unnecessary resources (images, CSS, fonts) — we only need JS for markers
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const type = req.resourceType();
+      if (type === "image" || type === "stylesheet" || type === "font" || type === "media") {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
     // Inject marker interceptor before page scripts run
     await page.evaluateOnNewDocument(MARKER_INTERCEPTOR);
 
@@ -173,7 +177,7 @@ async function scrapeHole(
     }
 
     // Give extra time for Google Maps to init and create markers
-    await new Promise((r) => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 1500));
 
     // Retrieve captured markers
     const markers: CapturedMarker[] = await page.evaluate(
@@ -315,6 +319,10 @@ async function trySuffixFallback(
   const lower = baseName.toLowerCase();
   // Skip if the name already ends with one of these suffixes
   if (COMMON_SUFFIXES.some((s) => lower.endsWith(s.toLowerCase()))) {
+    return null;
+  }
+  // Skip compound sub-course names (e.g. "Blue/Red", "Dogwood/Pines") — won't match individually
+  if (baseName.includes("/")) {
     return null;
   }
 
@@ -500,17 +508,21 @@ async function main() {
           AND postal_code IS NOT NULL
       `;
     } else {
-      // Courses that have layout_data but no greenCenters, and have a postal_code
+      // US courses that have layout_data but no greenCenters, haven't been attempted, and have a postal_code
       courses = await sql`
-        SELECT id, course_name, club_name, postal_code, layout_data
-        FROM courses
-        WHERE postal_code IS NOT NULL
-          AND layout_data IS NOT NULL
+        SELECT c.id, c.course_name, c.club_name, c.postal_code, c.layout_data
+        FROM courses c
+        JOIN states s ON c.state_id = s.id
+        JOIN countries co ON s.country_id = co.id
+        WHERE c.postal_code IS NOT NULL
+          AND c.layout_data IS NOT NULL
+          AND co.name = 'United States'
           AND (
-            layout_data NOT LIKE '%greenCenters%'
-            OR layout_data::jsonb -> 'greenCenters' = '{}'::jsonb
+            c.layout_data NOT LIKE '%greenCenters%'
+            OR c.layout_data::jsonb -> 'greenCenters' = '{}'::jsonb
           )
-        ORDER BY id
+          AND c.layout_data NOT LIKE '%greenCenterAttemptedAt%'
+        ORDER BY c.id
         LIMIT ${LIMIT}
       `;
     }
@@ -534,9 +546,9 @@ async function main() {
 
       // --- Periodic cooldown with browser restart ---
       if (coursesSinceCooldown >= COOLDOWN_INTERVAL) {
-        console.log(`\nCooldown: pausing 60s and restarting browser (after ${COOLDOWN_INTERVAL} courses)...`);
+        console.log(`\nCooldown: pausing 30s and restarting browser (after ${COOLDOWN_INTERVAL} courses)...`);
         await browser.close();
-        await new Promise((r) => setTimeout(r, 60_000));
+        await new Promise((r) => setTimeout(r, 30_000));
         browser = await launchBrowser();
         coursesSinceCooldown = 0;
         console.log(`Browser restarted, resuming.\n`);
@@ -569,6 +581,19 @@ async function main() {
           }
           success++;
         } else {
+          // Stamp the attempt so we don't retry this course
+          if (!DRY_RUN && course.layout_data) {
+            try {
+              const layoutObj = JSON.parse(course.layout_data);
+              layoutObj.greenCenterAttemptedAt = new Date().toISOString();
+              await sql`
+                UPDATE courses
+                SET layout_data = ${JSON.stringify(layoutObj)},
+                    updated_at = now()
+                WHERE id = ${course.id}
+              `;
+            } catch { /* best effort */ }
+          }
           console.log(`  => Skipped (no green centers found)\n`);
           failed++;
         }
@@ -611,6 +636,19 @@ async function main() {
               }
               success++;
             } else {
+              // Stamp the attempt on retry failure too
+              if (!DRY_RUN && course.layout_data) {
+                try {
+                  const layoutObj = JSON.parse(course.layout_data);
+                  layoutObj.greenCenterAttemptedAt = new Date().toISOString();
+                  await sql`
+                    UPDATE courses
+                    SET layout_data = ${JSON.stringify(layoutObj)},
+                        updated_at = now()
+                    WHERE id = ${course.id}
+                  `;
+                } catch { /* best effort */ }
+              }
               console.log(`  => Skipped on retry (no green centers found)\n`);
               failed++;
             }

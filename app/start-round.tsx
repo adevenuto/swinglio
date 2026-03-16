@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/auth-context";
 import {
   Course,
   courseHasRatings,
+  parseGreenCenters,
   parseTeeboxes,
   Teebox,
   useCourseSearch,
@@ -228,6 +229,7 @@ export default function StartRoundScreen() {
                 }
                 featuredImageUrl={featuredImages[item.id]}
                 missingRatings={!courseHasRatings(item.layout_data)}
+                hasGreenCenters={Object.keys(parseGreenCenters(item.layout_data)).length > 0}
                 onPress={() => handleSelectCourse(item)}
               />
             )}
@@ -270,6 +272,7 @@ export default function StartRoundScreen() {
                   }
                   featuredImageUrl={featuredImages[item.id]}
                   missingRatings={!courseHasRatings(item.layout_data)}
+                  hasGreenCenters={Object.keys(parseGreenCenters(item.layout_data)).length > 0}
                   onPress={() => handleSelectCourse(item)}
                 />
               ))

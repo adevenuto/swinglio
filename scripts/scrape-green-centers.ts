@@ -15,6 +15,7 @@
  *   --cooldown-interval <n>   Restart browser every N courses (default: 50)
  *   --dry-run                 Log results without writing to DB
  *   --diagnostic              Dump all marker data for first hole only (Phase 1)
+ *   --legacy                  Use old matching logic (course_name/club_name/suffix fallback)
  */
 
 import "dotenv/config";
@@ -37,6 +38,7 @@ const COURSE_DELAY_MS = parseInt(getArg("--course-delay") || "4000", 10);
 const COOLDOWN_INTERVAL = parseInt(getArg("--cooldown-interval") || "50", 10);
 const DRY_RUN = process.argv.includes("--dry-run");
 const DIAGNOSTIC = process.argv.includes("--diagnostic");
+const LEGACY_MODE = process.argv.includes("--legacy");
 
 const COMMON_SUFFIXES = [
   "Golf Club",
@@ -365,60 +367,84 @@ async function scrapeCourse(
     }
   }
 
-  const zip = course.postal_code;
   const greenCenters: Record<string, GreenCenter> = {};
   let found = 0;
   let missed = 0;
 
-  // Try course_name first; if hole 1 fails, try club_name as fallback
-  let courseName = course.course_name;
+  // Determine course name and zip to use for GolfTraxx URLs
+  let courseName: string;
+  let zip: string;
+
+  // Check if this course has a golftraxx match in layout_data
+  const golftraxxMatch = existingLayout && (existingLayout as any).golftraxx;
+
+  if (golftraxxMatch && !LEGACY_MODE) {
+    // Use GolfTraxx's own name and zip (high confidence match from index scraper)
+    courseName = golftraxxMatch.name;
+    zip = golftraxxMatch.zip || course.postal_code;
+    console.log(`  Using GolfTraxx name: "${courseName}" (zip=${zip}, conf=${golftraxxMatch.matchConfidence})`);
+  } else {
+    // Legacy fallback: use DB course_name
+    courseName = course.course_name;
+    zip = course.postal_code;
+  }
+
+  // Probe hole 1 to confirm course exists on GolfTraxx
   const { markers: h1Markers, greenCenter: h1Center } = await scrapeHole(browser, courseName, zip, 1);
-  if (h1Markers.length === 0 && course.club_name && course.club_name !== course.course_name) {
-    console.log(`  Trying club_name "${course.club_name}" instead...`);
-    const fallback = await scrapeHole(browser, course.club_name, zip, 1);
-    if (fallback.markers.length > 0) {
-      courseName = course.club_name;
-      if (fallback.greenCenter) {
-        greenCenters["hole-1"] = fallback.greenCenter;
-        found++;
-        process.stdout.write(`  Hole 1: ${fallback.greenCenter.lat.toFixed(6)}, ${fallback.greenCenter.lng.toFixed(6)}\n`);
-      } else {
-        missed++;
-        process.stdout.write(`  Hole 1: no green center found\n`);
-      }
-    } else {
-      // club_name also failed — try common suffix fallback
-      const suffixHit = await trySuffixFallback(browser, course.course_name, zip);
-      if (suffixHit) {
-        courseName = suffixHit.courseName;
-        if (suffixHit.greenCenter) {
-          greenCenters["hole-1"] = suffixHit.greenCenter;
-          found++;
-          process.stdout.write(`  Hole 1: ${suffixHit.greenCenter.lat.toFixed(6)}, ${suffixHit.greenCenter.lng.toFixed(6)}\n`);
+
+  if (h1Markers.length === 0) {
+    if (LEGACY_MODE) {
+      // Legacy mode: try club_name and suffix fallbacks
+      if (course.club_name && course.club_name !== course.course_name) {
+        console.log(`  Trying club_name "${course.club_name}" instead...`);
+        const fallback = await scrapeHole(browser, course.club_name, zip, 1);
+        if (fallback.markers.length > 0) {
+          courseName = course.club_name;
+          if (fallback.greenCenter) {
+            greenCenters["hole-1"] = fallback.greenCenter;
+            found++;
+            process.stdout.write(`  Hole 1: ${fallback.greenCenter.lat.toFixed(6)}, ${fallback.greenCenter.lng.toFixed(6)}\n`);
+          } else {
+            missed++;
+            process.stdout.write(`  Hole 1: no green center found\n`);
+          }
         } else {
-          missed++;
-          process.stdout.write(`  Hole 1: no green center found\n`);
+          const suffixHit = await trySuffixFallback(browser, course.course_name, zip);
+          if (suffixHit) {
+            courseName = suffixHit.courseName;
+            if (suffixHit.greenCenter) {
+              greenCenters["hole-1"] = suffixHit.greenCenter;
+              found++;
+              process.stdout.write(`  Hole 1: ${suffixHit.greenCenter.lat.toFixed(6)}, ${suffixHit.greenCenter.lng.toFixed(6)}\n`);
+            } else {
+              missed++;
+              process.stdout.write(`  Hole 1: no green center found\n`);
+            }
+          } else {
+            console.log(`  => Course not found on GolfTraxx, skipping`);
+            return null;
+          }
         }
       } else {
-        console.log(`  => Course not found on GolfTraxx, skipping`);
-        return null;
-      }
-    }
-  } else if (h1Markers.length === 0) {
-    // course_name returned 0 markers and no club_name to try — try suffix fallback
-    const suffixHit = await trySuffixFallback(browser, course.course_name, zip);
-    if (suffixHit) {
-      courseName = suffixHit.courseName;
-      if (suffixHit.greenCenter) {
-        greenCenters["hole-1"] = suffixHit.greenCenter;
-        found++;
-        process.stdout.write(`  Hole 1: ${suffixHit.greenCenter.lat.toFixed(6)}, ${suffixHit.greenCenter.lng.toFixed(6)}\n`);
-      } else {
-        missed++;
-        process.stdout.write(`  Hole 1: no green center found\n`);
+        const suffixHit = await trySuffixFallback(browser, course.course_name, zip);
+        if (suffixHit) {
+          courseName = suffixHit.courseName;
+          if (suffixHit.greenCenter) {
+            greenCenters["hole-1"] = suffixHit.greenCenter;
+            found++;
+            process.stdout.write(`  Hole 1: ${suffixHit.greenCenter.lat.toFixed(6)}, ${suffixHit.greenCenter.lng.toFixed(6)}\n`);
+          } else {
+            missed++;
+            process.stdout.write(`  Hole 1: no green center found\n`);
+          }
+        } else {
+          console.log(`  => Course not found on GolfTraxx (0 markers on hole 1), skipping`);
+          return null;
+        }
       }
     } else {
-      console.log(`  => Course not found on GolfTraxx (0 markers on hole 1), skipping`);
+      // Index-matched mode: no fallbacks, course should have been verified
+      console.log(`  => GolfTraxx match didn't resolve (0 markers), skipping`);
       return null;
     }
   } else if (h1Center) {
@@ -507,8 +533,8 @@ async function main() {
         WHERE id = ${COURSE_ID}
           AND postal_code IS NOT NULL
       `;
-    } else {
-      // US courses that have layout_data but no greenCenters, haven't been attempted, and have a postal_code
+    } else if (LEGACY_MODE) {
+      // Legacy: US courses with layout_data but no greenCenters/attempt stamp
       courses = await sql`
         SELECT c.id, c.course_name, c.club_name, c.postal_code, c.layout_data
         FROM courses c
@@ -519,6 +545,22 @@ async function main() {
           AND co.name = 'United States'
           AND (
             c.layout_data NOT LIKE '%greenCenters%'
+            OR c.layout_data::jsonb -> 'greenCenters' = '{}'::jsonb
+          )
+          AND c.layout_data NOT LIKE '%greenCenterAttemptedAt%'
+        ORDER BY c.id
+        LIMIT ${LIMIT}
+      `;
+    } else {
+      // Default: Only courses with a golftraxx match (from scrape-golftraxx-index)
+      // that don't have greenCenters yet and haven't been attempted
+      courses = await sql`
+        SELECT c.id, c.course_name, c.club_name, c.postal_code, c.layout_data
+        FROM courses c
+        WHERE c.layout_data IS NOT NULL
+          AND c.layout_data LIKE '%"golftraxx":%'
+          AND (
+            c.layout_data NOT LIKE '%"greenCenters"%'
             OR c.layout_data::jsonb -> 'greenCenters' = '{}'::jsonb
           )
           AND c.layout_data NOT LIKE '%greenCenterAttemptedAt%'
@@ -540,8 +582,16 @@ async function main() {
 
     for (let i = 0; i < courses.length; i++) {
       const course = courses[i];
+      // Show GolfTraxx name if available
+      let golftraxxInfo = "";
+      if (!LEGACY_MODE && course.layout_data) {
+        try {
+          const ld = JSON.parse(course.layout_data);
+          if (ld.golftraxx) golftraxxInfo = ` [golftraxx: "${ld.golftraxx.name}"]`;
+        } catch {}
+      }
       console.log(
-        `[${i + 1}/${courses.length}] ${course.course_name} (id=${course.id}, zip=${course.postal_code})`,
+        `[${i + 1}/${courses.length}] ${course.course_name} (id=${course.id}, zip=${course.postal_code})${golftraxxInfo}`,
       );
 
       // --- Periodic cooldown with browser restart ---

@@ -1,15 +1,10 @@
 import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
 import { DIFFERENTIAL_TABLE, formatHandicapIndex } from "@/lib/handicap";
 import { HandicapResult } from "@/types/handicap";
-import { MaterialCommunityIcons, Feather, FontAwesome5 } from "@expo/vector-icons";
+import HandicapHero from "@/components/HandicapHero";
+import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
 type Props = {
@@ -36,27 +31,12 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
     >
       <View style={styles.container}>
         {/* ── Green Hero Header ── */}
-        <View style={styles.hero}>
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed ? { opacity: 0.7 } : undefined,
-            ]}
-            hitSlop={12}
-          >
-            <Feather name="x" size={22} color={Color.white} />
-          </Pressable>
-
-          <MaterialCommunityIcons
-            name="golf-tee"
-            size={32}
-            color={Color.white}
-            style={styles.heroIcon}
-          />
-          <Text style={styles.heroLabel}>Handicap Index</Text>
-          <Text style={styles.heroValue}>{formatHandicapIndex(hIndex)}</Text>
-        </View>
+        <HandicapHero
+          handicapIndex={hIndex}
+          subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : methodDescription}
+          onClose={onClose}
+          style={{ borderRadius: 0, paddingTop: Space.xxxl }}
+        />
 
         {/* ── Scrollable Content ── */}
         <ScrollView
@@ -211,38 +191,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Color.white,
-  },
-
-  // ── Hero ──
-  hero: {
-    backgroundColor: Color.primary,
-    paddingTop: Space.xxxl,
-    paddingBottom: Space.xl,
-    paddingHorizontal: Space.xl,
-    alignItems: "center",
-  },
-  closeBtn: {
-    position: "absolute",
-    top: Space.lg,
-    right: Space.lg,
-    zIndex: 1,
-  },
-  heroIcon: {
-    marginBottom: Space.sm,
-  },
-  heroLabel: {
-    fontFamily: Font.semiBold,
-    fontSize: 13,
-    letterSpacing: 0.5,
-    color: "rgba(255,255,255,0.7)",
-    textTransform: "uppercase",
-    marginBottom: Space.xs,
-  },
-  heroValue: {
-    fontFamily: Font.bold,
-    fontSize: 44,
-    lineHeight: 52,
-    color: Color.white,
   },
 
   // ── Scroll ──

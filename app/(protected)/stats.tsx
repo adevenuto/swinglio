@@ -3,13 +3,12 @@ import { useAuth } from "@/contexts/auth-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
-import { formatHandicapIndex } from "@/lib/handicap";
 import { useFocusEffect } from "expo-router";
+import HandicapHero from "@/components/HandicapHero";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
 import React, { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -118,25 +117,11 @@ export default function StatsScreen() {
               onPress={() => setHandicapModalVisible(true)}
               style={({ pressed }) => pressed ? { opacity: 0.7 } : undefined}
             >
-              <View style={styles.heroCard}>
-                <View style={styles.heroRow}>
-                  <MaterialCommunityIcons
-                    name="golf-tee"
-                    size={22}
-                    color={Color.white}
-                    style={styles.heroIcon}
-                  />
-                  <Text style={styles.heroLabel}>HANDICAP INDEX</Text>
-                </View>
-                <Text style={styles.heroValue}>
-                  {formatHandicapIndex(hIndex)}
-                </Text>
-                <Text style={styles.heroSub}>
-                  {needMore > 0
-                    ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
-                    : hMethod}
-                </Text>
-              </View>
+              <HandicapHero
+                handicapIndex={hIndex}
+                subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : hMethod}
+                style={{ marginBottom: Space.lg }}
+              />
             </Pressable>
 
             {/* ── Scoring ── */}
@@ -266,42 +251,6 @@ const styles = StyleSheet.create({
   loader: {
     paddingVertical: Space.xxxl,
     alignItems: "center",
-  },
-
-  // ── Handicap Hero ──
-  heroCard: {
-    backgroundColor: Color.primary,
-    borderRadius: Radius.md,
-    padding: Space.xl,
-    marginBottom: Space.lg,
-    ...Shadow.sm,
-  },
-  heroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Space.sm,
-  },
-  heroIcon: {
-    marginRight: Space.sm,
-  },
-  heroLabel: {
-    fontFamily: Font.semiBold,
-    fontSize: 13,
-    letterSpacing: 0.5,
-    color: "rgba(255,255,255,0.7)",
-    textTransform: "uppercase",
-  },
-  heroValue: {
-    fontFamily: Font.bold,
-    fontSize: 44,
-    lineHeight: 52,
-    color: Color.white,
-    marginBottom: Space.xs,
-  },
-  heroSub: {
-    fontFamily: Font.regular,
-    fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
   },
 
   // ── Section Labels ──

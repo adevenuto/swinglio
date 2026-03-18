@@ -12,11 +12,14 @@ import { on } from "@/lib/events";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Redirect, Tabs, useFocusEffect } from "expo-router";
 import { useCallback, useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Image, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const teeballIcon = require("@/assets/images/teeball_transparent.png");
+
 export default function ProtectedLayout() {
-  const { user, isLoading, needsOnboarding, isRecoveryMode, refreshProfile } = useAuth();
+  const { user, isLoading, needsOnboarding, isRecoveryMode, refreshProfile } =
+    useAuth();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
   const { activeRounds, refresh: refreshActiveRounds } = useActiveRounds(
@@ -57,84 +60,92 @@ export default function ProtectedLayout() {
 
   return (
     <AppDrawerProvider>
-    <SafeAreaView
-      edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.screenBg }}
-    >
-    <BrandHeader />
-    <Tabs
-      tabBar={(props) => <BottomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}
-      initialRouteName="dashboard"
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="sports-golf" size={size} color={color} />
-          ),
-          tabBarBadge:
-            activeRounds.length > 0 ? activeRounds.length : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="friends"
-        options={{
-          title: "Friends",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="group" size={size} color={color} />
-          ),
-          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: "Stats",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="bar-chart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          href: null,
-          tabBarItemStyle: { display: "none" },
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="editor"
-        options={{
-          title: "Editor",
-          href: null,
-          tabBarItemStyle: { display: "none" },
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="edit" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          href: null,
-          tabBarItemStyle: { display: "none" },
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="settings" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-    </SafeAreaView>
-    <AppDrawer />
+      <SafeAreaView
+        edges={["top"]}
+        style={{ flex: 1, backgroundColor: Color.screenBg }}
+      >
+        <BrandHeader />
+        <Tabs
+          tabBar={(props) => <BottomTabBar {...props} />}
+          screenOptions={{
+            headerShown: false,
+          }}
+          initialRouteName="dashboard"
+        >
+          <Tabs.Screen
+            name="dashboard"
+            options={{
+              title: "Dashboard",
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={teeballIcon}
+                  style={{
+                    width: size + 8,
+                    height: size + 8,
+                    tintColor: Color.white,
+                  }}
+                  resizeMode="contain"
+                />
+              ),
+              tabBarBadge:
+                activeRounds.length > 0 ? activeRounds.length : undefined,
+            }}
+          />
+          <Tabs.Screen
+            name="friends"
+            options={{
+              title: "Friends",
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="group" size={size} color={color} />
+              ),
+              tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+            }}
+          />
+          <Tabs.Screen
+            name="stats"
+            options={{
+              title: "Stats",
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="bar-chart" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: "Profile",
+              href: null,
+              tabBarItemStyle: { display: "none" },
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="person" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="editor"
+            options={{
+              title: "Editor",
+              href: null,
+              tabBarItemStyle: { display: "none" },
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="edit" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="settings"
+            options={{
+              title: "Settings",
+              href: null,
+              tabBarItemStyle: { display: "none" },
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="settings" size={size} color={color} />
+              ),
+            }}
+          />
+        </Tabs>
+      </SafeAreaView>
+      <AppDrawer />
     </AppDrawerProvider>
   );
 }

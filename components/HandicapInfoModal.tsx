@@ -33,6 +33,8 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
         {/* ── Green Hero Header ── */}
         <HandicapHero
           handicapIndex={hIndex}
+          differentials={handicapResult?.differentials}
+          trend={handicapResult?.trend}
           subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : methodDescription}
           onClose={onClose}
           style={{ borderRadius: 0, paddingTop: Space.xxxl }}

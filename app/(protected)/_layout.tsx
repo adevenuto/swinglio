@@ -15,7 +15,7 @@ import { useCallback, useEffect } from "react";
 import { ActivityIndicator, Image, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const teeballIcon = require("@/assets/images/teeball_transparent.png");
+const teeballIcon = require("@/assets/images/ball.png");
 
 export default function ProtectedLayout() {
   const { user, isLoading, needsOnboarding, isRecoveryMode, refreshProfile } =
@@ -80,9 +80,8 @@ export default function ProtectedLayout() {
                 <Image
                   source={teeballIcon}
                   style={{
-                    width: size + 8,
-                    height: size + 8,
-                    tintColor: Color.white,
+                    width: size + 36,
+                    height: size + 36,
                   }}
                   resizeMode="contain"
                 />

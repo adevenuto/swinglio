@@ -19,6 +19,8 @@ export type HandicapDifferential = {
   datePlayed: string;
   differential: number;
   isUsed: boolean;
+  courseName?: string;
+  grossScore?: number;
 };
 
 export type HandicapEligibleRound = {
@@ -44,4 +46,6 @@ export type HandicapResult = {
   excludedRounds: HandicapExcludedRound[];
   methodDescription: string;
   lastUpdated: string;
+  /** Change from previous index (negative = improved). null if no previous. */
+  trend: number | null;
 };

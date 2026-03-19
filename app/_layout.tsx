@@ -2,11 +2,16 @@ import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { AuthProvider } from "@/contexts/auth-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import {
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_600SemiBold,
-  DMSans_700Bold,
-} from "@expo-google-fonts/dm-sans";
+  Outfit_400Regular,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from "@expo-google-fonts/outfit";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import Feather from "@expo/vector-icons/Feather";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -27,13 +32,13 @@ import Toast, { BaseToastProps } from "react-native-toast-message";
 SplashScreen.preventAutoHideAsync();
 
 const fontConfig = {
-  displayLarge: { fontFamily: Font.bold },
-  displayMedium: { fontFamily: Font.bold },
-  displaySmall: { fontFamily: Font.bold },
-  headlineLarge: { fontFamily: Font.bold },
-  headlineMedium: { fontFamily: Font.bold },
-  headlineSmall: { fontFamily: Font.bold },
-  titleLarge: { fontFamily: Font.bold },
+  displayLarge: { fontFamily: Font.displayBold },
+  displayMedium: { fontFamily: Font.displayBold },
+  displaySmall: { fontFamily: Font.displayBold },
+  headlineLarge: { fontFamily: Font.displayBold },
+  headlineMedium: { fontFamily: Font.displayBold },
+  headlineSmall: { fontFamily: Font.displaySemiBold },
+  titleLarge: { fontFamily: Font.displaySemiBold },
   titleMedium: { fontFamily: Font.semiBold },
   titleSmall: { fontFamily: Font.semiBold },
   bodyLarge: { fontFamily: Font.regular },
@@ -112,10 +117,13 @@ const toastStyles = StyleSheet.create({
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_600SemiBold,
-    DMSans_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Outfit_400Regular,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
   });
 
   useEffect(() => {

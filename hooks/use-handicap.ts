@@ -3,6 +3,7 @@ import {
   calculateAGS,
   calculateDifferential,
   calculateHandicapIndex,
+  DIFFERENTIAL_TABLE,
 } from "@/lib/handicap";
 import { ScoreDetails } from "@/types/scoring";
 import {
@@ -44,6 +45,7 @@ export function useHandicap(userId: string) {
           excludedRounds: [],
           methodDescription: "No eligible rounds",
           lastUpdated: new Date().toISOString(),
+          trend: null,
         });
         setIsLoading(false);
         return;
@@ -51,10 +53,10 @@ export function useHandicap(userId: string) {
 
       const roundIds = [...new Set(scoreRows.map((s) => s.round_id).filter(Boolean))];
 
-      // 2. Fetch rounds with teebox_data, date_played, status
+      // 2. Fetch rounds with teebox_data, date_played, status, course name
       const { data: roundRows } = await supabase
         .from("rounds")
-        .select("id, teebox_data, date_played, created_at, status")
+        .select("id, teebox_data, date_played, created_at, status, courses(course_name)")
         .in("id", roundIds)
         .in("status", ["completed", "incomplete"]);
 
@@ -67,6 +69,7 @@ export function useHandicap(userId: string) {
           excludedRounds: [],
           methodDescription: "No eligible rounds",
           lastUpdated: new Date().toISOString(),
+          trend: null,
         });
         setIsLoading(false);
         return;
@@ -234,6 +237,15 @@ export function useHandicap(userId: string) {
         });
       }
 
+      // Build lookup for enriching differentials with course name + gross score
+      const roundDetailMap = new Map<number, { courseName: string; grossScore: number }>();
+      for (const e of eligible) {
+        const round = roundMap.get(e.roundId);
+        const courses = (round as any)?.courses;
+        const courseName = courses?.course_name ?? "";
+        roundDetailMap.set(e.roundId, { courseName, grossScore: e.grossScore });
+      }
+
       // 5. Calculate handicap index
       // --- DEBUG: remove after verifying handicap is correct ---
       console.log(`[HANDICAP DEBUG] Eligible: ${eligible.length}, Excluded: ${excluded.length} (${excluded.map(e => `${e.roundId}:${e.reason}`).join(', ')})`);
@@ -243,6 +255,47 @@ export function useHandicap(userId: string) {
       // --- DEBUG: remove after verifying handicap is correct ---
       console.log(`[HANDICAP DEBUG] Result: index=${handicapResult.handicapIndex}, method="${handicapResult.methodDescription}"`);
       // --- END DEBUG ---
+
+      // 5b. Compute trend (normalized — uses same table entry for both sets
+      // so threshold changes don't produce misleading arrows)
+      if (handicapResult.handicapIndex != null && eligible.length >= 4) {
+        const sorted = [...eligible].sort((a, b) => {
+          const dateDiff =
+            new Date(b.datePlayed).getTime() - new Date(a.datePlayed).getTime();
+          if (dateDiff !== 0) return dateDiff;
+          return b.roundId - a.roundId;
+        });
+
+        const recent = sorted.slice(0, 20);
+        const count = recent.length;
+        const { used, adjustment } = DIFFERENTIAL_TABLE[Math.min(count, 20)];
+
+        // "Previous" index: same table entry but exclude the newest round
+        const withoutNewest = recent.slice(1);
+        const prevByDiff = [...withoutNewest].sort(
+          (a, b) => a.differential - b.differential,
+        );
+        const prevSum = prevByDiff
+          .slice(0, used)
+          .reduce((s, r) => s + r.differential, 0);
+        const prevAvg = prevSum / used;
+        const prevIndex = Math.round((prevAvg + adjustment) * 10) / 10;
+
+        handicapResult.trend = Math.round(
+          (handicapResult.handicapIndex - prevIndex) * 10,
+        ) / 10;
+
+        console.log(`[HANDICAP DEBUG] Trend: ${handicapResult.trend}, eligible=${eligible.length}`);
+      }
+
+      // Enrich differentials with course name and gross score
+      for (const diff of handicapResult.differentials) {
+        const detail = roundDetailMap.get(diff.roundId);
+        if (detail) {
+          diff.courseName = detail.courseName;
+          diff.grossScore = detail.grossScore;
+        }
+      }
 
       // 6. Cache to profile
       if (handicapResult.handicapIndex != null) {

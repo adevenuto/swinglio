@@ -62,7 +62,12 @@ export const Color = {
   primaryLight: "#E8F0EC",
   primaryBorder: "#5BA67A",
 
-  // Accent (chartreuse/yellow)
+  // Secondary (chartreuse/yellow-green)
+  secondary: "#D3CF37",
+  // Tertiary (warm gold)
+  tertiary: "#C4973B",
+
+  // Accent aliases (kept for backward compat)
   accent: "#D3CF37",
   accentDark: "#C4973B",
   accentLight: "#F9F8E4",
@@ -91,27 +96,32 @@ export const Color = {
 // === Typography ===
 
 export const Font = {
-  regular: "DMSans_400Regular",
-  medium: "DMSans_500Medium",
-  semiBold: "DMSans_600SemiBold",
-  bold: "DMSans_700Bold",
+  // Inter — body & UI
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semiBold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+  // Outfit — headlines & display
+  displayRegular: "Outfit_400Regular",
+  displaySemiBold: "Outfit_600SemiBold",
+  displayBold: "Outfit_700Bold",
 } as const;
 
 export const Type = {
   h1: {
-    fontFamily: Font.bold,
+    fontFamily: Font.displayBold,
     fontSize: 28,
     lineHeight: 34,
     color: Color.neutral900,
   } as TextStyle,
   h2: {
-    fontFamily: Font.bold,
+    fontFamily: Font.displayBold,
     fontSize: 22,
     lineHeight: 28,
     color: Color.neutral900,
   } as TextStyle,
   h3: {
-    fontFamily: Font.semiBold,
+    fontFamily: Font.displaySemiBold,
     fontSize: 17,
     lineHeight: 22,
     color: Color.neutral900,

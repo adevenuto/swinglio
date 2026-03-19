@@ -6,6 +6,7 @@ import { useRoundStats } from "@/hooks/use-round-stats";
 import { useFocusEffect } from "expo-router";
 import HandicapHero from "@/components/HandicapHero";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
+import StatCard from "@/components/StatCard";
 import React, { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -25,7 +26,7 @@ function bestToParColor(value: number | null): string {
   return Color.neutral700;
 }
 
-// ── Progress Bar ─────────────────────────────────────────
+// ── Progress Bar (for attestation card) ─────────────────
 
 function ProgressBar({ pct }: { pct: number }) {
   return (
@@ -92,6 +93,9 @@ export default function StatsScreen() {
   const hEligible = handicapResult?.eligibleCount ?? 0;
   const needMore = hIndex == null && hEligible < 3 ? 3 - hEligible : 0;
 
+  // Differentials for bar chart (full objects with course name, score, etc.)
+  const differentials = handicapResult?.differentials ?? [];
+
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -113,95 +117,74 @@ export default function StatsScreen() {
         ) : (
           <>
             {/* ── Handicap Hero ── */}
-            <Pressable
-              onPress={() => setHandicapModalVisible(true)}
-              style={({ pressed }) => pressed ? { opacity: 0.7 } : undefined}
-            >
               <HandicapHero
                 handicapIndex={hIndex}
+                differentials={differentials}
+                trend={handicapResult?.trend}
                 subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : hMethod}
+                onPress={() => setHandicapModalVisible(true)}
                 style={{ marginBottom: Space.lg }}
               />
-            </Pressable>
 
             {/* ── Scoring ── */}
             <Text style={styles.sectionLabel}>SCORING</Text>
             <View style={styles.tileRow}>
-              <View style={styles.tile}>
-                <Text
-                  style={[
-                    styles.tileValue,
-                    { color: bestToParColor(bestToPar) },
-                  ]}
-                >
-                  {formatBestToPar(bestToPar)}
-                </Text>
-                <Text style={styles.tileLabel}>Best</Text>
-              </View>
-              <View style={styles.tile}>
-                <Text style={styles.tileValue}>
-                  {totalRounds > 0 ? totalRounds : "\u2014"}
-                </Text>
-                <Text style={styles.tileLabel}>Rounds</Text>
-              </View>
+              <StatCard
+                compact
+                label="Best"
+                value={formatBestToPar(bestToPar)}
+                valueColor={bestToParColor(bestToPar)}
+              />
+              <StatCard
+                compact
+                label="Rounds"
+                value={totalRounds > 0 ? String(totalRounds) : "\u2014"}
+              />
             </View>
             <View style={styles.tileRow}>
-              <View style={styles.tile}>
-                <Text style={styles.tileValue}>
-                  {avg18 != null ? avg18 : "\u2014"}
-                </Text>
-                <Text style={styles.tileLabel}>Avg 18</Text>
-              </View>
-              <View style={styles.tile}>
-                <Text style={styles.tileValue}>
-                  {avg9 != null ? avg9 : "\u2014"}
-                </Text>
-                <Text style={styles.tileLabel}>Avg 9</Text>
-              </View>
+              <StatCard
+                compact
+                label="Avg 18"
+                value={avg18 != null ? String(avg18) : "\u2014"}
+              />
+              <StatCard
+                compact
+                label="Avg 9"
+                value={avg9 != null ? String(avg9) : "\u2014"}
+              />
             </View>
 
             {/* ── Short Game ── */}
             <Text style={styles.sectionLabel}>SHORT GAME</Text>
             <View style={styles.tileRow}>
-              <View style={styles.tile}>
-                <Text style={styles.tileValue}>
-                  {avgPutts != null ? avgPutts : "\u2014"}
-                </Text>
-                <Text style={styles.tileLabel}>Avg Putts</Text>
-              </View>
-              <View style={styles.tile}>
-                <View style={styles.barTileContent}>
-                  <View style={styles.barLabelRow}>
-                    <Text style={styles.barLabel}>FWY Hit</Text>
-                    <Text style={styles.barValue}>
-                      {fairwayPct != null ? `${fairwayPct}%` : "\u2014"}
-                    </Text>
-                  </View>
-                  {fairwayPct != null && <ProgressBar pct={fairwayPct} />}
-                </View>
-              </View>
+              <StatCard
+                compact
+                label="Avg Putts"
+                value={avgPutts != null ? String(avgPutts) : "\u2014"}
+                subtitle="per hole"
+              />
+              <StatCard
+                compact
+                label="FWY Hit"
+                value={fairwayPct != null ? `${fairwayPct}%` : "\u2014"}
+                barPercent={fairwayPct ?? undefined}
+                barColor={Color.primary}
+              />
             </View>
             <View style={styles.tileRow}>
-              <View style={styles.tile}>
-                <View style={styles.barTileContent}>
-                  <View style={styles.barLabelRow}>
-                    <Text style={styles.barLabel}>GIR</Text>
-                    <Text style={styles.barValue}>
-                      {girPct != null ? `${girPct}%` : "\u2014"}
-                    </Text>
-                  </View>
-                  {girPct != null && <ProgressBar pct={girPct} />}
-                </View>
-              </View>
-              <View style={styles.tile}>
-                <Text style={styles.tileValue}>
-                  {penaltyRate != null ? penaltyRate : "\u2014"}
-                </Text>
-                <Text style={styles.tileLabel}>Penalties</Text>
-                {penaltyRate != null && (
-                  <Text style={styles.tileSub}>per round</Text>
-                )}
-              </View>
+              <StatCard
+                compact
+                label="GIR"
+                value={girPct != null ? `${girPct}%` : "\u2014"}
+                barPercent={girPct ?? undefined}
+                barColor={Color.primary}
+              />
+              <StatCard
+                compact
+                label="Penalties"
+                value={penaltyRate != null ? String(penaltyRate) : "\u2014"}
+                subtitle="per round"
+              />
             </View>
 
             {/* ── Trust ── */}
@@ -266,59 +249,8 @@ const styles = StyleSheet.create({
     gap: TILE_GAP,
     marginBottom: TILE_GAP,
   },
-  tile: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
-    padding: Space.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 100,
-    ...Shadow.sm,
-  },
-  tileValue: {
-    fontFamily: Font.bold,
-    fontSize: 32,
-    lineHeight: 38,
-    color: Color.neutral900,
-  },
-  tileLabel: {
-    fontFamily: Font.regular,
-    fontSize: 13,
-    color: Color.neutral500,
-    marginTop: Space.xs,
-  },
-  tileSub: {
-    fontFamily: Font.regular,
-    fontSize: 11,
-    color: Color.neutral400,
-    marginTop: 2,
-  },
 
-  // ── Bar Tiles (FWY, GIR) ──
-  barTileContent: {
-    width: "100%",
-  },
-  barLabelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Space.sm,
-  },
-  barLabel: {
-    fontFamily: Font.medium,
-    fontSize: 13,
-    color: Color.neutral500,
-  },
-  barValue: {
-    fontFamily: Font.bold,
-    fontSize: 20,
-    color: Color.neutral900,
-  },
-
-  // ── Progress Bar ──
+  // ── Progress Bar (attestation) ──
   progressTrack: {
     height: 8,
     backgroundColor: Color.neutral200,
@@ -327,7 +259,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 8,
-    backgroundColor: Color.primary,
+    backgroundColor: Color.secondary,
     borderRadius: 4,
   },
 
@@ -337,7 +269,7 @@ const styles = StyleSheet.create({
     borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
-    padding: Space.lg,
+    padding: Space.xl,
     marginBottom: Space.lg,
     ...Shadow.sm,
   },

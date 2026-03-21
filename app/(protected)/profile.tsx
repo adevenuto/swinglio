@@ -318,21 +318,6 @@ export default function Profile() {
                 <Text style={styles.emailText}>{user?.email}</Text>
               </View>
             </View>
-
-            {/* Attestation Badge */}
-            {attTotal > 0 && (
-              <View style={styles.attestCard}>
-                <View>
-                  <Text style={styles.attestTitle}>Attestation: {attPct}%</Text>
-                  <Text style={styles.attestSub}>
-                    {attRounds} of {attTotal} rounds
-                  </Text>
-                </View>
-                <View style={styles.attestCircle}>
-                  <Text style={styles.attestCircleText}>{attPct}%</Text>
-                </View>
-              </View>
-            )}
           </View>
         </View>
       </ScrollView>

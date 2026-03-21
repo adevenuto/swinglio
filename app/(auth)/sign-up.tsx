@@ -1,19 +1,19 @@
-import SwinglioLogo from "@/assets/images/swinglio.svg";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 export default function SignUp() {
@@ -80,9 +80,11 @@ export default function SignUp() {
       >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
-            <SwinglioLogo height={56} fill={Color.neutral900} />
+            <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
           </View>
-          <Text style={styles.subtitle}>Create your account to get started</Text>
+          <Text style={styles.subtitle}>
+            Create your account to get started
+          </Text>
 
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
@@ -195,6 +197,10 @@ const styles = StyleSheet.create({
   logoRow: {
     alignItems: "center",
     marginBottom: Space.lg,
+  },
+  logo: {
+    height: 72,
+    width: 177,
   },
   subtitle: {
     fontFamily: Font.medium,

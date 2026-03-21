@@ -18,7 +18,7 @@ export type RecentRound = {
   hole_count: number | null;
 };
 
-export function useRecentRounds(userId: string) {
+export function useRecentRounds(userId: string, limit?: number) {
   const [recentRounds, setRecentRounds] = useState<RecentRound[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,14 +55,19 @@ export function useRecentRounds(userId: string) {
     }
 
     // Step 2: fetch rounds (no round status filter)
-    const { data } = await supabase
+    let query = supabase
       .from("rounds")
       .select(
         "id, course_id, creator_id, teebox_data, status, created_at, courses(club_name, course_name)",
       )
       .in("id", roundIds)
-      .order("created_at", { ascending: false })
-      .limit(10);
+      .order("created_at", { ascending: false });
+
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    const { data } = await query;
 
     if (data) {
       // Step 3: merge + compute score_to_par
@@ -103,7 +108,7 @@ export function useRecentRounds(userId: string) {
       setRecentRounds(enriched);
     }
     setIsLoading(false);
-  }, [userId]);
+  }, [userId, limit]);
 
   return { recentRounds, isLoading, refresh };
 }

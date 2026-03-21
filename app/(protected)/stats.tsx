@@ -1,14 +1,26 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import HandicapHero from "@/components/HandicapHero";
+import HandicapInfoModal from "@/components/HandicapInfoModal";
+import StatCard from "@/components/StatCard";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
 import { useFocusEffect } from "expo-router";
-import HandicapHero from "@/components/HandicapHero";
-import HandicapInfoModal from "@/components/HandicapInfoModal";
-import StatCard from "@/components/StatCard";
 import React, { useCallback, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View
+} from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -31,7 +43,9 @@ function bestToParColor(value: number | null): string {
 function ProgressBar({ pct }: { pct: number }) {
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${Math.min(pct, 100)}%` }]} />
+      <View
+        style={[styles.progressFill, { width: `${Math.min(pct, 100)}%` }]}
+      />
     </View>
   );
 }
@@ -81,7 +95,11 @@ export default function StatsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshStats(), refreshHandicap(), refreshAttestation()]);
+    await Promise.all([
+      refreshStats(),
+      refreshHandicap(),
+      refreshAttestation(),
+    ]);
     setRefreshing(false);
   }, [refreshStats, refreshHandicap, refreshAttestation]);
 
@@ -117,14 +135,18 @@ export default function StatsScreen() {
         ) : (
           <>
             {/* ── Handicap Hero ── */}
-              <HandicapHero
-                handicapIndex={hIndex}
-                differentials={differentials}
-                trend={handicapResult?.trend}
-                subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : hMethod}
-                onPress={() => setHandicapModalVisible(true)}
-                style={{ marginBottom: Space.lg }}
-              />
+            <HandicapHero
+              handicapIndex={hIndex}
+              differentials={differentials}
+              trend={handicapResult?.trend}
+              subtitle={
+                needMore > 0
+                  ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
+                  : hMethod
+              }
+              onPress={() => setHandicapModalVisible(true)}
+              style={{ marginBottom: Space.lg }}
+            />
 
             {/* ── Scoring ── */}
             <Text style={styles.sectionLabel}>SCORING</Text>

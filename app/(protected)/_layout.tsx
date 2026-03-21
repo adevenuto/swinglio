@@ -75,7 +75,7 @@ export default function ProtectedLayout() {
           <Tabs.Screen
             name="dashboard"
             options={{
-              title: "Dashboard",
+              title: "Play",
               tabBarIcon: ({ color, size }) => (
                 <Image
                   source={teeballIcon}

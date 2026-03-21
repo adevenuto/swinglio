@@ -1,6 +1,6 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
-import RoundCard from "@/components/RoundCard";
+import RoundListSection from "@/components/RoundListSection";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
 import {
   Color,
@@ -253,67 +253,44 @@ export default function Dashboard() {
             )}
 
             {/* Recent Rounds */}
-            <View style={{ marginTop: Space.xl }}>
-              <Text style={styles.sectionLabel}>Recent Activity</Text>
-
-              {completedRounds.length === 0 ? (
-                <View
-                  style={{ alignItems: "center", paddingVertical: Space.sm }}
-                >
-                  <Text style={styles.emptyText}>
-                    No scores on the board yet. Start a round and let's see
-                    what you've got.
-                  </Text>
-                </View>
-              ) : (
-                completedRounds.map((round) => (
-                  <RoundCard
-                    key={round.id}
-                    courseName={round.courses?.club_name || "Unknown Course"}
-                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
-                    playerStatus={round.player_status}
-                    teeboxName={(round.teebox_data as any)?.name}
-                    date={round.created_at}
-                    playerScore={round.player_score}
-                    scoreToPar={round.score_to_par}
-                    holesCompleted={round.holes_completed}
-                    holeCount={round.hole_count}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/round-summary",
-                        params: { roundId: round.id },
-                      })
-                    }
-                  />
-                ))
-              )}
-            </View>
+            <RoundListSection
+              title="Recent Activity"
+              rounds={completedRounds}
+              limit={3}
+              emptyText="No scores on the board yet. Start a round and let's see what you've got."
+              onSeeAll={() =>
+                router.push({
+                  pathname: "/round-history",
+                  params: { filter: "completed" },
+                })
+              }
+              onRoundPress={(roundId) =>
+                router.push({
+                  pathname: "/round-summary",
+                  params: { roundId },
+                })
+              }
+            />
 
             {/* Incomplete Rounds */}
             {incompleteRounds.length > 0 && (
-              <View style={{ marginTop: Space.xl }}>
-                <Text style={styles.sectionLabel}>Incomplete Rounds</Text>
-                {incompleteRounds.map((round) => (
-                  <RoundCard
-                    key={round.id}
-                    courseName={round.courses?.club_name || "Unknown Course"}
-                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
-                    playerStatus={round.player_status}
-                    teeboxName={(round.teebox_data as any)?.name}
-                    date={round.created_at}
-                    playerScore={round.player_score}
-                    scoreToPar={round.score_to_par}
-                    holesCompleted={round.holes_completed}
-                    holeCount={round.hole_count}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/round-summary",
-                        params: { roundId: round.id },
-                      })
-                    }
-                  />
-                ))}
-              </View>
+              <RoundListSection
+                title="Incomplete Rounds"
+                rounds={incompleteRounds}
+                limit={3}
+                onSeeAll={() =>
+                  router.push({
+                    pathname: "/round-history",
+                    params: { filter: "incomplete" },
+                  })
+                }
+                onRoundPress={(roundId) =>
+                  router.push({
+                    pathname: "/round-summary",
+                    params: { roundId },
+                  })
+                }
+              />
             )}
           </View>
         </View>
@@ -383,12 +360,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Color.neutral500,
     textTransform: "capitalize",
-  },
-  emptyText: {
-    fontFamily: Font.regular,
-    fontSize: 15,
-    color: Color.neutral400,
-    marginTop: Space.md,
-    textAlign: "center",
   },
 });

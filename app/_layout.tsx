@@ -192,6 +192,17 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="round-history"
+                options={{
+                  presentation: "modal",
+                  headerShown: true,
+                  title: "Round History",
+                  headerStyle,
+                  headerTintColor,
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen
                 name="course-editor"
                 options={{
                   presentation: "modal",

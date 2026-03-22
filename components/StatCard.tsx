@@ -1,10 +1,26 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
-import { Feather, MaterialCommunityIcons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
+import {
+  Feather,
+  FontAwesome5,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
-type IconFamily = "Feather" | "MaterialIcons" | "MaterialCommunityIcons" | "FontAwesome5";
+type IconFamily =
+  | "Feather"
+  | "MaterialIcons"
+  | "MaterialCommunityIcons"
+  | "FontAwesome5";
 
 type StatCardProps = {
   label: string;
@@ -45,7 +61,12 @@ export default function StatCard({
   if (compact) {
     return (
       <View style={styles.tileCard}>
-        <Text style={[styles.tileValue, valueColor ? { color: valueColor } : undefined]}>
+        <Text
+          style={[
+            styles.tileValue,
+            valueColor ? { color: valueColor } : undefined,
+          ]}
+        >
           {value}
         </Text>
         <Text style={styles.tileLabel}>{label}</Text>
@@ -54,7 +75,10 @@ export default function StatCard({
             <View
               style={[
                 styles.barFill,
-                { width: `${Math.min(barPercent, 100)}%`, backgroundColor: barColor },
+                {
+                  width: `${Math.min(barPercent, 100)}%`,
+                  backgroundColor: barColor,
+                },
               ]}
             />
           </View>
@@ -71,7 +95,9 @@ export default function StatCard({
         {icon && <StatIcon family={icon.family} name={icon.name} />}
       </View>
 
-      <Text style={[styles.value, valueColor ? { color: valueColor } : undefined]}>
+      <Text
+        style={[styles.value, valueColor ? { color: valueColor } : undefined]}
+      >
         {value}
       </Text>
 
@@ -80,7 +106,10 @@ export default function StatCard({
           <View
             style={[
               styles.barFill,
-              { width: `${Math.min(barPercent, 100)}%`, backgroundColor: barColor },
+              {
+                width: `${Math.min(barPercent, 100)}%`,
+                backgroundColor: barColor,
+              },
             ]}
           />
         </View>
@@ -94,8 +123,6 @@ export default function StatCard({
 const styles = StyleSheet.create({
   // ── Full-width card ──
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.xl,
@@ -126,8 +153,6 @@ const styles = StyleSheet.create({
   // ── Compact tile (2×2 grid) ──
   tileCard: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,

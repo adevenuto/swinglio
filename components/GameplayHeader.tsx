@@ -109,8 +109,6 @@ export default function GameplayHeader({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.md,

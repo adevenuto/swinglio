@@ -29,7 +29,6 @@ import {
 } from "react-native";
 import { Button, Text } from "react-native-paper";
 
-
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -166,7 +165,16 @@ export default function Dashboard() {
         label: "Avg Putts",
       },
     ],
-    [totalRounds, handicapResult, bestToPar, avg18, avg9, avgPutts, attPct, fairwayPct],
+    [
+      totalRounds,
+      handicapResult,
+      bestToPar,
+      avg18,
+      avg9,
+      avgPutts,
+      attPct,
+      fairwayPct,
+    ],
   );
 
   return (
@@ -206,7 +214,6 @@ export default function Dashboard() {
               </Button>
             )}
 
-
             <ActiveRoundCard rounds={activeRounds} />
 
             {/* Attestation Requests */}
@@ -228,7 +235,9 @@ export default function Dashboard() {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.courseName}>{pr.course_name}</Text>
                         {pr.course_name_sub ? (
-                          <Text style={styles.cardSubtitle}>- {pr.course_name_sub}</Text>
+                          <Text style={styles.cardSubtitle}>
+                            - {pr.course_name_sub}
+                          </Text>
                         ) : null}
                       </View>
                       <Button
@@ -300,7 +309,6 @@ export default function Dashboard() {
         onClose={() => setHandicapModalVisible(false)}
         handicapResult={handicapResult}
       />
-
     </View>
   );
 }
@@ -336,8 +344,6 @@ const styles = StyleSheet.create({
 
   card: {
     padding: Space.lg,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,

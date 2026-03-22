@@ -1,9 +1,6 @@
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import {
-  DistanceUnit,
-  usePreferences,
-} from "@/contexts/preferences-context";
+import { DistanceUnit, usePreferences } from "@/contexts/preferences-context";
 import { supabase } from "@/lib/supabase";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -53,7 +50,10 @@ export default function SettingsScreen() {
       return;
     }
     if (newPassword.length < 6) {
-      Toast.show({ type: "error", text1: "Password must be at least 6 characters" });
+      Toast.show({
+        type: "error",
+        text1: "Password must be at least 6 characters",
+      });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -79,7 +79,10 @@ export default function SettingsScreen() {
     setPasswordLoading(false);
 
     if (error) {
-      Toast.show({ type: "error", text1: error.message || "Failed to update password" });
+      Toast.show({
+        type: "error",
+        text1: error.message || "Failed to update password",
+      });
       return;
     }
 
@@ -109,9 +112,7 @@ export default function SettingsScreen() {
                   text: "Delete",
                   style: "destructive",
                   onPress: async () => {
-                    const { error } = await supabase.rpc(
-                      "delete_user_account",
-                    );
+                    const { error } = await supabase.rpc("delete_user_account");
                     if (error) {
                       Alert.alert(
                         "Error",
@@ -289,9 +290,7 @@ export default function SettingsScreen() {
 
               {/* Privacy Policy */}
               <Pressable
-                onPress={() =>
-                  Linking.openURL("https://swinglio.com/privacy")
-                }
+                onPress={() => Linking.openURL("https://swinglio.com/privacy")}
                 style={({ pressed }) => [
                   styles.row,
                   pressed && { opacity: 0.7 },
@@ -327,9 +326,7 @@ export default function SettingsScreen() {
 
               {/* Support */}
               <Pressable
-                onPress={() =>
-                  Linking.openURL("mailto:support@swinglio.com")
-                }
+                onPress={() => Linking.openURL("mailto:support@swinglio.com")}
                 style={({ pressed }) => [
                   styles.row,
                   pressed && { opacity: 0.7 },
@@ -346,7 +343,6 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-
     </View>
   );
 }
@@ -403,8 +399,6 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,

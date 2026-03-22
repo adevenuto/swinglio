@@ -1,7 +1,14 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import HandicapHero from "@/components/HandicapHero";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { DIFFERENTIAL_TABLE, formatHandicapIndex } from "@/lib/handicap";
 import { HandicapResult } from "@/types/handicap";
-import HandicapHero from "@/components/HandicapHero";
 import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
@@ -14,9 +21,15 @@ type Props = {
 };
 
 // Subset of DIFFERENTIAL_TABLE rows to show in the modal
-const TABLE_ROWS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const TABLE_ROWS = [
+  3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
 
-export default function HandicapInfoModal({ visible, onClose, handicapResult }: Props) {
+export default function HandicapInfoModal({
+  visible,
+  onClose,
+  handicapResult,
+}: Props) {
   const hIndex = handicapResult?.handicapIndex ?? null;
   const eligibleCount = handicapResult?.eligibleCount ?? 0;
   const methodDescription = handicapResult?.methodDescription ?? "";
@@ -35,7 +48,11 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
           handicapIndex={hIndex}
           differentials={handicapResult?.differentials}
           trend={handicapResult?.trend}
-          subtitle={needMore > 0 ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate` : methodDescription}
+          subtitle={
+            needMore > 0
+              ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
+              : methodDescription
+          }
           onClose={onClose}
           style={{ borderRadius: 0, paddingTop: Space.xxxl }}
         />
@@ -99,7 +116,8 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
                 >
                   <Text style={styles.tableCell}>{count}</Text>
                   <Text style={styles.tableCell}>
-                    Lowest {entry.used}{adjStr}
+                    Lowest {entry.used}
+                    {adjStr}
                   </Text>
                 </View>
               );
@@ -112,19 +130,31 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
             {hIndex != null ? (
               <>
                 <View style={styles.statusRow}>
-                  <FontAwesome5 name="check-circle" size={16} color={Color.primary} />
+                  <FontAwesome5
+                    name="check-circle"
+                    size={16}
+                    color={Color.primary}
+                  />
                   <Text style={styles.statusText}>
-                    Handicap Index: <Text style={styles.statusBold}>{formatHandicapIndex(hIndex)}</Text>
+                    Handicap Index:{" "}
+                    <Text style={styles.statusBold}>
+                      {formatHandicapIndex(hIndex)}
+                    </Text>
                   </Text>
                 </View>
                 <Text style={styles.statusDetail}>
-                  {methodDescription} ({eligibleCount} eligible round{eligibleCount !== 1 ? "s" : ""})
+                  {methodDescription} ({eligibleCount} eligible round
+                  {eligibleCount !== 1 ? "s" : ""})
                 </Text>
               </>
             ) : (
               <>
                 <View style={styles.statusRow}>
-                  <FontAwesome5 name="circle" size={16} color={Color.neutral400} />
+                  <FontAwesome5
+                    name="circle"
+                    size={16}
+                    color={Color.neutral400}
+                  />
                   <Text style={styles.statusText}>
                     {eligibleCount === 0
                       ? "No eligible rounds yet"
@@ -133,7 +163,8 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
                 </View>
                 {needMore > 0 && (
                   <Text style={styles.statusDetail}>
-                    Play {needMore} more attested round{needMore > 1 ? "s" : ""} to calculate your index.
+                    Play {needMore} more attested round{needMore > 1 ? "s" : ""}{" "}
+                    to calculate your index.
                   </Text>
                 )}
               </>
@@ -181,7 +212,12 @@ function StepRow({
 function BulletItem({ text }: { text: string }) {
   return (
     <View style={styles.bulletRow}>
-      <FontAwesome5 name="check-circle" size={13} color={Color.primary} style={styles.bulletIcon} />
+      <FontAwesome5
+        name="check-circle"
+        size={13}
+        color={Color.primary}
+        style={styles.bulletIcon}
+      />
       <Text style={styles.bulletText}>{text}</Text>
     </View>
   );
@@ -230,8 +266,8 @@ const styles = StyleSheet.create({
 
   // ── Steps Card ──
   stepsCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
+    // borderWidth: 1,
+    // borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -316,10 +352,6 @@ const styles = StyleSheet.create({
 
   // ── Status Card ──
   statusCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
     padding: Space.lg,
     marginBottom: Space.xl,
     ...Shadow.sm,
@@ -344,10 +376,6 @@ const styles = StyleSheet.create({
 
   // ── What Counts ──
   listCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
     padding: Space.lg,
     marginBottom: Space.xl,
     gap: Space.md,

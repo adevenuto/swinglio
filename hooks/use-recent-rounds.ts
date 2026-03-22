@@ -10,6 +10,8 @@ export type RecentRound = {
   teebox_data: { name: string; color?: string; holes?: Record<string, { par: string; length: string }> };
   status: string;
   created_at: string;
+  date_played: string | null;
+  display_date: string;
   courses: { club_name: string; course_name: string };
   player_score: number | null;
   player_status: string;
@@ -58,10 +60,10 @@ export function useRecentRounds(userId: string, limit?: number) {
     let query = supabase
       .from("rounds")
       .select(
-        "id, course_id, creator_id, teebox_data, status, created_at, courses(club_name, course_name)",
+        "id, course_id, creator_id, teebox_data, status, created_at, date_played, courses(club_name, course_name)",
       )
       .in("id", roundIds)
-      .order("created_at", { ascending: false });
+      .order("date_played", { ascending: false, nullsFirst: false });
 
     if (limit != null) {
       query = query.limit(limit);
@@ -96,6 +98,8 @@ export function useRecentRounds(userId: string, limit?: number) {
           teebox_data: round.teebox_data,
           status: round.status,
           created_at: round.created_at,
+          date_played: round.date_played ?? null,
+          display_date: round.date_played ?? round.created_at,
           courses: round.courses,
           player_score: scoreRow?.score ?? null,
           player_status: scoreRow?.player_status ?? "completed",

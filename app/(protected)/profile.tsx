@@ -388,8 +388,6 @@ const styles = StyleSheet.create({
     marginTop: Space.sm,
   },
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -426,16 +424,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Color.neutral900,
     paddingVertical: Space.md,
-  },
-  attestCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
-    padding: Space.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   attestTitle: {
     fontFamily: Font.bold,

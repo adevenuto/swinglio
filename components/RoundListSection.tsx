@@ -47,7 +47,7 @@ export default function RoundListSection({
             }
             playerStatus={round.player_status}
             teeboxName={(round.teebox_data as any)?.name}
-            date={round.created_at}
+            date={round.display_date}
             playerScore={round.player_score}
             scoreToPar={round.score_to_par}
             holesCompleted={round.holes_completed}

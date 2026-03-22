@@ -13,13 +13,15 @@ import { useAuth } from "@/contexts/auth-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
-import { useFocusEffect } from "expo-router";
+import Feather from "@expo/vector-icons/Feather";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  View
+  View,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 
@@ -55,6 +57,7 @@ function ProgressBar({ pct }: { pct: number }) {
 export default function StatsScreen() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [handicapModalVisible, setHandicapModalVisible] = useState(false);
 
@@ -145,8 +148,20 @@ export default function StatsScreen() {
                   : hMethod
               }
               onPress={() => setHandicapModalVisible(true)}
-              style={{ marginBottom: Space.lg }}
+              style={{ marginBottom: Space.sm }}
             />
+
+            {/* Add Past Round link */}
+            <Pressable
+              onPress={() => router.push("/add-past-round")}
+              style={({ pressed }) => [
+                styles.addPastRoundRow,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Feather name="plus" size={16} color={Color.primary} />
+              <Text style={styles.addPastRoundText}>Add Past Round</Text>
+            </Pressable>
 
             {/* ── Scoring ── */}
             <Text style={styles.sectionLabel}>SCORING</Text>
@@ -264,6 +279,17 @@ const styles = StyleSheet.create({
     marginBottom: Space.sm,
     marginTop: Space.sm,
   },
+  addPastRoundRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+    marginBottom: Space.lg,
+  },
+  addPastRoundText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.primary,
+  },
 
   // ── 2-Column Tiles ──
   tileRow: {
@@ -281,14 +307,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 8,
-    backgroundColor: Color.secondary,
+    backgroundColor: Color.primary,
     borderRadius: 4,
   },
 
   // ── Attestation Card ──
   attestCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.xl,

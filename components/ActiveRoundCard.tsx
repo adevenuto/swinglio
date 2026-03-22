@@ -1,4 +1,11 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { ActiveRound } from "@/hooks/use-active-rounds";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter } from "expo-router";
@@ -32,9 +39,12 @@ export default function ActiveRoundCard({ rounds }: Props) {
               <Text style={styles.courseName}>
                 {round.courses?.club_name || "Unknown Course"}
               </Text>
-              {round.courses?.course_name && round.courses.course_name !== round.courses.club_name && (
-                <Text style={styles.subtitle}>- {round.courses.course_name}</Text>
-              )}
+              {round.courses?.course_name &&
+                round.courses.course_name !== round.courses.club_name && (
+                  <Text style={styles.subtitle}>
+                    - {round.courses.course_name}
+                  </Text>
+                )}
               <Text style={styles.subtitle}>
                 {(round.teebox_data as any)?.name
                   ? `${(round.teebox_data as any).name} tees`
@@ -42,7 +52,11 @@ export default function ActiveRoundCard({ rounds }: Props) {
               </Text>
             </View>
             <View style={styles.badgeColumn}>
-              <Entypo name="chevron-with-circle-right" size={32} color={Color.primary} />
+              <Entypo
+                name="chevron-with-circle-right"
+                size={32}
+                color={Color.primary}
+              />
               <Text style={styles.badgeLabel}>Continue</Text>
             </View>
           </View>
@@ -60,7 +74,7 @@ const styles = StyleSheet.create({
   card: {
     padding: Space.lg,
     borderWidth: 1,
-    borderColor: Color.neutral200,
+    borderColor: Color.primary,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,

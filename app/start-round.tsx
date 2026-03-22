@@ -229,7 +229,9 @@ export default function StartRoundScreen() {
                 }
                 featuredImageUrl={featuredImages[item.id]}
                 missingRatings={!courseHasRatings(item.layout_data)}
-                hasGreenCenters={Object.keys(parseGreenCenters(item.layout_data)).length > 0}
+                hasGreenCenters={
+                  Object.keys(parseGreenCenters(item.layout_data)).length > 0
+                }
                 onPress={() => handleSelectCourse(item)}
               />
             )}
@@ -272,7 +274,9 @@ export default function StartRoundScreen() {
                   }
                   featuredImageUrl={featuredImages[item.id]}
                   missingRatings={!courseHasRatings(item.layout_data)}
-                  hasGreenCenters={Object.keys(parseGreenCenters(item.layout_data)).length > 0}
+                  hasGreenCenters={
+                    Object.keys(parseGreenCenters(item.layout_data)).length > 0
+                  }
                   onPress={() => handleSelectCourse(item)}
                 />
               ))
@@ -475,8 +479,6 @@ const styles = StyleSheet.create({
   },
   courseCard: {
     padding: Space.lg,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     marginBottom: Space.lg,
@@ -501,8 +503,6 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   playerCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     padding: Space.lg,

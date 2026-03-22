@@ -4,16 +4,16 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 export default function SignUp() {
@@ -80,7 +80,11 @@ export default function SignUp() {
       >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
-            <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={require("@/assets/images/brand.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.subtitle}>
             Create your account to get started

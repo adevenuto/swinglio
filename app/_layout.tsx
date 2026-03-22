@@ -2,16 +2,16 @@ import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { AuthProvider } from "@/contexts/auth-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import {
-  Outfit_400Regular,
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-} from "@expo-google-fonts/outfit";
-import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
+import {
+  Outfit_400Regular,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from "@expo-google-fonts/outfit";
 import Feather from "@expo/vector-icons/Feather";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -91,8 +91,6 @@ const toastStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Color.white,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderLeftWidth: 4,
     borderLeftColor: Color.primary,
     borderRadius: Radius.md,
@@ -138,85 +136,96 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <PreferencesProvider>
-        <ThemeProvider value={DefaultTheme}>
-          <PaperProvider theme={paperTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(protected)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="modal"
-                options={{
-                  presentation: "modal",
-                  headerShown: true,
-                  title: "Modal",
-                  headerStyle,
-                  headerTintColor,
-                  headerShadowVisible: false,
-                }}
-              />
-              <Stack.Screen
-                name="player-scores"
-                options={{
-                  presentation: "modal",
-                  headerShown: true,
-                  title: "Player Scores",
-                  headerStyle,
-                  headerTintColor,
-                  headerShadowVisible: false,
-                }}
-              />
-              <Stack.Screen
-                name="start-round"
-                options={{
-                  presentation: "modal",
-                  headerShown: true,
-                  title: "Start Round",
-                  headerStyle,
-                  headerTintColor,
-                  headerShadowVisible: false,
-                }}
-              />
-              <Stack.Screen
-                name="gameplay"
-                options={{
-                  animation: "none",
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="round-summary"
-                options={{
-                  animation: "none",
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="round-history"
-                options={{
-                  presentation: "modal",
-                  headerShown: true,
-                  title: "Round History",
-                  headerStyle,
-                  headerTintColor,
-                  headerShadowVisible: false,
-                }}
-              />
-              <Stack.Screen
-                name="course-editor"
-                options={{
-                  presentation: "modal",
-                  headerShown: true,
-                  title: "Course Editor",
-                  headerStyle,
-                  headerTintColor,
-                  headerShadowVisible: false,
-                }}
-              />
-            </Stack>
-            <StatusBar style="auto" />
-          </PaperProvider>
-        </ThemeProvider>
+          <ThemeProvider value={DefaultTheme}>
+            <PaperProvider theme={paperTheme}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(protected)" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen
+                  name="modal"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Modal",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="player-scores"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Player Scores",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="start-round"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Start Round",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="gameplay"
+                  options={{
+                    animation: "none",
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="round-summary"
+                  options={{
+                    animation: "none",
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="round-history"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Round History",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="add-past-round"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Add Past Round",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="course-editor"
+                  options={{
+                    presentation: "modal",
+                    headerShown: true,
+                    title: "Course Editor",
+                    headerStyle,
+                    headerTintColor,
+                    headerShadowVisible: false,
+                  }}
+                />
+              </Stack>
+              <StatusBar style="auto" />
+            </PaperProvider>
+          </ThemeProvider>
         </PreferencesProvider>
       </AuthProvider>
       <Toast config={toastConfig} topOffset={80} />

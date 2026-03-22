@@ -2,16 +2,29 @@ import GameplayHeader from "@/components/GameplayHeader";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestations } from "@/hooks/use-attestations";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Pressable,
   RefreshControl,
@@ -20,8 +33,8 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 type RoundData = {
   id: number;
@@ -70,7 +83,10 @@ function formatScoreToPar(score: number): string {
 export default function RoundSummaryScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const { roundId, completed } = useLocalSearchParams<{ roundId: string; completed?: string }>();
+  const { roundId, completed } = useLocalSearchParams<{
+    roundId: string;
+    completed?: string;
+  }>();
 
   const [round, setRound] = useState<RoundData | null>(null);
   const [players, setPlayers] = useState<PlayerScore[]>([]);
@@ -228,10 +244,7 @@ export default function RoundSummaryScreen() {
       .update({ status: "active", results_data: null })
       .eq("id", round?.id);
 
-    await supabase
-      .from("round_attestations")
-      .delete()
-      .eq("round_id", roundId);
+    await supabase.from("round_attestations").delete().eq("round_id", roundId);
 
     router.replace({ pathname: "/gameplay", params: { roundId } });
   }, [user?.id, roundId, myScore, round?.id, router]);
@@ -287,7 +300,12 @@ export default function RoundSummaryScreen() {
           <GameplayHeader
             courseId={round.course_id}
             courseName={round.courses?.club_name || "Unknown"}
-            courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
+            courseNameSub={
+              round.courses?.course_name &&
+              round.courses.course_name !== round.courses.club_name
+                ? round.courses.course_name
+                : null
+            }
             featuredImageUrl={featuredImageUrl}
             holeCount={
               round.teebox_data?.holes
@@ -332,21 +350,33 @@ export default function RoundSummaryScreen() {
                         {isWd && (
                           <StyledTooltip title="Withdrew">
                             <View>
-                              <MaterialIcons name="block" size={30} color={Color.danger} />
+                              <MaterialIcons
+                                name="block"
+                                size={30}
+                                color={Color.danger}
+                              />
                             </View>
                           </StyledTooltip>
                         )}
                         {pr.player_status === "incomplete" && (
                           <StyledTooltip title="Incomplete">
                             <View>
-                              <MaterialIcons name="warning" size={30} color={Color.warning} />
+                              <MaterialIcons
+                                name="warning"
+                                size={30}
+                                color={Color.warning}
+                              />
                             </View>
                           </StyledTooltip>
                         )}
                         {pr.player_status === "completed" && (
                           <StyledTooltip title="Completed">
                             <View>
-                              <Ionicons name="checkmark-done-circle" size={30} color={Color.primary} />
+                              <Ionicons
+                                name="checkmark-done-circle"
+                                size={30}
+                                color={Color.primary}
+                              />
                             </View>
                           </StyledTooltip>
                         )}
@@ -411,39 +441,42 @@ export default function RoundSummaryScreen() {
         )}
 
         {/* Peer attestation — only for multi-player eligible rounds */}
-        {!isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
-          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>ATTESTATION</Text>
-            <View style={s.attestCard}>
-              <Text style={s.attestCount}>
-                {attestCount} of {eligiblePlayerCount} players attested
-              </Text>
+        {!isEffectivelySolo &&
+          isParticipant &&
+          !myWithdrew &&
+          !myIncomplete && (
+            <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+              <Text style={s.sectionLabel}>ATTESTATION</Text>
+              <View style={s.attestCard}>
+                <Text style={s.attestCount}>
+                  {attestCount} of {eligiblePlayerCount} players attested
+                </Text>
 
-              {hasAttested ? (
-                <View style={s.attestedRow}>
-                  <MaterialIcons
-                    name="check-circle"
-                    size={24}
-                    color={Color.primary}
-                  />
-                  <Text style={s.attestedText}>Attested</Text>
-                </View>
-              ) : (
-                <Button
-                  mode="contained"
-                  buttonColor={Color.primary}
-                  textColor={Color.white}
-                  style={s.attestButton}
-                  onPress={handleAttest}
-                  icon="check-bold"
-                  labelStyle={{ fontFamily: Font.bold }}
-                >
-                  Attest Scores
-                </Button>
-              )}
+                {hasAttested ? (
+                  <View style={s.attestedRow}>
+                    <MaterialIcons
+                      name="check-circle"
+                      size={24}
+                      color={Color.primary}
+                    />
+                    <Text style={s.attestedText}>Attested</Text>
+                  </View>
+                ) : (
+                  <Button
+                    mode="contained"
+                    buttonColor={Color.primary}
+                    textColor={Color.white}
+                    style={s.attestButton}
+                    onPress={handleAttest}
+                    icon="check-bold"
+                    labelStyle={{ fontFamily: Font.bold }}
+                  >
+                    Attest Scores
+                  </Button>
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
         {/* Self-confirmed indicator — for effectively-solo rounds */}
         {isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
@@ -464,7 +497,6 @@ export default function RoundSummaryScreen() {
 
         <View style={{ height: Space.xxxl }} />
       </ScrollView>
-
     </SafeAreaView>
   );
 }
@@ -504,8 +536,6 @@ const s = StyleSheet.create({
     marginBottom: Space.sm,
   },
   resultsCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     overflow: "hidden",
@@ -560,8 +590,6 @@ const s = StyleSheet.create({
     fontSize: 14,
   },
   attestCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,

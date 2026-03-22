@@ -41,7 +41,7 @@ export default function RoundHistoryScreen() {
         }
         playerStatus={item.player_status}
         teeboxName={(item.teebox_data as any)?.name}
-        date={item.created_at}
+        date={item.display_date}
         playerScore={item.player_score}
         scoreToPar={item.score_to_par}
         holesCompleted={item.holes_completed}

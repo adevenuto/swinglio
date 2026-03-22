@@ -32,7 +32,7 @@ export function useHandicap(userId: string) {
       // 1. Fetch all completed/incomplete score rows for this player
       const { data: scoreRows } = await supabase
         .from("scores")
-        .select("id, round_id, score_details, player_status, self_attested")
+        .select("id, round_id, score, score_details, player_status, self_attested")
         .eq("golfer_id", userId)
         .eq("player_status", "completed");
 
@@ -113,6 +113,82 @@ export function useHandicap(userId: string) {
         // Has hole-by-hole data?
         const sd = scoreRow.score_details as ScoreDetails | null;
         if (!sd || !sd.holes || Object.keys(sd.holes).length === 0) {
+          // Total-only round: use scoreRow.score directly if available
+          const totalScore = (scoreRow as any).score as number | null;
+          if (totalScore != null && totalScore > 0 && teebox) {
+            const courseRatingTotal = Number(teebox.courseRating);
+            const slopeTotal = Number(teebox.slope);
+
+            if (
+              courseRatingTotal &&
+              !isNaN(courseRatingTotal) &&
+              courseRatingTotal >= 20 &&
+              courseRatingTotal <= 90 &&
+              slopeTotal &&
+              !isNaN(slopeTotal) &&
+              slopeTotal >= 55 &&
+              slopeTotal <= 155
+            ) {
+              // Compute par from teebox holes
+              const teeboxHoleKeysTotal = Object.keys(teebox.holes || {});
+              const parTotal = teeboxHoleKeysTotal.reduce((sum, k) => {
+                const p = parseInt(teebox.holes[k].par, 10);
+                return sum + (isNaN(p) ? 0 : p);
+              }, 0);
+
+              if (parTotal > 0) {
+                const holeCountTotal = teeboxHoleKeysTotal.length;
+                let adjCourseRatingTotal = courseRatingTotal;
+                if (holeCountTotal <= 9 && courseRatingTotal > parTotal * 1.5) {
+                  adjCourseRatingTotal = courseRatingTotal / 2;
+                }
+
+                // Skip attestation check for self_attested total-only rounds
+                if (!INCLUDE_UNATTESTED) {
+                  const isSelfAttested = scoreRow.self_attested === true;
+                  const hasPeerAttestation = attestedRoundIds.has(roundId);
+                  if (!isSelfAttested && !hasPeerAttestation) {
+                    excluded.push({ roundId, reason: "not_attested" });
+                    continue;
+                  }
+                }
+
+                const differentialTotal = calculateDifferential(
+                  totalScore,
+                  adjCourseRatingTotal,
+                  slopeTotal,
+                );
+
+                const datePlayedTotal =
+                  (round.date_played as string) ||
+                  (round.created_at as string).split("T")[0];
+
+                console.log(
+                  `[HANDICAP DEBUG] Round ${roundId} (total-only): ` +
+                    `score=${totalScore}, par=${parTotal}, ` +
+                    `CR=${courseRatingTotal}, adjCR=${adjCourseRatingTotal}, ` +
+                    `slope=${slopeTotal}, diff=${differentialTotal.toFixed(2)}`,
+                );
+
+                eligible.push({
+                  roundId,
+                  datePlayed: datePlayedTotal,
+                  courseRating: adjCourseRatingTotal,
+                  slopeRating: slopeTotal,
+                  par: parTotal,
+                  holeCount: holeCountTotal,
+                  grossScore: totalScore,
+                  adjustedGrossScore: totalScore,
+                  wasAdjusted: false,
+                  hasStrokeIndex: false,
+                  isAttested: true,
+                  differential: differentialTotal,
+                });
+                continue;
+              }
+            }
+          }
+
           excluded.push({ roundId, reason: "total_only" });
           continue;
         }

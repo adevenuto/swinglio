@@ -1,4 +1,11 @@
-import { Btn, Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import {
+  Btn,
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useCourseSearch } from "@/hooks/use-course-search";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -17,7 +24,13 @@ export default function EditorScreen() {
     return (
       <View style={styles.screen}>
         <View style={styles.centeredContainer}>
-          <Text style={{ fontFamily: Font.medium, fontSize: 16, color: Color.neutral500 }}>
+          <Text
+            style={{
+              fontFamily: Font.medium,
+              fontSize: 16,
+              color: Color.neutral500,
+            }}
+          >
             Access denied
           </Text>
         </View>
@@ -31,7 +44,11 @@ export default function EditorScreen() {
     <View style={styles.screen}>
       <View style={styles.navRow}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="chevron-left" size={28} color={Color.neutral900} />
+          <MaterialIcons
+            name="chevron-left"
+            size={28}
+            color={Color.neutral900}
+          />
           <Text style={styles.backText}>Back</Text>
         </Pressable>
       </View>
@@ -39,7 +56,9 @@ export default function EditorScreen() {
         {/* Create Section */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Create New Course</Text>
-          <Text style={styles.cardSubtitle}>Add a course that doesn't exist yet</Text>
+          <Text style={styles.cardSubtitle}>
+            Add a course that doesn't exist yet
+          </Text>
           <Button
             mode="contained"
             buttonColor={Color.primary}
@@ -143,8 +162,6 @@ const styles = StyleSheet.create({
     color: Color.neutral900,
   },
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -177,8 +194,6 @@ const styles = StyleSheet.create({
     marginBottom: Space.lg,
   },
   courseRow: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     padding: Space.md,

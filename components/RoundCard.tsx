@@ -1,5 +1,5 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -89,7 +89,7 @@ export default function RoundCard({
                   {
                     color:
                       scoreToPar > 0
-                        ? Color.danger
+                        ? Color.warning
                         : scoreToPar < 0
                           ? Color.primary
                           : Color.neutral500,
@@ -125,12 +125,8 @@ export default function RoundCard({
       {playerStatus === "completed" && (
         <View style={styles.badgeOverlay}>
           <StyledTooltip title="Completed">
-            <View>
-              <Ionicons
-                name="checkmark-done-circle"
-                size={30}
-                color={Color.primary}
-              />
+            <View style={styles.completedBadge}>
+              <Feather name="check" size={16} color={Color.white} />
             </View>
           </StyledTooltip>
         </View>
@@ -205,5 +201,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Space.lg,
     right: Space.lg,
+  },
+  completedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Color.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

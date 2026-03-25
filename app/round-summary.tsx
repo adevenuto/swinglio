@@ -15,7 +15,7 @@ import { useAttestations } from "@/hooks/use-attestations";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
@@ -371,12 +371,8 @@ export default function RoundSummaryScreen() {
                         )}
                         {pr.player_status === "completed" && (
                           <StyledTooltip title="Completed">
-                            <View>
-                              <Ionicons
-                                name="checkmark-done-circle"
-                                size={30}
-                                color={Color.primary}
-                              />
+                            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Color.primary, alignItems: "center", justifyContent: "center" }}>
+                              <Feather name="check" size={16} color={Color.white} />
                             </View>
                           </StyledTooltip>
                         )}

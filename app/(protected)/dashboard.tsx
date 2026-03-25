@@ -179,6 +179,15 @@ export default function Dashboard() {
 
   return (
     <View style={styles.screen}>
+      <StatsStrip
+        items={statsItems}
+        avatarUrl={avatarUrl}
+        onAvatarPress={() => router.push("/profile")}
+        onItemPress={(key) => {
+          if (key === "handicap") setHandicapModalVisible(true);
+        }}
+      />
+
       <ScrollView
         style={styles.scroll}
         refreshControl={
@@ -190,15 +199,6 @@ export default function Dashboard() {
           />
         }
       >
-        <StatsStrip
-          items={statsItems}
-          avatarUrl={avatarUrl}
-          onAvatarPress={() => router.push("/profile")}
-          onItemPress={(key) => {
-            if (key === "handicap") setHandicapModalVisible(true);
-          }}
-        />
-
         <View style={styles.contentContainer}>
           <View style={styles.contentInner}>
             {activeRounds.length === 0 && (
@@ -266,6 +266,7 @@ export default function Dashboard() {
               title="Recent Activity"
               rounds={completedRounds}
               limit={3}
+              showLegend
               emptyText="No scores on the board yet. Start a round and let's see what you've got."
               onSeeAll={() =>
                 router.push({

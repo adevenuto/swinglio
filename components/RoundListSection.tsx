@@ -11,6 +11,7 @@ type RoundListSectionProps = {
   rounds: RecentRound[];
   limit?: number;
   emptyText?: string;
+  showLegend?: boolean;
   onSeeAll: () => void;
   onRoundPress: (roundId: number) => void;
 };
@@ -20,6 +21,7 @@ export default function RoundListSection({
   rounds,
   limit = 3,
   emptyText,
+  showLegend = false,
   onSeeAll,
   onRoundPress,
 }: RoundListSectionProps) {
@@ -29,6 +31,29 @@ export default function RoundListSection({
   return (
     <View style={styles.container}>
       <Text style={styles.sectionLabel}>{title}</Text>
+
+      {showLegend && (
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View
+              style={[styles.legendDot, { backgroundColor: Color.primary }]}
+            />
+            <Text style={styles.legendText}>under par</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View
+              style={[styles.legendDot, { backgroundColor: Color.warning }]}
+            />
+            <Text style={styles.legendText}>over par</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View
+              style={[styles.legendDot, { backgroundColor: Color.neutral400 }]}
+            />
+            <Text style={styles.legendText}>even</Text>
+          </View>
+        </View>
+      )}
 
       {visible.length === 0 && emptyText ? (
         <View style={styles.emptyWrap}>
@@ -82,6 +107,27 @@ const styles = StyleSheet.create({
   sectionLabel: {
     ...Type.caption,
     marginBottom: Space.sm,
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.lg,
+    marginBottom: Space.md,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.xs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
   },
   emptyWrap: {
     alignItems: "center",

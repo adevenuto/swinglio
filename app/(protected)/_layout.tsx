@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const teeballIcon = require("@/assets/images/ball.png");
 
 export default function ProtectedLayout() {
-  const { user, isLoading, needsOnboarding, isRecoveryMode, refreshProfile } =
+  const { user, isLoading, isProfileLoaded, needsOnboarding, isRecoveryMode, refreshProfile } =
     useAuth();
   const { count: pendingCount, refresh: refreshPendingCount } =
     usePendingFriendCount(user?.id ?? "");
@@ -37,7 +37,7 @@ export default function ProtectedLayout() {
     return on("friends-changed", refreshPendingCount);
   }, [refreshPendingCount]);
 
-  if (isLoading) {
+  if (isLoading || !isProfileLoaded) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />

@@ -7,9 +7,8 @@ import {
     ActivityIndicator,
     Alert,
     Image,
-    KeyboardAvoidingView,
-    Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -54,10 +53,11 @@ export default function SignIn() {
 
   return (
     <View style={styles.screen}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
             <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
@@ -154,7 +154,7 @@ export default function SignIn() {
             </Link>
           </View>
         </View>
-      </KeyboardAvoidingView>
+        </ScrollView>
     </View>
   );
 }
@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
   },
   inner: {
@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     backgroundColor: Color.white,
+    letterSpacing: 0,
   },
   inputFocused: {
     borderColor: Color.primary,

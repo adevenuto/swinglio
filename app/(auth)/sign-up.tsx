@@ -1,5 +1,6 @@
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { supabase } from "@/lib/supabase";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
@@ -7,9 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,7 +20,9 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const { signUp, signInWithGoogle } = useAuth();
 
@@ -47,16 +49,42 @@ export default function SignUp() {
     if (error) {
       Alert.alert("Sign Up Failed", error.message);
     } else {
-      Alert.alert(
-        "Success",
-        "Account created! Please check your email to verify your account.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/(auth)/sign-in"),
-          },
-        ],
-      );
+      setSent(true);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!code.trim()) {
+      Alert.alert("Error", "Please enter the code from your email");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code.trim(),
+      type: "signup",
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    }
+    // On success, onAuthStateChange fires → session established → auto-redirect
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
+      Alert.alert("Sent", "A new verification code has been sent to your email");
     }
   };
 
@@ -72,12 +100,81 @@ export default function SignUp() {
     }
   };
 
+  if (sent) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
+          <View style={styles.inner}>
+            <Text style={styles.title}>Check Your Email</Text>
+            <Text style={styles.verifySubtitle}>
+              We sent a verification code to {email}. Enter it below to verify
+              your account.
+            </Text>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Verification Code</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.codeInput,
+                  focusedField === "code" && styles.inputFocused,
+                ]}
+                placeholder="00000000"
+                placeholderTextColor={Color.neutral400}
+                value={code}
+                onChangeText={setCode}
+                onFocus={() => setFocusedField("code")}
+                onBlur={() => setFocusedField(null)}
+                keyboardType="number-pad"
+                maxLength={8}
+                editable={!loading}
+              />
+            </View>
+
+            <Pressable
+              style={[styles.verifyButton, loading && { opacity: 0.7 }]}
+              onPress={handleVerifyCode}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={Color.white} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Verify Code</Text>
+              )}
+            </Pressable>
+
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Didn't get the email? </Text>
+              <Pressable onPress={handleResend} disabled={loading}>
+                {({ pressed }) => (
+                  <Text
+                    style={[
+                      styles.footerLink,
+                      pressed ? { opacity: 0.7 } : undefined,
+                    ]}
+                  >
+                    Resend
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
             <Image
@@ -181,7 +278,7 @@ export default function SignUp() {
             </Link>
           </View>
         </View>
-      </KeyboardAvoidingView>
+        </ScrollView>
     </View>
   );
 }
@@ -191,8 +288,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
   },
   inner: {
@@ -206,10 +303,25 @@ const styles = StyleSheet.create({
     height: 72,
     width: 177,
   },
+  title: {
+    fontFamily: Font.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Color.neutral900,
+    textAlign: "center",
+    marginBottom: Space.xs,
+  },
   subtitle: {
     fontFamily: Font.medium,
     fontSize: 16,
     color: Color.neutral700,
+    textAlign: "center",
+    marginBottom: Space.xxl,
+  },
+  verifySubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral500,
     textAlign: "center",
     marginBottom: Space.xxl,
   },
@@ -232,6 +344,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     backgroundColor: Color.white,
+    letterSpacing: 0,
+  },
+  codeInput: {
+    fontSize: 24,
+    fontFamily: Font.semiBold,
+    textAlign: "center",
+    letterSpacing: 8,
   },
   inputFocused: {
     borderColor: Color.primary,
@@ -244,6 +363,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Space.lg,
+  },
+  verifyButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: Space.sm,
+    marginBottom: Space.xl,
   },
   primaryButtonText: {
     fontFamily: Font.bold,

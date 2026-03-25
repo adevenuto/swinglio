@@ -11,6 +11,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isProfileLoaded: boolean;
   needsOnboarding: boolean;
   isRecoveryMode: boolean;
   role: string | null;
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const fetchProfile = async (userId: string) => {
@@ -55,7 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) await fetchProfile(session.user.id);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+      setIsProfileLoaded(true);
       setIsLoading(false);
     });
 
@@ -82,12 +87,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id); // fire-and-forget — avoid lock deadlock with setSession()
+        setIsProfileLoaded(false);
+        fetchProfile(session.user.id).then(() => setIsProfileLoaded(true));
       } else {
         setRole(null);
         setAvatarUrl(null);
         setDisplayName(null);
         setNeedsOnboarding(false);
+        setIsProfileLoaded(true);
       }
 
     });
@@ -142,9 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: "swinglio://",
-      },
     });
     return { error };
   };
@@ -268,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        isProfileLoaded,
         needsOnboarding,
         isRecoveryMode,
         role,

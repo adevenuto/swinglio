@@ -119,23 +119,25 @@ function HoleEntryPanel({
   const prevHoleRef = useRef(holeNumber);
   const isTransitioning = prevHoleRef.current !== holeNumber;
 
-  // Slide animation
-  const translateX = useSharedValue(0);
+  // Scale + fade animation
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
 
   useEffect(() => {
     if (prevHoleRef.current !== holeNumber) {
-      const direction = holeNumber > prevHoleRef.current ? 1 : -1;
       prevHoleRef.current = holeNumber;
 
-      // Snap to offset, then animate to center
-      translateX.value = direction * Animation.slideOffset;
-      translateX.value = withTiming(0, { duration: Animation.durationMs });
+      // Snap to scaled-down + faded, then animate back
+      scale.value = 0.95;
+      opacity.value = 0.5;
+      scale.value = withTiming(1, { duration: Animation.durationMs });
+      opacity.value = withTiming(1, { duration: Animation.durationMs });
     }
-  }, [holeNumber, translateX]);
+  }, [holeNumber, scale, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: translateX.value === 0 ? 1 : Animation.slideMinOpacity,
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
 
   // Stable refs for use in hole-initialization effect

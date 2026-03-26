@@ -1,5 +1,5 @@
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
-import Feather from "@expo/vector-icons/Feather";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import { Text } from "react-native-paper";
@@ -22,14 +22,14 @@ type StepperProps = {
 const SIZE_CONFIG = {
   lg: {
     buttonSize: 38,
-    iconSize: 20,
+    iconSize: 24,
     valueFontFamily: Font.bold,
     valueFontSize: 26,
     dimOnZero: false,
   },
   sm: {
     buttonSize: 32,
-    iconSize: 16,
+    iconSize: 18,
     valueFontFamily: Font.semiBold,
     valueFontSize: 16,
     dimOnZero: true,
@@ -88,7 +88,7 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather name="minus" size={config.iconSize} color={Color.white} />
+            <MaterialCommunityIcons name="minus-thick" size={config.iconSize} color={Color.white} />
           </View>
         </Pressable>
         {valueElement}
@@ -98,7 +98,7 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather name="plus" size={config.iconSize} color={Color.white} />
+            <MaterialCommunityIcons name="plus-thick" size={config.iconSize} color={Color.white} />
           </View>
         </Pressable>
       </View>
@@ -114,7 +114,7 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather name="plus" size={config.iconSize} color={Color.white} />
+          <MaterialCommunityIcons name="plus-thick" size={config.iconSize} color={Color.white} />
         </View>
       </Pressable>
       {valueElement}
@@ -124,7 +124,7 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather name="minus" size={config.iconSize} color={Color.white} />
+          <MaterialCommunityIcons name="minus-thick" size={config.iconSize} color={Color.white} />
         </View>
       </Pressable>
     </View>

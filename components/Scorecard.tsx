@@ -31,8 +31,8 @@ export type ScorecardRef = {
 
 const FIXED_COL_WIDTH = 120;
 const SHADOW_WIDTH = 8;
-const CELL_WIDTH = 56;
-const CELL_HEIGHT = 44;
+const CELL_WIDTH = 62;
+const CELL_HEIGHT = 48;
 const BORDER_COLOR = Color.neutral200;
 const CELL_PADDING = 7;
 const FALLBACK_TEEBOX_COLOR = "#677079";

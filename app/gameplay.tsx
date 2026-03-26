@@ -1,4 +1,5 @@
 import DistanceMapModal from "@/components/DistanceMapModal";
+import FinishRoundModal from "@/components/FinishRoundModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
@@ -63,7 +64,8 @@ function GameplayScreenContent() {
     updateHole,
     flushPersist,
     setActiveHole,
-    handleQuitRound,
+    quitWithStatus,
+    getHolesScored,
     greenCenters,
     hasGreenCenters,
   } = useGameplay();
@@ -71,6 +73,7 @@ function GameplayScreenContent() {
   // GPS distance to pin
   const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
   const [showDistanceMap, setShowDistanceMap] = useState(false);
+  const [showFinishModal, setShowFinishModal] = useState(false);
 
   const activeGreenCenter = greenCenters[`hole-${activeHole}`] ?? null;
 
@@ -181,8 +184,17 @@ function GameplayScreenContent() {
   // Flush current hole then show quit/finish modal
   const onFinishRound = useCallback(() => {
     flushPersist();
-    handleQuitRound();
-  }, [handleQuitRound, flushPersist]);
+    setShowFinishModal(true);
+  }, [flushPersist]);
+
+  const holesScored = getHolesScored();
+  const totalHoles = holeCount;
+  const finishMessage =
+    holesScored === 0
+      ? "You haven't scored any holes yet."
+      : holesScored >= totalHoles
+        ? `You've scored all ${totalHoles} holes.`
+        : `You've scored ${holesScored} of ${totalHoles} holes.`;
 
   // Flush persist (used by HoleNavigation)
   const saveCurrentHole = useCallback(() => {
@@ -320,7 +332,7 @@ function GameplayScreenContent() {
             style={{ marginTop: Space.xl }}
             labelStyle={{ fontFamily: Font.medium }}
           >
-            Quit Round
+            End Round
           </Button>
         )}
       </ScrollView>
@@ -348,6 +360,26 @@ function GameplayScreenContent() {
           distanceYards={distanceToPin}
         />
       )}
+
+      <FinishRoundModal
+        visible={showFinishModal}
+        message={finishMessage}
+        showComplete={holesScored >= totalHoles}
+        showIncomplete={holesScored > 0 && holesScored < totalHoles}
+        onComplete={() => {
+          setShowFinishModal(false);
+          quitWithStatus("completed");
+        }}
+        onIncomplete={() => {
+          setShowFinishModal(false);
+          quitWithStatus("incomplete");
+        }}
+        onWithdraw={() => {
+          setShowFinishModal(false);
+          quitWithStatus("withdrew");
+        }}
+        onCancel={() => setShowFinishModal(false)}
+      />
     </SafeAreaView>
   );
 }

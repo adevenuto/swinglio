@@ -37,6 +37,7 @@ type HoleEntryPanelProps = {
   currentStats: HoleStats | undefined;
   onSave: (data: { score: string; stats: HoleStats }) => void;
   disabled?: boolean;
+  connectedTop?: boolean;
 };
 
 // === Helpers ===
@@ -96,6 +97,7 @@ function HoleEntryPanel({
   currentStats,
   onSave,
   disabled = false,
+  connectedTop = false,
 }: HoleEntryPanelProps) {
   const parNum = parseInt(par, 10) || 4;
   const isPar3 = parNum === 3;
@@ -291,8 +293,21 @@ function HoleEntryPanel({
   };
 
   return (
-    <View style={[styles.card, disabled && styles.cardDisabled]}>
+    <View
+      style={[
+        styles.card,
+        disabled && styles.cardDisabled,
+        connectedTop && {
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
+    >
       <Animated.View style={animatedStyle}>
+        {/* Separator when connected to header */}
+        {connectedTop && <View style={styles.connectedDivider} />}
         {/* Top section: D-pad + Score/Putts steppers */}
         <View style={styles.topSection}>
           {/* Fairway D-pad */}
@@ -300,18 +315,10 @@ function HoleEntryPanel({
             style={[styles.dpadWrapper, isPar3 && { opacity: 0.25 }]}
             pointerEvents={isPar3 ? "none" : "auto"}
           >
-            <Text style={styles.stepperLabel}>Tee Shot Accuracy</Text>
+            <Text style={styles.stepperLabel}>Tee Shot</Text>
             <DPad
-              size={120}
               value={fairway}
               onControl={toggleFairway}
-              quadrantColor={Color.neutral200}
-              selectedColor={Color.primary}
-              iconColor={Color.neutral400}
-              selectedIconColor={Color.white}
-              centerBgColor={Color.neutral300}
-              centerTextColor={Color.neutral500}
-              iconSize={20}
             />
           </View>
 
@@ -373,13 +380,16 @@ function HoleEntryPanel({
         {/* Advanced toggle */}
         <Pressable
           onPress={() => setAdvancedExpanded((prev) => !prev)}
-          style={styles.advancedToggle}
+          style={({ pressed }) => [
+            styles.advancedToggle,
+            pressed && { opacity: 0.7 },
+          ]}
         >
-          <Text style={styles.advancedToggleText}>Advanced</Text>
+          <Text style={styles.advancedToggleText}>Advanced stats</Text>
           <Feather
-            name={advancedExpanded ? "chevron-up" : "chevron-down"}
-            size={16}
-            color={Color.neutral500}
+            name="chevron-right"
+            size={18}
+            color={Color.neutral400}
           />
         </Pressable>
 
@@ -437,6 +447,12 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 
+  connectedDivider: {
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+    marginBottom: Space.lg,
+  },
+
   // Top section
   topSection: {
     flexDirection: "row",
@@ -464,7 +480,7 @@ const styles = StyleSheet.create({
   },
   stepperLabel: {
     ...Type.overline,
-    marginBottom: Space.sm - 4,
+    marginBottom: Space.sm,
   },
   pillSubLabel: {
     fontFamily: Font.semiBold,
@@ -501,14 +517,16 @@ const styles = StyleSheet.create({
   advancedToggle: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "center",
-    gap: Space.xs,
-    paddingVertical: 2,
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: Color.neutral200,
+    paddingTop: Space.lg,
+    marginTop: Space.sm,
   },
   advancedToggleText: {
     fontFamily: Font.semiBold,
-    fontSize: 13,
-    color: Color.neutral500,
+    fontSize: 15,
+    color: Color.neutral900,
   },
 
   // Advanced content

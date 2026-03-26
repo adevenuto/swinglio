@@ -228,28 +228,6 @@ function GameplayScreenContent() {
         </Pressable>
       </View>
 
-      {/* Course header */}
-      <View style={gameStyles.courseCardWrapper}>
-        <GameplayHeader
-          courseId={round.course_id}
-          courseName={round.courses?.club_name || "Unknown"}
-          courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
-          featuredImageUrl={featuredImageUrl}
-          holeCount={holeCount}
-          activeHole={activeHole}
-          par={teeboxHoleData?.par}
-          yardage={teeboxHoleData?.length}
-          teeboxName={(round.teebox_data as any)?.name}
-          distanceToPin={distanceToPin}
-          distanceLoading={hasGreenCenters && gpsLoading}
-          onDistancePress={
-            distanceToPin != null && activeGreenCenter
-              ? () => setShowDistanceMap(true)
-              : undefined
-          }
-        />
-      </View>
-
       {/* Scorecard + HoleEntryPanel */}
       <ScrollView
         ref={scrollViewRef}
@@ -288,6 +266,26 @@ function GameplayScreenContent() {
             <View
               style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}
             >
+              {/* Course header + HoleEntryPanel unified card */}
+              <GameplayHeader
+                courseId={round.course_id}
+                courseName={round.courses?.club_name || "Unknown"}
+                courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
+                featuredImageUrl={featuredImageUrl}
+                holeCount={holeCount}
+                activeHole={activeHole}
+                par={teeboxHoleData?.par}
+                yardage={teeboxHoleData?.length}
+                teeboxName={(round.teebox_data as any)?.name}
+                distanceToPin={distanceToPin}
+                distanceLoading={hasGreenCenters && gpsLoading}
+                onDistancePress={
+                  distanceToPin != null && activeGreenCenter
+                    ? () => setShowDistanceMap(true)
+                    : undefined
+                }
+                connectedBottom
+              />
               <HoleEntryPanel
                 holeNumber={activeHole}
                 par={teeboxHoleData.par}
@@ -295,6 +293,7 @@ function GameplayScreenContent() {
                 currentScore={activeHoleData?.score ?? ""}
                 currentStats={activeHoleData?.stats}
                 onSave={updateHole}
+                connectedTop
               />
             </View>
           </GestureDetector>
@@ -387,7 +386,7 @@ const gameStyles = StyleSheet.create({
   courseCardWrapper: {
     paddingHorizontal: Space.lg,
     marginBottom: Space.md,
-  },
+  }, // kept for potential reuse
   scorecardLabel: {
     ...Type.caption,
     marginBottom: Space.sm,

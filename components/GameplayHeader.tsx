@@ -21,6 +21,7 @@ type GameplayHeaderProps = {
   distanceToPin?: number | null;
   distanceLoading?: boolean;
   onDistancePress?: () => void;
+  connectedBottom?: boolean;
 };
 
 export default function GameplayHeader({
@@ -37,6 +38,7 @@ export default function GameplayHeader({
   distanceToPin,
   distanceLoading,
   onDistancePress,
+  connectedBottom = false,
 }: GameplayHeaderProps) {
   const { distanceUnit } = usePreferences();
   const yardageDisplay =
@@ -46,7 +48,17 @@ export default function GameplayHeader({
   const showDistance =
     distanceLoading || (distanceToPin != null && distanceToPin > 0);
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        connectedBottom && {
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
+    >
       <Image
         source={getCourseImageSource(courseId, featuredImageUrl)}
         style={styles.thumbnail}

@@ -21,8 +21,8 @@ type StepperProps = {
 
 const SIZE_CONFIG = {
   lg: {
-    buttonSize: 34,
-    iconSize: 18,
+    buttonSize: 38,
+    iconSize: 20,
     valueFontFamily: Font.bold,
     valueFontSize: 26,
     dimOnZero: false,
@@ -63,9 +63,7 @@ export default function Stepper({
 
   const resolvedValueColor =
     valueColor ??
-    (config.dimOnZero && value === 0
-      ? Color.neutral400
-      : Color.neutral900);
+    (config.dimOnZero && value === 0 ? Color.neutral400 : Color.neutral900);
 
   const valueElement = (
     <Text
@@ -90,11 +88,7 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather
-              name="minus"
-              size={config.iconSize}
-              color={Color.white}
-            />
+            <Feather name="minus" size={config.iconSize} color={Color.white} />
           </View>
         </Pressable>
         {valueElement}
@@ -104,11 +98,7 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather
-              name="plus"
-              size={config.iconSize}
-              color={Color.white}
-            />
+            <Feather name="plus" size={config.iconSize} color={Color.white} />
           </View>
         </Pressable>
       </View>
@@ -124,11 +114,7 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather
-            name="plus"
-            size={config.iconSize}
-            color={Color.white}
-          />
+          <Feather name="plus" size={config.iconSize} color={Color.white} />
         </View>
       </Pressable>
       {valueElement}
@@ -138,11 +124,7 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather
-            name="minus"
-            size={config.iconSize}
-            color={Color.white}
-          />
+          <Feather name="minus" size={config.iconSize} color={Color.white} />
         </View>
       </Pressable>
     </View>
@@ -187,15 +169,15 @@ const verticalStyles = StyleSheet.create({
   pill: {
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "space-around",
-    width: 50,
-    minHeight: 120,
+    justifyContent: "center",
+    gap: Space.sm,
+    width: 70,
     alignSelf: "stretch",
-    borderRadius: Radius.full,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Color.neutral300,
     backgroundColor: Color.white,
-    paddingVertical: Space.sm,
+    paddingVertical: Space.md,
   },
 });
 

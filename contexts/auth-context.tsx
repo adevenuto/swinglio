@@ -189,10 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Opening OAuth URL:", data.url);
 
       if (Platform.OS === "android") {
-        // Android: open full browser — Custom Chrome Tabs don't reliably
+        // Android: open external browser — Chrome Custom Tabs don't reliably
         // redirect back via custom schemes. The deep link listener
         // (handleUrl) will catch the swinglio:// redirect and set the session.
-        await WebBrowser.openBrowserAsync(data.url);
+        await Linking.openURL(data.url);
         return { error: null };
       }
 

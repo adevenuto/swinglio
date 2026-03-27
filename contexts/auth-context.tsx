@@ -54,13 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (Platform.OS === "android") {
-      WebBrowser.warmUpAsync();
-      return () => { WebBrowser.coolDownAsync(); };
-    }
-  }, []);
-
-  useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
@@ -174,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = Linking.createURL("/");
+      const redirectUrl = "swinglio://";
       console.log("Redirect URL:", redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -195,16 +188,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log("Opening OAuth URL:", data.url);
 
+      if (Platform.OS === "android") {
+        // Android: open full browser — Custom Chrome Tabs don't reliably
+        // redirect back via custom schemes. The deep link listener
+        // (handleUrl) will catch the swinglio:// redirect and set the session.
+        await WebBrowser.openBrowserAsync(data.url);
+        return { error: null };
+      }
+
+      // iOS: openAuthSessionAsync works correctly with custom schemes
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectUrl,
-        { showInRecents: false },
       );
 
       console.log("WebBrowser result:", result);
 
       if (result.type === "success") {
-        // Parse the URL directly from the result
         const url = result.url;
         const params = new URLSearchParams(url.split("#")[1]);
 
@@ -227,7 +227,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { error: sessionError };
           }
 
-          // Set React state immediately — don't rely on onAuthStateChange timing
           if (data.session) {
             setSession(data.session);
             setUser(data.session.user);

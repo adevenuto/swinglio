@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import Toast from "react-native-toast-message";
 
@@ -51,6 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setDisplayName(data?.display_name || data?.first_name || null);
     setNeedsOnboarding(!data?.first_name);
   };
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      WebBrowser.warmUpAsync();
+      return () => { WebBrowser.coolDownAsync(); };
+    }
+  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -166,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = "swinglio://";
+      const redirectUrl = Linking.createURL("/");
       console.log("Redirect URL:", redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -190,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectUrl,
+        { showInRecents: false },
       );
 
       console.log("WebBrowser result:", result);

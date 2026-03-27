@@ -163,13 +163,6 @@ export function useHandicap(userId: string) {
                   (round.date_played as string) ||
                   (round.created_at as string).split("T")[0];
 
-                console.log(
-                  `[HANDICAP DEBUG] Round ${roundId} (total-only): ` +
-                    `score=${totalScore}, par=${parTotal}, ` +
-                    `CR=${courseRatingTotal}, adjCR=${adjCourseRatingTotal}, ` +
-                    `slope=${slopeTotal}, diff=${differentialTotal.toFixed(2)}`,
-                );
-
                 eligible.push({
                   roundId,
                   datePlayed: datePlayedTotal,
@@ -290,13 +283,6 @@ export function useHandicap(userId: string) {
           (round.date_played as string) ||
           (round.created_at as string).split("T")[0];
 
-        // --- DEBUG: remove after verifying handicap is correct ---
-        console.log(`[HANDICAP DEBUG] Round ${roundId}: ` +
-          `scoredHoles=${scoredHoleCount}, par=${par}, gross=${grossScore}, ` +
-          `AGS=${adjustedGrossScore}, CR=${courseRating}, adjCR=${adjCourseRating}, ` +
-          `slope=${slopeRating}, diff=${differential.toFixed(2)}`);
-        // --- END DEBUG ---
-
         eligible.push({
           roundId,
           datePlayed,
@@ -323,14 +309,8 @@ export function useHandicap(userId: string) {
       }
 
       // 5. Calculate handicap index
-      // --- DEBUG: remove after verifying handicap is correct ---
-      console.log(`[HANDICAP DEBUG] Eligible: ${eligible.length}, Excluded: ${excluded.length} (${excluded.map(e => `${e.roundId}:${e.reason}`).join(', ')})`);
-      // --- END DEBUG ---
       const handicapResult = calculateHandicapIndex(eligible);
       handicapResult.excludedRounds = excluded;
-      // --- DEBUG: remove after verifying handicap is correct ---
-      console.log(`[HANDICAP DEBUG] Result: index=${handicapResult.handicapIndex}, method="${handicapResult.methodDescription}"`);
-      // --- END DEBUG ---
 
       // 5b. Compute trend (normalized — uses same table entry for both sets
       // so threshold changes don't produce misleading arrows)
@@ -360,8 +340,6 @@ export function useHandicap(userId: string) {
         handicapResult.trend = Math.round(
           (handicapResult.handicapIndex - prevIndex) * 10,
         ) / 10;
-
-        console.log(`[HANDICAP DEBUG] Trend: ${handicapResult.trend}, eligible=${eligible.length}`);
       }
 
       // Enrich differentials with course name and gross score

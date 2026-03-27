@@ -69,8 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("Auth state changed:", _event, session?.user?.email);
-
       // Set recovery mode before session/user so it's batched in the same render
       if (_event === "PASSWORD_RECOVERY") {
         setIsRecoveryMode(true);
@@ -102,31 +100,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Handle incoming deep links
     const handleUrl = async ({ url }: { url: string }) => {
-      console.log("Deep link received:", url);
-
       try {
-        // Extract session from URL
         const urlObj = new URL(url);
         const hash = urlObj.hash.substring(1);
-
-        console.log("Hash from URL:", hash);
-
         const params = new URLSearchParams(hash);
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
-
-        console.log("Tokens found:", {
-          access_token: !!access_token,
-          refresh_token: !!refresh_token,
-        });
 
         if (access_token && refresh_token) {
           const { error } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
-
-          console.log("Session set result:", error);
 
           if (error) {
             console.error("Error setting session:", error);
@@ -168,7 +153,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const redirectUrl = "swinglio://";
-      console.log("Redirect URL:", redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -186,8 +170,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("No OAuth URL returned") };
       }
 
-      console.log("Opening OAuth URL:", data.url);
-
       if (Platform.OS === "android") {
         // Android: open external browser — Chrome Custom Tabs don't reliably
         // redirect back via custom schemes. The deep link listener
@@ -202,19 +184,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         redirectUrl,
       );
 
-      console.log("WebBrowser result:", result);
-
       if (result.type === "success") {
         const url = result.url;
         const params = new URLSearchParams(url.split("#")[1]);
 
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
-
-        console.log("Tokens found:", {
-          access_token: !!access_token,
-          refresh_token: !!refresh_token,
-        });
 
         if (access_token && refresh_token) {
           const { data, error: sessionError } = await supabase.auth.setSession({
@@ -262,14 +237,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    console.log("🔄 Refreshing user session...");
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    console.log("✅ Session refreshed:", {
-      user: session?.user?.email,
-      userId: session?.user?.id,
-    });
     setSession(session);
     setUser(session?.user ?? null);
   };

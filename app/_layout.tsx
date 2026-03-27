@@ -1,4 +1,5 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/auth-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import {
@@ -134,6 +135,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
       <AuthProvider>
         <PreferencesProvider>
           <ThemeProvider value={DefaultTheme}>
@@ -228,6 +230,7 @@ export default function RootLayout() {
           </ThemeProvider>
         </PreferencesProvider>
       </AuthProvider>
+      </ErrorBoundary>
       <Toast config={toastConfig} topOffset={80} />
     </GestureHandlerRootView>
   );

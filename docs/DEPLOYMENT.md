@@ -8,6 +8,18 @@ You **should** keep this in a private GitHub repo for backup, but it's not requi
 
 ---
 
+## Pre-Flight Checklist (Code Readiness)
+
+Before building, make sure the app is production-ready:
+
+- [x] Remove debug `console.log` statements (keep `console.error` for diagnostics)
+- [x] Add global `ErrorBoundary` wrapping the app (prevents white-screen crashes)
+- [ ] Verify app icon and splash screen look correct on device
+- [ ] Test full user flow end-to-end on a real device (not just Expo Go)
+- [ ] Ensure no hardcoded localhost/dev URLs remain in code
+
+---
+
 ## Step 1: Developer Accounts (Start Now — Takes Days)
 
 These have approval wait times, so do them first.
@@ -205,6 +217,19 @@ Before Apple/Google will approve your app, you need to fill out listing info.
 - [ ] Verify Supabase and Mapbox work in production
 - [ ] Consider adding crash reporting (`sentry-expo` or EAS Insights)
 - [ ] Monitor store reviews and crash reports
+
+---
+
+## OTA Updates (Post-Launch)
+
+After your app is live, you can push JavaScript-only fixes without going through App Store/Play Store review:
+
+```bash
+# Push an over-the-air update (JS changes only — no native code changes)
+eas update --branch production --message "describe the fix"
+```
+
+This updates the app for existing users without a new store submission. Native code changes (new native modules, SDK version bumps, etc.) still require a full build + store submission.
 
 ---
 

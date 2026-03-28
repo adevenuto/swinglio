@@ -10,6 +10,11 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscription, SubscriptionTier } from "@/contexts/subscription-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
+import {
+  WeatherCondition,
+  getDevWeatherOverride,
+  setDevWeatherOverride,
+} from "@/hooks/use-weather";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
 import { formatHandicapIndex } from "@/lib/handicap";
@@ -37,6 +42,9 @@ export default function Profile() {
 
   const [isLoading, setIsLoading] = useState(true);
   const { tier, isPro, presentPaywall, devOverrideTier, setDevOverrideTier } = useSubscription();
+  const [weatherLabel, setWeatherLabel] = useState<string>(
+    () => getDevWeatherOverride() ?? "auto",
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const [displayName, setDisplayName] = useState("");
@@ -450,22 +458,45 @@ export default function Profile() {
               </Pressable>
 
               {__DEV__ && (
-                <Pressable
-                  onPress={() => {
-                    const next: (SubscriptionTier | null)[] = [null, "free", "pro"];
-                    const currentIdx = next.indexOf(devOverrideTier);
-                    setDevOverrideTier(next[(currentIdx + 1) % next.length]);
-                  }}
-                  style={({ pressed }) => [
-                    styles.devToggle,
-                    pressed && { opacity: 0.7 },
-                  ]}
-                >
-                  <Text style={styles.devToggleLabel}>DEV Tier Override</Text>
-                  <Text style={styles.devToggleValue}>
-                    {devOverrideTier ?? `auto (${tier})`}
-                  </Text>
-                </Pressable>
+                <>
+                  <Pressable
+                    onPress={() => {
+                      const next: (SubscriptionTier | null)[] = [null, "free", "pro"];
+                      const currentIdx = next.indexOf(devOverrideTier);
+                      setDevOverrideTier(next[(currentIdx + 1) % next.length]);
+                    }}
+                    style={({ pressed }) => [
+                      styles.devToggle,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.devToggleLabel}>DEV Tier Override</Text>
+                    <Text style={styles.devToggleValue}>
+                      {devOverrideTier ?? `auto (${tier})`}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      const conditions: (WeatherCondition | null)[] = [
+                        null, "clear", "clouds_few", "clouds", "rain",
+                        "drizzle", "thunderstorm", "snow", "fog",
+                      ];
+                      const current = getDevWeatherOverride();
+                      const idx = conditions.indexOf(current);
+                      const next = conditions[(idx + 1) % conditions.length];
+                      setDevWeatherOverride(next);
+                      setWeatherLabel(next ?? "auto");
+                    }}
+                    style={({ pressed }) => [
+                      styles.devToggleWeather,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.devToggleLabel}>DEV Weather</Text>
+                    <Text style={styles.devToggleValue}>{weatherLabel}</Text>
+                  </Pressable>
+                </>
               )}
             </View>
           </View>
@@ -674,5 +705,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Color.warning,
     textTransform: "uppercase",
+  },
+  devToggleWeather: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Space.sm,
+    paddingVertical: Space.md,
+    paddingHorizontal: Space.lg,
+    backgroundColor: "#E0F2FE",
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Color.info,
   },
 });

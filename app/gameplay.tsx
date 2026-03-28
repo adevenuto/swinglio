@@ -1,4 +1,5 @@
 import DistanceMapModal from "@/components/DistanceMapModal";
+import WeatherBackground from "@/components/WeatherBackground";
 import FinishRoundModal from "@/components/FinishRoundModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
@@ -16,6 +17,7 @@ import {
   getCurrentHole,
   useGameplay,
 } from "@/contexts/gameplay-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { usePlayerLocation } from "@/hooks/use-player-location";
 import { distanceInYards } from "@/lib/geo";
 import { supabase } from "@/lib/supabase";
@@ -45,6 +47,7 @@ export default function GameplayScreen() {
 
 function GameplayScreenContent() {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
   const router = useRouter();
   const {
     round,
@@ -220,8 +223,9 @@ function GameplayScreenContent() {
   return (
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
+      style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg, paddingTop: 20 }}
     >
+      <WeatherBackground />
       {/* Nav header */}
       <View style={gameStyles.navHeader}>
         <Pressable

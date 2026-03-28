@@ -31,6 +31,7 @@ import {
 } from "react-native";
 import { Button, Text } from "react-native-paper";
 import GradientButton from "@/components/GradientButton";
+import WeatherBackground from "@/components/WeatherBackground";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -197,7 +198,8 @@ export default function Dashboard() {
   );
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, isPro && { backgroundColor: "transparent" }]}>
+      <WeatherBackground />
       <StatsStrip
         items={statsItems}
         avatarUrl={avatarUrl}

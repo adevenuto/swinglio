@@ -40,9 +40,16 @@ function mapCondition(weatherId: number, clouds: number): WeatherCondition {
 let devOverrideCondition: WeatherCondition | null = null;
 let devOverrideListeners: Array<() => void> = [];
 
-export function setDevWeatherOverride(condition: WeatherCondition | null) {
+let devOverrideNight: boolean | null = null;
+
+export function setDevWeatherOverride(condition: WeatherCondition | null, isNight?: boolean) {
   devOverrideCondition = condition;
+  devOverrideNight = isNight ?? null;
   devOverrideListeners.forEach((fn) => fn());
+}
+
+export function getDevNightOverride(): boolean | null {
+  return devOverrideNight;
 }
 
 export function getDevWeatherOverride(): WeatherCondition | null {
@@ -59,10 +66,11 @@ export function useWeather() {
     const listener = () => {
       const override = devOverrideCondition;
       if (override) {
+        const nightOverride = devOverrideNight;
         setWeather({
           condition: override,
           temp: 55,
-          isNight: new Date().getHours() >= 19 || new Date().getHours() < 6,
+          isNight: nightOverride ?? (new Date().getHours() >= 19 || new Date().getHours() < 6),
           description: `dev override: ${override}`,
         });
       } else {

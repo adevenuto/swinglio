@@ -14,6 +14,7 @@ import {
   WeatherCondition,
   getDevWeatherOverride,
   setDevWeatherOverride,
+  getDevNightOverride,
 } from "@/hooks/use-weather";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
@@ -476,26 +477,45 @@ export default function Profile() {
                     </Text>
                   </Pressable>
 
-                  <Pressable
-                    onPress={() => {
-                      const conditions: (WeatherCondition | null)[] = [
-                        null, "clear", "clouds_few", "clouds", "rain",
-                        "drizzle", "thunderstorm", "snow", "fog",
-                      ];
-                      const current = getDevWeatherOverride();
-                      const idx = conditions.indexOf(current);
-                      const next = conditions[(idx + 1) % conditions.length];
-                      setDevWeatherOverride(next);
-                      setWeatherLabel(next ?? "auto");
-                    }}
-                    style={({ pressed }) => [
-                      styles.devToggleWeather,
-                      pressed && { opacity: 0.7 },
-                    ]}
-                  >
+                  <View style={styles.devToggleWeather}>
                     <Text style={styles.devToggleLabel}>DEV Weather</Text>
-                    <Text style={styles.devToggleValue}>{weatherLabel}</Text>
-                  </Pressable>
+                    <View style={styles.devWeatherGrid}>
+                      {([
+                        { condition: null, night: null, label: "Auto" },
+                        { condition: "clear", night: false, label: "Sunny" },
+                        { condition: "clouds_few", night: false, label: "Pt. Cloudy" },
+                        { condition: "clear", night: true, label: "Night" },
+                        { condition: "clouds", night: false, label: "Cloudy" },
+                        { condition: "clouds", night: true, label: "Cloudy N" },
+                        { condition: "rain", night: false, label: "Rain" },
+                        { condition: "rain", night: true, label: "Rain N" },
+                        { condition: "thunderstorm", night: true, label: "Storm" },
+                        { condition: "snow", night: false, label: "Snow" },
+                        { condition: "snow", night: true, label: "Snow N" },
+                      ] as { condition: WeatherCondition | null; night: boolean | null; label: string }[]).map((preset) => (
+                        <Pressable
+                          key={preset.label}
+                          onPress={() => {
+                            setDevWeatherOverride(preset.condition, preset.night ?? undefined);
+                            setWeatherLabel(preset.label);
+                          }}
+                          style={[
+                            styles.devWeatherChip,
+                            weatherLabel === preset.label && styles.devWeatherChipActive,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.devWeatherChipText,
+                              weatherLabel === preset.label && styles.devWeatherChipTextActive,
+                            ]}
+                          >
+                            {preset.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
                 </>
               )}
             </View>
@@ -707,9 +727,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   devToggleWeather: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginTop: Space.sm,
     paddingVertical: Space.md,
     paddingHorizontal: Space.lg,
@@ -717,5 +734,31 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Color.info,
+  },
+  devWeatherGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Space.xs,
+    marginTop: Space.sm,
+  },
+  devWeatherChip: {
+    paddingHorizontal: Space.sm,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.sm,
+    backgroundColor: Color.white,
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+  },
+  devWeatherChipActive: {
+    backgroundColor: Color.info,
+    borderColor: Color.info,
+  },
+  devWeatherChipText: {
+    fontFamily: Font.medium,
+    fontSize: 11,
+    color: Color.neutral700,
+  },
+  devWeatherChipTextActive: {
+    color: Color.white,
   },
 });

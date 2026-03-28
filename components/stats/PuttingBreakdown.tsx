@@ -11,7 +11,7 @@ type Props = {
 
 const ITEMS: { key: keyof Props; label: string; color: string }[] = [
   { key: "onePuttPct", label: "1-Putt", color: Color.primary },
-  { key: "twoPuttPct", label: "2-Putt", color: Color.info },
+  { key: "twoPuttPct", label: "2-Putt", color: "#6BB87B" },
   { key: "threePuttPlusPct", label: "3-Putt+", color: Color.danger },
 ];
 

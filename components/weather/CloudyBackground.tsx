@@ -30,43 +30,73 @@ type CloudDef = {
 };
 
 function CloudShape({ cx, cy, scale }: { cx: number; cy: number; scale: number }) {
-  // Build cloud from overlapping circles
   const s = scale;
   return (
     <Group>
-      <Circle cx={cx - 40 * s} cy={cy + 5 * s} r={25 * s} color="white" />
-      <Circle cx={cx - 15 * s} cy={cy - 10 * s} r={32 * s} color="white" />
-      <Circle cx={cx + 15 * s} cy={cy - 5 * s} r={28 * s} color="white" />
-      <Circle cx={cx + 40 * s} cy={cy + 5 * s} r={22 * s} color="white" />
-      {/* Base to connect */}
-      <Rect x={cx - 55 * s} y={cy} width={110 * s} height={20 * s} color="white" />
+      {/* Bottom fill circles */}
+      <Circle cx={cx - 30 * s} cy={cy + 8 * s} r={22 * s} color="white" />
+      <Circle cx={cx} cy={cy + 10 * s} r={24 * s} color="white" />
+      <Circle cx={cx + 28 * s} cy={cy + 8 * s} r={20 * s} color="white" />
+      {/* Top puffs */}
+      <Circle cx={cx - 40 * s} cy={cy + 2 * s} r={25 * s} color="white" />
+      <Circle cx={cx - 15 * s} cy={cy - 12 * s} r={32 * s} color="white" />
+      <Circle cx={cx + 15 * s} cy={cy - 6 * s} r={28 * s} color="white" />
+      <Circle cx={cx + 40 * s} cy={cy + 2 * s} r={22 * s} color="white" />
     </Group>
   );
 }
 
+const CLOUD_CANVAS_W = W + 400;
+
 function AnimatedCloud({ cloud }: { cloud: CloudDef }) {
-  const translateX = useSharedValue(0);
+  // Start at a random position so clouds are visible immediately
+  const startX = Math.random() * W;
+  const translateX = useSharedValue(startX);
 
   useEffect(() => {
-    const duration = (W + 200) / cloud.speed * 1000;
-    translateX.value = withRepeat(
-      withTiming(W + 200, { duration, easing: Easing.linear }),
-      -1,
-      false,
-    );
+    // First: animate from start to right edge
+    const firstDuration = ((CLOUD_CANVAS_W - startX) / cloud.speed) * 1000;
+    translateX.value = withTiming(CLOUD_CANVAS_W, {
+      duration: firstDuration,
+      easing: Easing.linear,
+    });
+
+    // Then: loop from left to right
+    const timeout = setTimeout(() => {
+      translateX.value = -200;
+      const loopDuration = ((CLOUD_CANVAS_W + 200) / cloud.speed) * 1000;
+      translateX.value = withRepeat(
+        withTiming(CLOUD_CANVAS_W, { duration: loopDuration, easing: Easing.linear }),
+        -1,
+        false,
+      );
+    }, firstDuration);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value - 100 }],
+    transform: [{ translateX: translateX.value - 200 }],
     opacity: cloud.opacity,
   }));
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, style]}>
-      <Canvas style={StyleSheet.absoluteFill}>
+    <Animated.View
+      style={[
+        {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: CLOUD_CANVAS_W,
+          height: H,
+        },
+        style,
+      ]}
+    >
+      <Canvas style={{ width: CLOUD_CANVAS_W, height: H }}>
         <Group>
           <BlurMask blur={cloud.blur} style="normal" />
-          <CloudShape cx={cloud.x} cy={cloud.y} scale={cloud.scale} />
+          <CloudShape cx={200} cy={cloud.y} scale={cloud.scale} />
         </Group>
       </Canvas>
     </Animated.View>
@@ -76,10 +106,13 @@ function AnimatedCloud({ cloud }: { cloud: CloudDef }) {
 export default function CloudyBackground({ isNight = false }: { isNight?: boolean }) {
   const clouds = useMemo<CloudDef[]>(
     () => [
-      { x: W * 0.3, y: H * 0.06, scale: 1.8, opacity: 0.25, speed: 4, blur: 20 },
-      { x: W * 0.7, y: H * 0.12, scale: 1.4, opacity: 0.3, speed: 6, blur: 15 },
-      { x: W * 0.2, y: H * 0.2, scale: 2.0, opacity: 0.2, speed: 3, blur: 25 },
-      { x: W * 0.6, y: H * 0.28, scale: 1.2, opacity: 0.15, speed: 5, blur: 18 },
+      { x: W * 0.3, y: H * 0.04, scale: 1.8, opacity: 0.35, speed: 10, blur: 20 },
+      { x: W * 0.8, y: H * 0.09, scale: 1.3, opacity: 0.4, speed: 14, blur: 15 },
+      { x: W * 0.1, y: H * 0.15, scale: 2.0, opacity: 0.3, speed: 8, blur: 25 },
+      { x: W * 0.5, y: H * 0.22, scale: 1.5, opacity: 0.32, speed: 12, blur: 18 },
+      { x: W * 0.7, y: H * 0.30, scale: 1.1, opacity: 0.28, speed: 16, blur: 14 },
+      { x: W * 0.4, y: H * 0.37, scale: 1.7, opacity: 0.25, speed: 9, blur: 22 },
+      { x: W * 0.2, y: H * 0.44, scale: 1.3, opacity: 0.22, speed: 11, blur: 20 },
     ],
     [],
   );

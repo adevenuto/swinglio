@@ -18,6 +18,7 @@ export type WeatherData = {
   description: string;
 };
 
+
 const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHERMAP_KEY ?? "";
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 

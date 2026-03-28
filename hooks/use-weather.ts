@@ -56,25 +56,40 @@ export function getDevWeatherOverride(): WeatherCondition | null {
   return devOverrideCondition;
 }
 
+function getOverrideData(): WeatherData | null {
+  if (!devOverrideCondition) return null;
+  return {
+    condition: devOverrideCondition,
+    temp: 55,
+    isNight: devOverrideNight ?? (new Date().getHours() >= 19 || new Date().getHours() < 6),
+    description: `dev override: ${devOverrideCondition}`,
+  };
+}
+
 export function useWeather() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [weather, setWeather] = useState<WeatherData | null>(() => getOverrideData() ?? cachedWeather?.data ?? null);
+  const [isLoading, setIsLoading] = useState(() => !devOverrideCondition && !cachedWeather);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync override on mount (covers navigation between screens)
+  useEffect(() => {
+    const data = getOverrideData();
+    if (data) {
+      setWeather(data);
+      setIsLoading(false);
+    } else if (cachedWeather) {
+      setWeather(cachedWeather.data);
+      setIsLoading(false);
+    }
+  }, []);
 
   // Listen for dev override changes
   useEffect(() => {
     const listener = () => {
-      const override = devOverrideCondition;
-      if (override) {
-        const nightOverride = devOverrideNight;
-        setWeather({
-          condition: override,
-          temp: 55,
-          isNight: nightOverride ?? (new Date().getHours() >= 19 || new Date().getHours() < 6),
-          description: `dev override: ${override}`,
-        });
+      const data = getOverrideData();
+      if (data) {
+        setWeather(data);
       } else {
-        // Re-fetch real weather
         refresh();
       }
     };
@@ -85,6 +100,14 @@ export function useWeather() {
   }, []);
 
   const refresh = useCallback(async () => {
+    // Skip API fetch when dev override is active
+    if (devOverrideCondition) {
+      const data = getOverrideData();
+      if (data) setWeather(data);
+      setIsLoading(false);
+      return;
+    }
+
     // Return cached data if fresh
     if (cachedWeather && Date.now() - cachedWeather.timestamp < CACHE_TTL) {
       setWeather(cachedWeather.data);

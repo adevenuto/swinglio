@@ -221,11 +221,12 @@ function GameplayScreenContent() {
   }
 
   return (
-    <SafeAreaView
-      edges={["top"]}
-      style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg, paddingTop: 20 }}
-    >
+    <View style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg }}>
       <WeatherBackground />
+      <SafeAreaView
+        edges={["top"]}
+        style={{ flex: 1, paddingTop: 20 }}
+      >
       {/* Nav header */}
       <View style={gameStyles.navHeader}>
         <Pressable
@@ -384,7 +385,8 @@ function GameplayScreenContent() {
         }}
         onCancel={() => setShowFinishModal(false)}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

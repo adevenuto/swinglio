@@ -1,5 +1,5 @@
 import RoundCard from "@/components/RoundCard";
-import { Color, Font, Space, Type } from "@/constants/design-tokens";
+import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { RecentRound } from "@/hooks/use-recent-rounds";
 import Feather from "@expo/vector-icons/Feather";
 import React from "react";
@@ -146,7 +146,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Space.md,
+    paddingHorizontal: Space.lg,
     gap: Space.xs,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    marginTop: Space.sm,
   },
   seeAllText: {
     fontFamily: Font.semiBold,

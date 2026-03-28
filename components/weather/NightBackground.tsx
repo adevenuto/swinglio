@@ -108,7 +108,7 @@ export default function NightBackground() {
       "#FFE8D0", // warm amber
     ];
 
-    return Array.from({ length: 30 }, () => ({
+    return Array.from({ length: 45 }, () => ({
       x: Math.random() * W,
       y: Math.random() * H * 0.7, // stars in upper 70%
       size: 1.5 + Math.random() * 2,

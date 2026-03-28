@@ -45,13 +45,19 @@ export default function WeatherScene({ condition, isNight }: Props) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {/* Night gets its own full background */}
-      {isNight && simple !== "rain" && simple !== "snow" ? (
+      {isNight && simple !== "rain" && simple !== "snow" && simple !== "cloudy" ? (
         <NightBackground />
       ) : (
         <>
           {simple === "sunny" && !isNight && <SunnyBackground />}
           {simple === "partly_cloudy" && !isNight && <PartlyCloudyBackground />}
-          {simple === "cloudy" && <CloudyBackground isNight={isNight} />}
+          {simple === "cloudy" && isNight && (
+            <>
+              <NightBackground />
+              <CloudyBackground isNight={true} showSky={false} />
+            </>
+          )}
+          {simple === "cloudy" && !isNight && <CloudyBackground isNight={false} />}
           {simple === "rain" && (
             <RainyBackground isNight={isNight} isThunderstorm={isThunderstorm} />
           )}

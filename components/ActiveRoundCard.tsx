@@ -1,3 +1,4 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import {
   Color,
   Font,
@@ -28,7 +29,7 @@ export default function ActiveRoundCard({ rounds }: Props) {
 
   return (
     <View style={{ marginTop: Space.lg }}>
-      <Text style={styles.sectionLabel}>In Progress</Text>
+      <AdaptiveText style={styles.sectionLabel}>In Progress</AdaptiveText>
       {rounds.map((round) => {
         const teeName = (round.teebox_data as any)?.name;
         const teeLabel = teeName ? `${teeName} tees` : "";

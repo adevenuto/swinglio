@@ -9,6 +9,7 @@ import {
 } from "@shopify/react-native-skia";
 import React, { useEffect, useMemo, useRef } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
+import CloudyBackground from "./CloudyBackground";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -186,6 +187,9 @@ export default function RainyBackground({
           />
         </Rect>
       </Canvas>
+
+      {/* Clouds */}
+      <CloudyBackground isNight={isNight} showSky={false} />
 
       {/* Rain streaks */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">

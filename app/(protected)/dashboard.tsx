@@ -1,7 +1,9 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import GradientButton from "@/components/GradientButton";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
 import RoundListSection from "@/components/RoundListSection";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
+import WeatherBackground from "@/components/WeatherBackground";
 import {
   Color,
   Font,
@@ -12,14 +14,14 @@ import {
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
-
-const PRO_STAT_KEYS = new Set(["handicap", "fwy-pct", "avg-18", "avg-9", "avg-putts"]);
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
 import { useRoundStats } from "@/hooks/use-round-stats";
+import { formatDisplayDate } from "@/lib/date-utils";
 import { formatHandicapIndex } from "@/lib/handicap";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -29,11 +31,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Text } from "react-native-paper";
-import GradientButton from "@/components/GradientButton";
-import WeatherBackground from "@/components/WeatherBackground";
-import { formatDisplayDate } from "@/lib/date-utils";
-import { LinearGradient } from "expo-linear-gradient";
+import AdaptiveText from "@/components/AdaptiveText";
+import { Text } from "react-native-paper";
+
+const PRO_STAT_KEYS = new Set([
+  "handicap",
+  "fwy-pct",
+  "avg-18",
+  "avg-9",
+  "avg-putts",
+]);
 
 export default function Dashboard() {
   const { user, avatarUrl, refreshUser } = useAuth();
@@ -185,17 +192,16 @@ export default function Dashboard() {
         : locked("avg-putts", "Avg Putts"),
     ];
   }, [
-      totalRounds,
-      handicapResult,
-      bestToPar,
-      avg18,
-      avg9,
-      avgPutts,
-      attPct,
-      fairwayPct,
-      isPro,
-    ],
-  );
+    totalRounds,
+    handicapResult,
+    bestToPar,
+    avg18,
+    avg9,
+    avgPutts,
+    attPct,
+    fairwayPct,
+    isPro,
+  ]);
 
   return (
     <View style={[styles.screen, isPro && { backgroundColor: "transparent" }]}>
@@ -239,7 +245,7 @@ export default function Dashboard() {
             {/* Attestation Requests */}
             {attestNeededRounds.length > 0 && (
               <View style={{ marginTop: Space.xl }}>
-                <Text style={styles.sectionLabel}>Review & Attest</Text>
+                <AdaptiveText style={styles.sectionLabel}>Review & Attest</AdaptiveText>
                 {attestNeededRounds.map((round) => (
                   <TouchableOpacity
                     key={round.id}
@@ -257,7 +263,8 @@ export default function Dashboard() {
                           {round.courses?.club_name || "Unknown Course"}
                         </Text>
                         {round.courses?.course_name &&
-                          round.courses.course_name !== round.courses.club_name && (
+                          round.courses.course_name !==
+                            round.courses.club_name && (
                             <Text style={styles.cardSubtitle}>
                               - {round.courses.course_name}
                             </Text>

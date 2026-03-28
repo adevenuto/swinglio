@@ -32,6 +32,7 @@ import {
   View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import AdaptiveText from "@/components/AdaptiveText";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
 import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -236,12 +237,7 @@ function GameplayScreenContent() {
           }}
           style={gameStyles.navBack}
         >
-          <MaterialIcons
-            name="chevron-left"
-            size={28}
-            color={Color.neutral900}
-          />
-          <Text style={gameStyles.navBackText}>Dashboard</Text>
+          <AdaptiveText style={gameStyles.navBackText}>{"\u2039"} Dashboard</AdaptiveText>
         </Pressable>
       </View>
 

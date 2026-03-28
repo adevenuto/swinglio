@@ -1,3 +1,4 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Font, Space } from "@/constants/design-tokens";
 import React from "react";
@@ -98,7 +99,7 @@ export default function StatsStrip({ items, avatarUrl, onAvatarPress, onItemPres
                 </View>
               )}
             </View>
-            <Text style={styles.label}>{item.label}</Text>
+            <AdaptiveText style={styles.label}>{item.label}</AdaptiveText>
           </>
         );
 

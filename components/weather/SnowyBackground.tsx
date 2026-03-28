@@ -8,6 +8,7 @@ import {
 } from "@shopify/react-native-skia";
 import React, { useMemo } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
+import CloudyBackground from "./CloudyBackground";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -152,6 +153,9 @@ export default function SnowyBackground({ isNight = false }: { isNight?: boolean
           />
         </Rect>
       </Canvas>
+
+      {/* Clouds */}
+      <CloudyBackground isNight={isNight} showSky={false} />
 
       {/* Snowflakes */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">

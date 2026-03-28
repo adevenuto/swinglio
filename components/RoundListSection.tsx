@@ -1,3 +1,4 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import RoundCard from "@/components/RoundCard";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { RecentRound } from "@/hooks/use-recent-rounds";
@@ -30,7 +31,7 @@ export default function RoundListSection({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionLabel}>{title}</Text>
+      <AdaptiveText style={styles.sectionLabel}>{title}</AdaptiveText>
 
       {showLegend && (
         <View style={styles.legendRow}>
@@ -38,19 +39,19 @@ export default function RoundListSection({
             <View
               style={[styles.legendDot, { backgroundColor: Color.primary }]}
             />
-            <Text style={styles.legendText}>under par</Text>
+            <AdaptiveText style={styles.legendText}>under par</AdaptiveText>
           </View>
           <View style={styles.legendItem}>
             <View
               style={[styles.legendDot, { backgroundColor: Color.warning }]}
             />
-            <Text style={styles.legendText}>over par</Text>
+            <AdaptiveText style={styles.legendText}>over par</AdaptiveText>
           </View>
           <View style={styles.legendItem}>
             <View
               style={[styles.legendDot, { backgroundColor: Color.neutral400 }]}
             />
-            <Text style={styles.legendText}>even</Text>
+            <AdaptiveText style={styles.legendText}>even</AdaptiveText>
           </View>
         </View>
       )}

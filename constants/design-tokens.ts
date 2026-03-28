@@ -93,7 +93,11 @@ export const Color = {
   info: "#2563EB",
 
   // Gradient
-  primaryGradient: ["#1A7A4A", "#15603A", "#0F4D2E"] as readonly [string, string, string],
+  primaryGradient: ["#1A7A4A", "#15603A", "#0F4D2E"] as readonly [
+    string,
+    string,
+    string,
+  ],
 } as const;
 
 // === Typography ===
@@ -145,7 +149,7 @@ export const Type = {
     fontFamily: Font.semiBold,
     fontSize: 13,
     lineHeight: 16,
-    color: Color.neutral500,
+    color: Color.neutral900,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   } as TextStyle,

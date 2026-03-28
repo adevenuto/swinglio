@@ -103,7 +103,7 @@ function AnimatedCloud({ cloud }: { cloud: CloudDef }) {
   );
 }
 
-export default function CloudyBackground({ isNight = false }: { isNight?: boolean }) {
+export default function CloudyBackground({ isNight = false, showSky = true }: { isNight?: boolean; showSky?: boolean }) {
   const clouds = useMemo<CloudDef[]>(
     () => [
       { x: W * 0.3, y: H * 0.04, scale: 1.8, opacity: 0.35, speed: 10, blur: 20 },
@@ -124,15 +124,17 @@ export default function CloudyBackground({ isNight = false }: { isNight?: boolea
   return (
     <>
       {/* Overcast sky */}
-      <Canvas style={StyleSheet.absoluteFill}>
-        <Rect x={0} y={0} width={W} height={H}>
-          <LinearGradient
-            start={vec(0, 0)}
-            end={vec(0, H)}
-            colors={skyColors}
-          />
-        </Rect>
-      </Canvas>
+      {showSky && (
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Rect x={0} y={0} width={W} height={H}>
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, H)}
+              colors={skyColors}
+            />
+          </Rect>
+        </Canvas>
+      )}
 
       {/* Animated cloud layers */}
       {clouds.map((cloud, i) => (

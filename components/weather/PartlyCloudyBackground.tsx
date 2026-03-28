@@ -11,10 +11,8 @@ export default function PartlyCloudyBackground() {
   return (
     <View style={StyleSheet.absoluteFill}>
       <SunnyBackground />
-      {/* Fewer, more transparent clouds layered on the sunny sky */}
-      <View style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}>
-        <CloudyBackground isNight={false} />
-      </View>
+      {/* Same clouds as cloudy, layered on the sunny sky (no gray gradient) */}
+      <CloudyBackground isNight={false} showSky={false} />
     </View>
   );
 }

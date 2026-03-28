@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { DistanceUnit, usePreferences } from "@/contexts/preferences-context";
@@ -238,19 +239,12 @@ export default function SettingsScreen() {
                         onChangeText={setConfirmPassword}
                         autoCapitalize="none"
                       />
-                      <Pressable
+                      <GradientButton
                         onPress={handleChangePassword}
+                        label="Save"
+                        loading={passwordLoading}
                         disabled={passwordLoading}
-                        style={({ pressed }) => [
-                          styles.saveBtn,
-                          pressed && { opacity: 0.7 },
-                          passwordLoading && { opacity: 0.7 },
-                        ]}
-                      >
-                        <Text style={styles.saveBtnText}>
-                          {passwordLoading ? "Saving..." : "Save"}
-                        </Text>
-                      </Pressable>
+                      />
                     </View>
                   )}
 

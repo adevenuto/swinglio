@@ -11,7 +11,7 @@ type Props = {
 
 const ITEMS: { key: keyof Props; label: string; color: string }[] = [
   { key: "onePuttPct", label: "1-Putt", color: Color.primary },
-  { key: "twoPuttPct", label: "2-Putt", color: Color.neutral400 },
+  { key: "twoPuttPct", label: "2-Putt", color: Color.info },
   { key: "threePuttPlusPct", label: "3-Putt+", color: Color.danger },
 ];
 
@@ -27,7 +27,7 @@ export default function PuttingBreakdown(props: Props) {
               <View
                 style={[
                   styles.barFill,
-                  { height: `${Math.max(pct, 2)}%`, backgroundColor: color },
+                  { height: pct > 0 ? `${pct}%` : 0, backgroundColor: color },
                 ]}
               />
             </View>

@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import GreenCenterPicker from "@/components/GreenCenterPicker";
 import {
   Btn,
@@ -1133,18 +1134,13 @@ export default function CourseEditorScreen() {
             Cancel
           </Button>
 
-          <Button
-            mode="contained"
-            buttonColor={Color.primary}
-            textColor={Color.white}
+          <GradientButton
             onPress={handleSave}
+            label={isEdit ? "Save" : "Create"}
             loading={isSaving}
             disabled={isSaving}
             style={styles.footerBtnPrimary}
-            labelStyle={{ fontFamily: Font.bold }}
-          >
-            {isEdit ? "Save" : "Create"}
-          </Button>
+          />
         </View>
       </View>
 

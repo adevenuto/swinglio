@@ -452,7 +452,7 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
 
         {/* Shadow overlay on fixed column edge */}
         <LinearGradient
-          colors={["rgba(0,0,0,.3)", "transparent"]}
+          colors={["rgba(11, 50, 1, 0.2)", "transparent"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.shadowOverlay}

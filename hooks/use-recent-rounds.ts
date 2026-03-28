@@ -18,6 +18,7 @@ export type RecentRound = {
   score_to_par: number | null;
   holes_completed: number | null;
   hole_count: number | null;
+  needsAttestation: boolean;
 };
 
 export function useRecentRounds(userId: string, limit?: number) {
@@ -72,7 +73,37 @@ export function useRecentRounds(userId: string, limit?: number) {
     const { data } = await query;
 
     if (data) {
-      // Step 3: merge + compute score_to_par
+      // Step 3: check attestation status
+      // Fetch user's attestations and player counts for these rounds
+      const fetchedRoundIds = data.map((r: any) => r.id);
+
+      const [{ data: userAttestations }, { data: allScoresForRounds }] =
+        await Promise.all([
+          supabase
+            .from("attestations")
+            .select("round_id")
+            .eq("attester_id", userId)
+            .in("round_id", fetchedRoundIds),
+          supabase
+            .from("scores")
+            .select("round_id, player_status")
+            .in("round_id", fetchedRoundIds),
+        ]);
+
+      const attestedSet = new Set(
+        (userAttestations || []).map((a: any) => Number(a.round_id)),
+      );
+
+      // Count eligible players per round (exclude withdrew)
+      const playerCounts: Record<number, number> = {};
+      for (const s of allScoresForRounds || []) {
+        if (s.player_status !== "withdrew") {
+          const rid = Number(s.round_id);
+          playerCounts[rid] = (playerCounts[rid] || 0) + 1;
+        }
+      }
+
+      // Step 4: merge + compute score_to_par
       const enriched: RecentRound[] = data.map((round: any) => {
         const scoreRow = scoreMap.get(round.id);
         let scoreToPar: number | null = null;
@@ -106,6 +137,9 @@ export function useRecentRounds(userId: string, limit?: number) {
           score_to_par: scoreToPar,
           holes_completed: holesCompleted,
           hole_count: holeCount,
+          needsAttestation:
+            (playerCounts[Number(round.id)] || 0) > 1 &&
+            !attestedSet.has(Number(round.id)),
         };
       });
 

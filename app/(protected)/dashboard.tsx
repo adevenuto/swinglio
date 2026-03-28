@@ -17,7 +17,6 @@ const PRO_STAT_KEYS = new Set(["handicap", "fwy-pct", "avg-18", "avg-9", "avg-pu
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
-import { usePendingAttestations } from "@/hooks/use-pending-attestations";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
 import { useRoundStats } from "@/hooks/use-round-stats";
 import { formatHandicapIndex } from "@/lib/handicap";
@@ -33,6 +32,7 @@ import {
 import { Button, Text } from "react-native-paper";
 import GradientButton from "@/components/GradientButton";
 import { formatDisplayDate } from "@/lib/date-utils";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Dashboard() {
   const { user, avatarUrl, refreshUser } = useAuth();
@@ -44,9 +44,6 @@ export default function Dashboard() {
     user?.id ?? "",
   );
   const { recentRounds, refresh: refreshRecent } = useRecentRounds(
-    user?.id ?? "",
-  );
-  const { pendingRounds, refresh: refreshPending } = usePendingAttestations(
     user?.id ?? "",
   );
   const { percentage: attPct, refresh: refreshAttStats } = useAttestationStats(
@@ -70,14 +67,12 @@ export default function Dashboard() {
       refreshRoundStats();
       refreshRounds();
       refreshRecent();
-      refreshPending();
       refreshAttStats();
       refreshHandicap();
     }, [
       refreshRoundStats,
       refreshRounds,
       refreshRecent,
-      refreshPending,
       refreshAttStats,
       refreshHandicap,
     ]),
@@ -90,7 +85,6 @@ export default function Dashboard() {
       refreshRoundStats(),
       refreshRounds(),
       refreshRecent(),
-      refreshPending(),
       refreshAttStats(),
       refreshHandicap(),
     ]);
@@ -100,17 +94,23 @@ export default function Dashboard() {
     refreshRoundStats,
     refreshRounds,
     refreshRecent,
-    refreshPending,
     refreshAttStats,
     refreshHandicap,
   ]);
 
+  const attestNeededRounds = useMemo(
+    () => recentRounds.filter((r) => r.needsAttestation),
+    [recentRounds],
+  );
   const incompleteRounds = useMemo(
     () => recentRounds.filter((r) => r.player_status === "incomplete"),
     [recentRounds],
   );
   const completedRounds = useMemo(
-    () => recentRounds.filter((r) => r.player_status === "completed"),
+    () =>
+      recentRounds.filter(
+        (r) => r.player_status === "completed" && !r.needsAttestation,
+      ),
     [recentRounds],
   );
 
@@ -235,44 +235,58 @@ export default function Dashboard() {
             <ActiveRoundCard rounds={activeRounds} />
 
             {/* Attestation Requests */}
-            {pendingRounds.length > 0 && (
+            {attestNeededRounds.length > 0 && (
               <View style={{ marginTop: Space.xl }}>
                 <Text style={styles.sectionLabel}>Review & Attest</Text>
-                {pendingRounds.map((pr) => (
+                {attestNeededRounds.map((round) => (
                   <TouchableOpacity
-                    key={pr.round_id}
+                    key={round.id}
                     onPress={() =>
                       router.push({
                         pathname: "/round-summary",
-                        params: { roundId: pr.round_id },
+                        params: { roundId: round.id },
                       })
                     }
                     style={styles.card}
                   >
                     <View style={styles.cardRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.courseName}>{pr.course_name}</Text>
-                        {pr.course_name_sub ? (
-                          <Text style={styles.cardSubtitle}>
-                            - {pr.course_name_sub}
-                          </Text>
-                        ) : null}
+                        <Text style={styles.courseName}>
+                          {round.courses?.club_name || "Unknown Course"}
+                        </Text>
+                        {round.courses?.course_name &&
+                          round.courses.course_name !== round.courses.club_name && (
+                            <Text style={styles.cardSubtitle}>
+                              - {round.courses.course_name}
+                            </Text>
+                          )}
                       </View>
-                      <Button
-                        mode="contained"
-                        buttonColor={Color.primary}
-                        textColor={Color.white}
-                        compact
-                        style={{ borderRadius: Radius.lg }}
-                        labelStyle={{ fontFamily: Font.semiBold, fontSize: 12 }}
+                      <LinearGradient
+                        colors={Color.primaryGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                          borderRadius: Radius.lg,
+                          paddingHorizontal: Space.lg,
+                          paddingVertical: Space.sm,
+                        }}
                       >
-                        Review
-                      </Button>
+                        <Text
+                          style={{
+                            fontFamily: Font.semiBold,
+                            fontSize: 12,
+                            color: Color.white,
+                          }}
+                        >
+                          Review
+                        </Text>
+                      </LinearGradient>
                     </View>
                     <Text style={styles.cardSubtitle}>
-                      {pr.player_count} players
-                      {" \u00B7 "}
-                      {formatDisplayDate(pr.completed_at)}
+                      {(round.teebox_data as any)?.name
+                        ? `${(round.teebox_data as any).name} Tees \u00B7 `
+                        : ""}
+                      {formatDisplayDate(round.display_date)}
                     </Text>
                   </TouchableOpacity>
                 ))}

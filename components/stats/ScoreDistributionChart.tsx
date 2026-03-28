@@ -31,7 +31,7 @@ export default function ScoreDistributionChart({ distribution }: Props) {
               <View
                 style={[
                   styles.barFill,
-                  { width: `${Math.max(barWidth, 2)}%`, backgroundColor: color },
+                  { width: pct > 0 ? `${Math.max(barWidth, 2)}%` : 0, backgroundColor: color },
                 ]}
               />
             </View>

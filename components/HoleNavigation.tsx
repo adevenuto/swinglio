@@ -1,9 +1,9 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
+import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Button, Text } from "react-native-paper";
-import Feather from "@expo/vector-icons/Feather";
 
 type HoleNavigationProps = {
   holeNumber: number;
@@ -38,22 +38,24 @@ export default function HoleNavigation({
 
   return (
     <View style={styles.navRow}>
-      <Button
-        mode="outlined"
-        onPress={handlePrev}
-        disabled={holeNumber <= 1}
-        icon="chevron-left"
-        style={styles.prevButton}
-        textColor={Color.neutral900}
-        labelStyle={{ fontFamily: Font.medium }}
-      >
-        Prev
-      </Button>
+      {!isLastHole && (
+        <Button
+          mode="outlined"
+          onPress={handlePrev}
+          disabled={holeNumber <= 1}
+          icon="chevron-left"
+          style={styles.prevButton}
+          textColor={Color.neutral900}
+          labelStyle={{ fontFamily: Font.medium }}
+        >
+          Prev
+        </Button>
+      )}
       <Pressable
         onPress={handleNext}
         disabled={isLastHole && !onFinish}
         style={({ pressed }) => [
-          styles.nextButton,
+          isLastHole ? styles.finishButton : styles.nextButton,
           (pressed || (isLastHole && !onFinish)) && { opacity: 0.7 },
         ]}
       >
@@ -61,16 +63,20 @@ export default function HoleNavigation({
           colors={Color.primaryGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.nextGradient}
+          style={isLastHole ? styles.finishGradient : styles.nextGradient}
         >
-          <Text style={styles.nextLabel}>
+          <Feather
+            name="flag"
+            size={isLastHole ? 22 : 18}
+            color={isLastHole ? Color.accent : Color.white}
+            style={!isLastHole && { display: "none" }}
+          />
+          <Text style={[styles.nextLabel, isLastHole && styles.finishLabel]}>
             {isLastHole ? "Finish Round" : "Next Hole"}
           </Text>
-          <Feather
-            name={isLastHole ? "flag" : "chevron-right"}
-            size={18}
-            color={Color.white}
-          />
+          {!isLastHole && (
+            <Feather name="chevron-right" size={18} color={Color.white} />
+          )}
         </LinearGradient>
       </Pressable>
     </View>
@@ -87,10 +93,10 @@ const styles = StyleSheet.create({
     borderColor: Color.neutral300,
     borderRadius: Radius.lg,
     padding: 5,
-    flex: 1,
+    flex: 2,
   },
   nextButton: {
-    flex: 1,
+    flex: 3,
     borderRadius: Radius.lg,
     overflow: "hidden",
     ...Shadow.sm,
@@ -107,5 +113,26 @@ const styles = StyleSheet.create({
     fontFamily: Font.bold,
     fontSize: 14,
     color: Color.white,
+  },
+
+  // Finish Round — full-width takeover
+  finishButton: {
+    flex: 1,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Color.accent,
+    overflow: "hidden",
+    ...Shadow.lg,
+  },
+  finishGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space.md,
+    paddingVertical: Space.lg,
+    borderRadius: Radius.lg - 2,
+  },
+  finishLabel: {
+    fontSize: 17,
   },
 });

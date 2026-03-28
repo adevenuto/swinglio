@@ -12,6 +12,7 @@ import {
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestations } from "@/hooks/use-attestations";
+import GradientButton from "@/components/GradientButton";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
@@ -414,17 +415,10 @@ export default function RoundSummaryScreen() {
                 You scored {myResult?.holes_completed ?? 0} of{" "}
                 {myResult?.hole_count ?? 0} holes.
               </Text>
-              <Button
-                mode="contained"
-                buttonColor={Color.primary}
-                textColor={Color.white}
-                style={s.attestButton}
+              <GradientButton
                 onPress={handleContinueRound}
-                icon="play"
-                labelStyle={{ fontFamily: Font.bold }}
-              >
-                Continue Round
-              </Button>
+                label="Continue Round"
+              />
             </View>
           </View>
         )}
@@ -451,17 +445,10 @@ export default function RoundSummaryScreen() {
                     <Text style={s.attestedText}>Attested</Text>
                   </View>
                 ) : (
-                  <Button
-                    mode="contained"
-                    buttonColor={Color.primary}
-                    textColor={Color.white}
-                    style={s.attestButton}
+                  <GradientButton
                     onPress={handleAttest}
-                    icon="check-bold"
-                    labelStyle={{ fontFamily: Font.bold }}
-                  >
-                    Attest Scores
-                  </Button>
+                    label="Attest Scores"
+                  />
                 )}
               </View>
             </View>

@@ -21,7 +21,7 @@ type StepperProps = {
 
 const SIZE_CONFIG = {
   lg: {
-    buttonSize: 38,
+    buttonSize: 40,
     iconSize: 24,
     valueFontFamily: Font.bold,
     valueFontSize: 26,
@@ -88,7 +88,11 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <MaterialCommunityIcons name="minus-thick" size={config.iconSize} color={Color.white} />
+            <MaterialCommunityIcons
+              name="minus-thick"
+              size={config.iconSize}
+              color={Color.white}
+            />
           </View>
         </Pressable>
         {valueElement}
@@ -98,7 +102,11 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <MaterialCommunityIcons name="plus-thick" size={config.iconSize} color={Color.white} />
+            <MaterialCommunityIcons
+              name="plus-thick"
+              size={config.iconSize}
+              color={Color.white}
+            />
           </View>
         </Pressable>
       </View>
@@ -114,7 +122,11 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <MaterialCommunityIcons name="plus-thick" size={config.iconSize} color={Color.white} />
+          <MaterialCommunityIcons
+            name="plus-thick"
+            size={config.iconSize}
+            color={Color.white}
+          />
         </View>
       </Pressable>
       {valueElement}
@@ -124,7 +136,11 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <MaterialCommunityIcons name="minus-thick" size={config.iconSize} color={Color.white} />
+          <MaterialCommunityIcons
+            name="minus-thick"
+            size={config.iconSize}
+            color={Color.white}
+          />
         </View>
       </Pressable>
     </View>
@@ -173,7 +189,7 @@ const verticalStyles = StyleSheet.create({
     gap: Space.sm,
     width: 70,
     alignSelf: "stretch",
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Color.neutral300,
     backgroundColor: Color.white,

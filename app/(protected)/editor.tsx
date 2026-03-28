@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import {
   Btn,
   Color,
@@ -59,16 +60,10 @@ export default function EditorScreen() {
           <Text style={styles.cardSubtitle}>
             Add a course that doesn't exist yet
           </Text>
-          <Button
-            mode="contained"
-            buttonColor={Color.primary}
-            textColor={Color.white}
+          <GradientButton
             onPress={() => router.push("/course-editor")}
-            style={Btn.pill}
-            labelStyle={{ fontFamily: Font.bold }}
-          >
-            Create Course
-          </Button>
+            label="Create Course"
+          />
         </View>
 
         {/* Edit Section */}

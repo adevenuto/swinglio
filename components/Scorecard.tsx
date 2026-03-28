@@ -39,7 +39,13 @@ const FALLBACK_TEEBOX_COLOR = "#677079";
 const HIGHLIGHT_BG = Color.neutral50;
 const HIGHLIGHT_BORDER = Color.neutral300;
 const SYMBOL_SIZE = 28;
-const SYMBOL_COLOR = Color.neutral900;
+const SCORE_COLORS = {
+  eagle: "#F59E0B",       // gold — eagles and better
+  birdie: Color.primary,  // green — birdies
+  par: Color.neutral700,  // neutral — par
+  bogey: Color.danger,    // red — bogeys (matches summary over-par color)
+  double: Color.danger,   // red — double bogey and worse
+};
 
 // --- Column definitions ---
 
@@ -217,16 +223,22 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
       let inner: React.ReactNode;
 
       if (diff === 0) {
-        inner = <Text style={styles.cellText}>{score}</Text>;
+        inner = (
+          <Text style={[styles.cellText, { color: SCORE_COLORS.par }]}>
+            {score}
+          </Text>
+        );
       } else if (diff === -1) {
         inner = (
-          <View style={symbolStyles.circle}>
-            <Text style={styles.cellText}>{score}</Text>
+          <View style={[symbolStyles.circle, { borderColor: SCORE_COLORS.birdie }]}>
+            <Text style={[styles.cellText, { color: SCORE_COLORS.birdie }]}>
+              {score}
+            </Text>
           </View>
         );
       } else if (diff === -2) {
         inner = (
-          <View style={symbolStyles.circleSolid}>
+          <View style={[symbolStyles.circleSolid, { backgroundColor: SCORE_COLORS.eagle }]}>
             <Text style={[styles.cellText, { color: Color.white }]}>
               {score}
             </Text>
@@ -234,8 +246,8 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         );
       } else if (diff <= -3) {
         inner = (
-          <View style={symbolStyles.circleFrame}>
-            <View style={symbolStyles.circleSolid}>
+          <View style={[symbolStyles.circleFrame, { borderColor: SCORE_COLORS.eagle }]}>
+            <View style={[symbolStyles.circleSolid, { backgroundColor: SCORE_COLORS.eagle }]}>
               <Text style={[styles.cellText, { color: Color.white }]}>
                 {score}
               </Text>
@@ -244,13 +256,15 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         );
       } else if (diff === 1) {
         inner = (
-          <View style={symbolStyles.square}>
-            <Text style={styles.cellText}>{score}</Text>
+          <View style={[symbolStyles.square, { borderColor: SCORE_COLORS.bogey }]}>
+            <Text style={[styles.cellText, { color: SCORE_COLORS.bogey }]}>
+              {score}
+            </Text>
           </View>
         );
       } else if (diff === 2) {
         inner = (
-          <View style={symbolStyles.squareSolid}>
+          <View style={[symbolStyles.squareSolid, { backgroundColor: SCORE_COLORS.double }]}>
             <Text style={[styles.cellText, { color: Color.white }]}>
               {score}
             </Text>
@@ -258,8 +272,8 @@ const Scorecard = forwardRef<ScorecardRef, ScorecardProps>(
         );
       } else {
         inner = (
-          <View style={symbolStyles.squareFrame}>
-            <View style={symbolStyles.squareSolid}>
+          <View style={[symbolStyles.squareFrame, { borderColor: SCORE_COLORS.double }]}>
+            <View style={[symbolStyles.squareSolid, { backgroundColor: SCORE_COLORS.double }]}>
               <Text style={[styles.cellText, { color: Color.white }]}>
                 {score}
               </Text>
@@ -558,7 +572,7 @@ const symbolStyles = StyleSheet.create({
     height: SYMBOL_SIZE,
     borderRadius: SYMBOL_SIZE / 2,
     borderWidth: 2,
-    borderColor: SYMBOL_COLOR,
+    borderColor: Color.neutral900,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -566,13 +580,13 @@ const symbolStyles = StyleSheet.create({
     width: SYMBOL_SIZE,
     height: SYMBOL_SIZE,
     borderRadius: SYMBOL_SIZE / 2,
-    backgroundColor: SYMBOL_COLOR,
+    backgroundColor: Color.neutral900,
     justifyContent: "center",
     alignItems: "center",
   },
   circleFrame: {
     borderWidth: 2,
-    borderColor: SYMBOL_COLOR,
+    borderColor: Color.neutral900,
     borderRadius: (SYMBOL_SIZE + 8) / 2,
     padding: 2,
   },
@@ -580,20 +594,20 @@ const symbolStyles = StyleSheet.create({
     width: SYMBOL_SIZE,
     height: SYMBOL_SIZE,
     borderWidth: 2,
-    borderColor: SYMBOL_COLOR,
+    borderColor: Color.neutral900,
     justifyContent: "center",
     alignItems: "center",
   },
   squareSolid: {
     width: SYMBOL_SIZE,
     height: SYMBOL_SIZE,
-    backgroundColor: SYMBOL_COLOR,
+    backgroundColor: Color.neutral900,
     justifyContent: "center",
     alignItems: "center",
   },
   squareFrame: {
     borderWidth: 2,
-    borderColor: SYMBOL_COLOR,
+    borderColor: Color.neutral900,
     padding: 2,
   },
 });

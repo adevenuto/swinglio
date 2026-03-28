@@ -19,6 +19,12 @@ export type RecentRound = {
   holes_completed: number | null;
   hole_count: number | null;
   needsAttestation: boolean;
+  players: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  }[];
 };
 
 export function useRecentRounds(userId: string, limit?: number) {
@@ -86,7 +92,7 @@ export function useRecentRounds(userId: string, limit?: number) {
             .in("round_id", fetchedRoundIds),
           supabase
             .from("scores")
-            .select("round_id, player_status")
+            .select("round_id, golfer_id, player_status, profiles(first_name, last_name, avatar_url)")
             .in("round_id", fetchedRoundIds),
         ]);
 
@@ -94,13 +100,23 @@ export function useRecentRounds(userId: string, limit?: number) {
         (userAttestations || []).map((a: any) => Number(a.round_id)),
       );
 
-      // Count eligible players per round (exclude withdrew)
+      // Count eligible players per round (exclude withdrew) + build player profiles map
       const playerCounts: Record<number, number> = {};
+      const roundPlayersMap: Record<number, RecentRound["players"]> = {};
       for (const s of allScoresForRounds || []) {
+        const rid = Number(s.round_id);
         if (s.player_status !== "withdrew") {
-          const rid = Number(s.round_id);
           playerCounts[rid] = (playerCounts[rid] || 0) + 1;
         }
+        // Build player list for each round
+        const profile = (s as any).profiles;
+        if (!roundPlayersMap[rid]) roundPlayersMap[rid] = [];
+        roundPlayersMap[rid].push({
+          id: s.golfer_id as string,
+          firstName: profile?.first_name ?? null,
+          lastName: profile?.last_name ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+        });
       }
 
       // Step 4: merge + compute score_to_par
@@ -140,6 +156,7 @@ export function useRecentRounds(userId: string, limit?: number) {
           needsAttestation:
             (playerCounts[Number(round.id)] || 0) > 1 &&
             !attestedSet.has(Number(round.id)),
+          players: roundPlayersMap[Number(round.id)] ?? [],
         };
       });
 

@@ -77,6 +77,7 @@ export default function RoundListSection({
             scoreToPar={round.score_to_par}
             holesCompleted={round.holes_completed}
             holeCount={round.hole_count}
+            players={round.players}
             onPress={() => onRoundPress(round.id)}
           />
         ))

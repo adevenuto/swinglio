@@ -334,6 +334,7 @@ export default function Profile() {
                 <UserAvatar
                   avatarUrl={avatarUrl}
                   firstName={firstName}
+                  lastName={lastName}
                   size={110}
                 />
               </View>

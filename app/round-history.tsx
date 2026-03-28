@@ -52,6 +52,7 @@ export default function RoundHistoryScreen() {
         scoreToPar={item.score_to_par}
         holesCompleted={item.holes_completed}
         holeCount={item.hole_count}
+        players={item.players}
         onPress={() =>
           router.push({
             pathname: "/round-summary",

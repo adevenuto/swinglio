@@ -1,3 +1,4 @@
+import PlayerAvatarRow, { PlayerAvatarInfo } from "@/components/PlayerAvatarRow";
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { formatDisplayDate } from "@/lib/date-utils";
 import Feather from "@expo/vector-icons/Feather";
@@ -17,6 +18,7 @@ type RoundCardProps = {
   scoreToPar?: number | null;
   holesCompleted?: number | null;
   holeCount?: number | null;
+  players?: PlayerAvatarInfo[];
   onPress: () => void;
 };
 
@@ -35,6 +37,7 @@ export default function RoundCard({
   scoreToPar,
   holesCompleted,
   holeCount,
+  players,
   onPress,
 }: RoundCardProps) {
   const teeLabel = teeboxName ? `${teeboxName} tees` : "";
@@ -66,7 +69,14 @@ export default function RoundCard({
           {hasBadge && <View style={styles.badgeSpacer} />}
         </View>
 
-        {/* Row 2: tees · date | score + holes */}
+        {/* Row 2: player avatars */}
+        {players && players.length > 0 && (
+          <View style={styles.avatarRow}>
+            <PlayerAvatarRow players={players} size={24} overlap={6} />
+          </View>
+        )}
+
+        {/* Row 3: tees · date | score + holes */}
         <View style={styles.cardBottomRow}>
           <Text style={styles.cardSubtitle}>{subtitle}</Text>
           <View style={styles.scoreContainer}>
@@ -97,6 +107,7 @@ export default function RoundCard({
             )}
           </View>
         </View>
+
       </Pressable>
 
       {/* Badge overlay — outside the Pressable so Tooltip long-press works */}
@@ -157,6 +168,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Color.neutral500,
     marginTop: 2,
+  },
+  avatarRow: {
+    marginTop: Space.sm,
   },
   cardBottomRow: {
     flexDirection: "row",

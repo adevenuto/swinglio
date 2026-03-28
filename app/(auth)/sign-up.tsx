@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -135,17 +136,12 @@ export default function SignUp() {
               />
             </View>
 
-            <Pressable
-              style={[styles.verifyButton, loading && { opacity: 0.7 }]}
+            <GradientButton
               onPress={handleVerifyCode}
+              label="Verify Code"
+              loading={loading}
               disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={Color.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Verify Code</Text>
-              )}
-            </Pressable>
+            />
 
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>Didn't get the email? </Text>
@@ -242,17 +238,12 @@ export default function SignUp() {
             />
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+          <GradientButton
             onPress={handleSignUp}
+            label="Sign Up"
+            loading={loading}
             disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Sign Up</Text>
-            )}
-          </Pressable>
+          />
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />

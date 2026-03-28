@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -191,21 +192,12 @@ export default function OnboardingScreen({ onComplete }: Props) {
           </View>
 
           {/* Continue Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.continueBtn,
-              !canContinue && styles.continueBtnDisabled,
-              pressed && canContinue ? { opacity: 0.7 } : undefined,
-            ]}
+          <GradientButton
             onPress={handleContinue}
+            label="Continue"
+            loading={saving}
             disabled={!canContinue || saving}
-          >
-            {saving ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.continueText}>Continue</Text>
-            )}
-          </Pressable>
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

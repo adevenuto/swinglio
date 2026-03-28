@@ -11,6 +11,7 @@ export const profiles = pgTable('profiles', {
   birthday: date('birthday'),
   gender: varchar('gender', { length: 20 }),
   role: varchar('role', { length: 50 }).default('user'),
+  subscriptionTier: varchar('subscription_tier', { length: 20 }).default('free'),
   handicapIndex: doublePrecision('handicap_index'),
   handicapUpdatedAt: timestamp('handicap_updated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

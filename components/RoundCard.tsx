@@ -1,4 +1,5 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
+import { formatDisplayDate } from "@/lib/date-utils";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
@@ -19,11 +20,6 @@ type RoundCardProps = {
   onPress: () => void;
 };
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function formatToPar(toPar: number): string {
   if (toPar === 0) return "E";
   return toPar > 0 ? `+${toPar}` : `${toPar}`;
@@ -42,7 +38,7 @@ export default function RoundCard({
   onPress,
 }: RoundCardProps) {
   const teeLabel = teeboxName ? `${teeboxName} tees` : "";
-  const dateLabel = formatDate(date);
+  const dateLabel = formatDisplayDate(date);
   const subtitle = [teeLabel, dateLabel].filter(Boolean).join(" \u00B7 ");
   const showHoles =
     holesCompleted != null && holeCount != null && holesCompleted < holeCount;

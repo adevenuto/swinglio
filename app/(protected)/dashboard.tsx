@@ -11,6 +11,9 @@ import {
   Type,
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
+
+const PRO_STAT_KEYS = new Set(["handicap", "fwy-pct", "avg-18", "avg-9", "avg-putts"]);
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
@@ -28,14 +31,12 @@ import {
   View,
 } from "react-native";
 import { Button, Text } from "react-native-paper";
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+import GradientButton from "@/components/GradientButton";
+import { formatDisplayDate } from "@/lib/date-utils";
 
 export default function Dashboard() {
   const { user, avatarUrl, refreshUser } = useAuth();
+  const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [handicapModalVisible, setHandicapModalVisible] = useState(false);
@@ -113,30 +114,41 @@ export default function Dashboard() {
     [recentRounds],
   );
 
-  const statsItems = useMemo<StatItem[]>(
-    () => [
+  const statsItems = useMemo<StatItem[]>(() => {
+    const locked = (key: string, label: string): StatItem => ({
+      key,
+      value: "\uD83D\uDD12",
+      label,
+      subtitle: "Pro",
+    });
+
+    return [
       {
         key: "attested",
         value: totalRounds > 0 ? `${attPct}%` : "\u2014",
         label: "Attested",
         progress: attPct,
       },
-      {
-        key: "fwy-pct",
-        value: fairwayPct != null ? `${fairwayPct}%` : "\u2014",
-        label: "FWY Hit",
-        progress: fairwayPct ?? 0,
-      },
+      isPro
+        ? {
+            key: "fwy-pct",
+            value: fairwayPct != null ? `${fairwayPct}%` : "\u2014",
+            label: "FWY Hit",
+            progress: fairwayPct ?? 0,
+          }
+        : locked("fwy-pct", "FWY Hit"),
       { key: "rounds", value: String(totalRounds), label: "Rounds" },
-      {
-        key: "handicap",
-        value:
-          handicapResult?.handicapIndex != null
-            ? formatHandicapIndex(handicapResult.handicapIndex)
-            : "\u2014",
-        label: "Handicap",
-        subtitle: "(est)",
-      },
+      isPro
+        ? {
+            key: "handicap",
+            value:
+              handicapResult?.handicapIndex != null
+                ? formatHandicapIndex(handicapResult.handicapIndex)
+                : "\u2014",
+            label: "Handicap",
+            subtitle: "(est)",
+          }
+        : locked("handicap", "Handicap"),
       {
         key: "best",
         value:
@@ -149,23 +161,29 @@ export default function Dashboard() {
             : "\u2014",
         label: "Best",
       },
-      {
-        key: "avg-18",
-        value: avg18 != null ? String(avg18) : "\u2014",
-        label: "Avg 18",
-      },
-      {
-        key: "avg-9",
-        value: avg9 != null ? String(avg9) : "\u2014",
-        label: "Avg 9",
-      },
-      {
-        key: "avg-putts",
-        value: avgPutts != null ? avgPutts.toFixed(1) : "\u2014",
-        label: "Avg Putts",
-      },
-    ],
-    [
+      isPro
+        ? {
+            key: "avg-18",
+            value: avg18 != null ? String(avg18) : "\u2014",
+            label: "Avg 18",
+          }
+        : locked("avg-18", "Avg 18"),
+      isPro
+        ? {
+            key: "avg-9",
+            value: avg9 != null ? String(avg9) : "\u2014",
+            label: "Avg 9",
+          }
+        : locked("avg-9", "Avg 9"),
+      isPro
+        ? {
+            key: "avg-putts",
+            value: avgPutts != null ? avgPutts.toFixed(1) : "\u2014",
+            label: "Avg Putts",
+          }
+        : locked("avg-putts", "Avg Putts"),
+    ];
+  }, [
       totalRounds,
       handicapResult,
       bestToPar,
@@ -174,6 +192,7 @@ export default function Dashboard() {
       avgPutts,
       attPct,
       fairwayPct,
+      isPro,
     ],
   );
 
@@ -184,6 +203,10 @@ export default function Dashboard() {
         avatarUrl={avatarUrl}
         onAvatarPress={() => router.push("/profile")}
         onItemPress={(key) => {
+          if (!isPro && PRO_STAT_KEYS.has(key)) {
+            presentPaywall();
+            return;
+          }
           if (key === "handicap") setHandicapModalVisible(true);
         }}
       />
@@ -202,16 +225,11 @@ export default function Dashboard() {
         <View style={styles.contentContainer}>
           <View style={styles.contentInner}>
             {activeRounds.length === 0 && (
-              <Button
-                mode="contained"
-                buttonColor={Color.primary}
-                textColor={Color.white}
+              <GradientButton
                 onPress={() => router.push("/start-round")}
-                style={styles.ctaButton}
-                labelStyle={{ fontFamily: Font.bold }}
-              >
-                Start A Round
-              </Button>
+                label="Start A Round"
+                style={{ marginBottom: Space.lg }}
+              />
             )}
 
             <ActiveRoundCard rounds={activeRounds} />
@@ -254,7 +272,7 @@ export default function Dashboard() {
                     <Text style={styles.cardSubtitle}>
                       {pr.player_count} players
                       {" \u00B7 "}
-                      {formatDate(pr.completed_at)}
+                      {formatDisplayDate(pr.completed_at)}
                     </Text>
                   </TouchableOpacity>
                 ))}

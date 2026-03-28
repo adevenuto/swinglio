@@ -12,6 +12,7 @@ import {
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useAttestations } from "@/hooks/use-attestations";
+import { formatDisplayDate } from "@/lib/date-utils";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
@@ -42,6 +43,7 @@ type RoundData = {
   course_id: number;
   status: string;
   created_at: string;
+  date_played: string | null;
   results_data: ResultsData | null;
   teebox_data: {
     order: number;
@@ -65,15 +67,6 @@ type PlayerScore = {
     avatar_url: string | null;
   };
 };
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function formatScoreToPar(score: number): string {
   if (score === 0) return "E";
@@ -108,7 +101,7 @@ export default function RoundSummaryScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(club_name, course_name)",
+        "id, creator_id, course_id, status, created_at, date_played, results_data, teebox_data, courses(club_name, course_name)",
       )
       .eq("id", roundId)
       .single();
@@ -312,7 +305,7 @@ export default function RoundSummaryScreen() {
                 ? Object.keys(round.teebox_data.holes).length
                 : undefined
             }
-            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${resultsData?.completed_at ? formatDate(resultsData.completed_at) : formatDate(round.created_at)}`}
+            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${formatDisplayDate(round.date_played ?? round.created_at, true)}`}
           />
         </View>
 

@@ -91,6 +91,9 @@ export const Color = {
   warning: "#EA580C",
   warningLight: "#FFF7ED",
   info: "#2563EB",
+
+  // Gradient
+  primaryGradient: ["#1A7A4A", "#15603A", "#0F4D2E"] as readonly [string, string, string],
 } as const;
 
 // === Typography ===

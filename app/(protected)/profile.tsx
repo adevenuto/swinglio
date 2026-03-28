@@ -8,6 +8,7 @@ import {
   Type,
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription, SubscriptionTier } from "@/contexts/subscription-context";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
 import { useRoundStats } from "@/hooks/use-round-stats";
@@ -35,6 +36,7 @@ export default function Profile() {
   const { user, signOut, refreshUser, refreshProfile } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
+  const { tier, isPro, presentPaywall, devOverrideTier, setDevOverrideTier } = useSubscription();
   const [refreshing, setRefreshing] = useState(false);
 
   const [displayName, setDisplayName] = useState("");
@@ -301,7 +303,7 @@ export default function Profile() {
       >
         {/* Hero header */}
         <LinearGradient
-          colors={["#1A7A4A", Color.primary, "#0F4D2E"]}
+          colors={Color.primaryGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
@@ -354,10 +356,18 @@ export default function Profile() {
                 <Text style={styles.statLabel}>Rounds</Text>
               </View>
               <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{handicapDisplay}</Text>
-                <Text style={styles.statLabel}>Handicap</Text>
-              </View>
+              <Pressable
+                style={styles.statItem}
+                onPress={!isPro ? presentPaywall : undefined}
+                disabled={isPro}
+              >
+                <Text style={styles.statValue}>
+                  {isPro ? handicapDisplay : "\uD83D\uDD12"}
+                </Text>
+                <Text style={styles.statLabel}>
+                  {isPro ? "Handicap" : "Pro"}
+                </Text>
+              </Pressable>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
@@ -437,6 +447,25 @@ export default function Profile() {
               >
                 <Text style={styles.signOutText}>Sign Out</Text>
               </Pressable>
+
+              {__DEV__ && (
+                <Pressable
+                  onPress={() => {
+                    const next: (SubscriptionTier | null)[] = [null, "free", "pro"];
+                    const currentIdx = next.indexOf(devOverrideTier);
+                    setDevOverrideTier(next[(currentIdx + 1) % next.length]);
+                  }}
+                  style={({ pressed }) => [
+                    styles.devToggle,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text style={styles.devToggleLabel}>DEV Tier Override</Text>
+                  <Text style={styles.devToggleValue}>
+                    {devOverrideTier ?? `auto (${tier})`}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         </View>
@@ -621,5 +650,28 @@ const styles = StyleSheet.create({
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.danger,
+  },
+  devToggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Space.lg,
+    paddingVertical: Space.md,
+    paddingHorizontal: Space.lg,
+    backgroundColor: Color.warningLight,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Color.warning,
+  },
+  devToggleLabel: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    color: Color.warning,
+  },
+  devToggleValue: {
+    fontFamily: Font.bold,
+    fontSize: 13,
+    color: Color.warning,
+    textTransform: "uppercase",
   },
 });

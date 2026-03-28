@@ -1,6 +1,7 @@
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/auth-context";
+import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
 import {
   Inter_400Regular,
@@ -137,6 +138,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
       <AuthProvider>
+        <SubscriptionProvider>
         <PreferencesProvider>
           <ThemeProvider value={DefaultTheme}>
             <PaperProvider theme={paperTheme}>
@@ -214,6 +216,13 @@ export default function RootLayout() {
                   }}
                 />
                 <Stack.Screen
+                  name="paywall"
+                  options={{
+                    presentation: "modal",
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
                   name="course-editor"
                   options={{
                     presentation: "modal",
@@ -229,6 +238,7 @@ export default function RootLayout() {
             </PaperProvider>
           </ThemeProvider>
         </PreferencesProvider>
+        </SubscriptionProvider>
       </AuthProvider>
       </ErrorBoundary>
       <Toast config={toastConfig} topOffset={80} />

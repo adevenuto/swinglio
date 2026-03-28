@@ -1,6 +1,7 @@
-import { Color, Font, Radius, Space } from "@/constants/design-tokens";
+import GradientButton from "@/components/GradientButton";
+import { Color, Font, Space } from "@/constants/design-tokens";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 type Props = { children: React.ReactNode };
 type State = { hasError: boolean };
@@ -28,15 +29,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
           <Text style={styles.body}>
             An unexpected error occurred. Please restart the app.
           </Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && { opacity: 0.7 },
-            ]}
+          <GradientButton
             onPress={this.handleRetry}
-          >
-            <Text style={styles.buttonText}>Try Again</Text>
-          </Pressable>
+            label="Try Again"
+          />
         </View>
       );
     }
@@ -65,18 +61,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: Space.xl,
     lineHeight: 22,
-  },
-  button: {
-    backgroundColor: Color.primary,
-    paddingHorizontal: Space.xl,
-    height: 52,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radius.lg,
-  },
-  buttonText: {
-    fontFamily: Font.bold,
-    fontSize: 16,
-    color: Color.white,
   },
 });

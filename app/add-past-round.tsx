@@ -1,4 +1,5 @@
 import CourseCard from "@/components/CourseCard";
+import GradientButton from "@/components/GradientButton";
 import {
   Color,
   Font,
@@ -378,22 +379,12 @@ export default function AddPastRoundScreen() {
 
       {/* Save button */}
       <View style={styles.stickyFooter}>
-        <Button
-          mode="contained"
-          buttonColor={Color.primary}
-          textColor={Color.white}
+        <GradientButton
           onPress={handleSave}
+          label="Save Round"
           loading={isSaving}
           disabled={!canSave}
-          style={{
-            borderRadius: Radius.lg,
-            padding: 5,
-            opacity: canSave ? 1 : 0.7,
-          }}
-          labelStyle={{ fontFamily: Font.bold }}
-        >
-          Save Round
-        </Button>
+        />
       </View>
     </View>
   );

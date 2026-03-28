@@ -1,10 +1,12 @@
 import RoundCard from "@/components/RoundCard";
-import { Color, Font, Space, Type } from "@/constants/design-tokens";
+import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { RecentRound, useRecentRounds } from "@/hooks/use-recent-rounds";
+import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
 export default function RoundHistoryScreen() {
@@ -12,8 +14,12 @@ export default function RoundHistoryScreen() {
     filter?: "completed" | "incomplete" | "all";
   }>();
   const { user } = useAuth();
+  const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
-  const { recentRounds, isLoading, refresh } = useRecentRounds(user?.id ?? "");
+  const { recentRounds, isLoading, refresh } = useRecentRounds(
+    user?.id ?? "",
+    isPro ? undefined : 10,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -78,6 +84,22 @@ export default function RoundHistoryScreen() {
             </View>
           ) : null
         }
+        ListFooterComponent={
+          !isPro && filtered.length >= 10 ? (
+            <Pressable
+              onPress={presentPaywall}
+              style={({ pressed }) => [
+                styles.upgradeFooter,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Feather name="lock" size={16} color={Color.primary} />
+              <Text style={styles.upgradeFooterText}>
+                Viewing last 10 rounds — Upgrade to see all
+              </Text>
+            </Pressable>
+          ) : null
+        }
       />
     </View>
   );
@@ -101,5 +123,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Color.neutral400,
     textAlign: "center",
+  },
+  upgradeFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space.sm,
+    paddingVertical: Space.lg,
+    marginTop: Space.sm,
+    backgroundColor: Color.primaryLight,
+    borderRadius: Radius.md,
+  },
+  upgradeFooterText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.primary,
   },
 });

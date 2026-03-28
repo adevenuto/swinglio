@@ -1,4 +1,5 @@
 import CourseCard from "@/components/CourseCard";
+import GradientButton from "@/components/GradientButton";
 import UserAvatar from "@/components/UserAvatar";
 import {
   Color,
@@ -440,19 +441,12 @@ export default function StartRoundScreen() {
 
       {/* Sticky Footer */}
       <View style={styles.stickyFooter}>
-        <Button
-          mode="contained"
-          buttonColor={Color.primary}
-          textColor={Color.white}
+        <GradientButton
           onPress={handleStartRound}
+          label={`Start Round (${totalPlayers} ${totalPlayers === 1 ? "player" : "players"})`}
           loading={isStarting}
           disabled={isStarting}
-          style={{ borderRadius: Radius.lg, padding: 5 }}
-          labelStyle={{ fontFamily: Font.bold }}
-        >
-          Start Round ({totalPlayers}{" "}
-          {totalPlayers === 1 ? "player" : "players"})
-        </Button>
+        />
       </View>
     </View>
   );

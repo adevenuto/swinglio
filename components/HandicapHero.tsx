@@ -40,25 +40,25 @@ export default function HandicapHero({
 
   return (
     <View style={[styles.container, style]}>
-      {onClose && (
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            pressed ? { opacity: 0.7 } : undefined,
-          ]}
-          hitSlop={12}
-        >
-          <Feather name="x" size={22} color={Color.white} />
-        </Pressable>
-      )}
-
       <Pressable
         onPress={onPress}
         disabled={!onPress}
         style={({ pressed }) => pressed && onPress ? { opacity: 0.7 } : undefined}
       >
-        <Text style={styles.label}>CURRENT INDEX</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>CURRENT INDEX</Text>
+          {onClose && (
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [
+                pressed ? { opacity: 0.7 } : undefined,
+              ]}
+              hitSlop={12}
+            >
+              <Feather name="x" size={22} color={Color.white} />
+            </Pressable>
+          )}
+        </View>
 
         <View style={styles.valueRow}>
           <Text style={styles.value}>{formatHandicapIndex(handicapIndex)}</Text>
@@ -156,11 +156,10 @@ const styles = StyleSheet.create({
     padding: Space.xl,
     ...Shadow.sm,
   },
-  closeBtn: {
-    position: "absolute",
-    top: Space.lg,
-    right: Space.lg,
-    zIndex: 1,
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   label: {
     fontFamily: Font.semiBold,

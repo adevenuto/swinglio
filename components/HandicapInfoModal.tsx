@@ -13,6 +13,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   visible: boolean;
@@ -30,6 +31,7 @@ export default function HandicapInfoModal({
   onClose,
   handicapResult,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const hIndex = handicapResult?.handicapIndex ?? null;
   const eligibleCount = handicapResult?.eligibleCount ?? 0;
   const methodDescription = handicapResult?.methodDescription ?? "";
@@ -54,7 +56,7 @@ export default function HandicapInfoModal({
               : methodDescription
           }
           onClose={onClose}
-          style={{ borderRadius: 0, paddingTop: Space.xxxl }}
+          style={{ borderRadius: 0, paddingTop: insets.top + Space.lg }}
         />
 
         {/* ── Scrollable Content ── */}

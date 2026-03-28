@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
@@ -101,21 +102,12 @@ export default function ResetPasswordScreen() {
             />
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.resetBtn,
-              !canSubmit && styles.resetBtnDisabled,
-              pressed && canSubmit ? { opacity: 0.7 } : undefined,
-            ]}
+          <GradientButton
             onPress={handleReset}
+            label="Reset Password"
+            loading={saving}
             disabled={!canSubmit || saving}
-          >
-            {saving ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.resetText}>Reset Password</Text>
-            )}
-          </Pressable>
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -6,6 +6,7 @@ import {
   Space,
   Type,
 } from "@/constants/design-tokens";
+import { LinearGradient } from "expo-linear-gradient";
 import { ActiveRound } from "@/hooks/use-active-rounds";
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
@@ -85,10 +86,15 @@ export default function ActiveRoundCard({ rounds }: Props) {
             ) : null}
 
             {/* Continue button */}
-            <View style={styles.continueBtn}>
+            <LinearGradient
+              colors={Color.primaryGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.continueBtn}
+            >
               <Feather name="play" size={14} color={Color.white} />
               <Text style={styles.continueBtnText}>continue round</Text>
-            </View>
+            </LinearGradient>
           </Pressable>
         );
       })}
@@ -155,8 +161,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: Color.primary,
     borderRadius: Radius.lg,
+    overflow: "hidden",
     paddingHorizontal: Space.lg,
     paddingVertical: Space.sm + 2,
     marginTop: Space.md,

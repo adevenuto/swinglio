@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -118,17 +119,12 @@ export default function SignIn() {
             </Link>
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+          <GradientButton
             onPress={handleSignIn}
+            label="Sign In"
+            loading={loading}
             disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-            )}
-          </Pressable>
+          />
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />

@@ -1,7 +1,7 @@
 import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import { DistanceUnit, usePreferences } from "@/contexts/preferences-context";
+import { DistanceUnit, TempUnit, usePreferences } from "@/contexts/preferences-context";
 import { supabase } from "@/lib/supabase";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -25,9 +25,14 @@ const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
   { value: "meters", label: "Meters" },
 ];
 
+const TEMP_OPTIONS: { value: TempUnit; label: string }[] = [
+  { value: "fahrenheit", label: "°F" },
+  { value: "celsius", label: "°C" },
+];
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { distanceUnit, setDistanceUnit } = usePreferences();
+  const { distanceUnit, setDistanceUnit, tempUnit, setTempUnit } = usePreferences();
 
   // Change password state
   const [passwordExpanded, setPasswordExpanded] = useState(false);
@@ -170,6 +175,33 @@ export default function SettingsScreen() {
                     <Pressable
                       key={opt.value}
                       onPress={() => setDistanceUnit(opt.value)}
+                      style={[
+                        styles.segmentBtn,
+                        selected && styles.segmentBtnSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentText,
+                          selected && styles.segmentTextSelected,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Temperature Unit */}
+              <Text style={styles.fieldLabel}>Temperature</Text>
+              <View style={styles.segmentedRow}>
+                {TEMP_OPTIONS.map((opt) => {
+                  const selected = tempUnit === opt.value;
+                  return (
+                    <Pressable
+                      key={opt.value}
+                      onPress={() => setTempUnit(opt.value)}
                       style={[
                         styles.segmentBtn,
                         selected && styles.segmentBtnSelected,

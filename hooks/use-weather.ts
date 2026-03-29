@@ -16,7 +16,16 @@ export type WeatherData = {
   temp: number; // Fahrenheit
   isNight: boolean;
   description: string;
+  windSpeed: number; // mph
+  windDeg: number; // degrees (0 = N, 90 = E, etc.)
 };
+
+const WIND_ARROWS = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"] as const;
+
+export function windDegToArrow(deg: number): string {
+  const index = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
+  return WIND_ARROWS[index];
+}
 
 
 const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHERMAP_KEY ?? "";
@@ -64,6 +73,8 @@ function getOverrideData(): WeatherData | null {
     temp: 55,
     isNight: devOverrideNight ?? (new Date().getHours() >= 19 || new Date().getHours() < 6),
     description: `dev override: ${devOverrideCondition}`,
+    windSpeed: 8,
+    windDeg: 180,
   };
 }
 
@@ -176,6 +187,8 @@ export function useWeather() {
         temp: Math.round(json.main?.temp ?? 70),
         isNight,
         description: json.weather?.[0]?.description ?? "",
+        windSpeed: Math.round(json.wind?.speed ?? 0),
+        windDeg: Math.round(json.wind?.deg ?? 0),
       };
 
       if (__DEV__) console.log("[Weather] Result:", data.condition, data.isNight ? "night" : "day", data.temp + "°F", data.description);

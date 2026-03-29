@@ -17,8 +17,10 @@ import {
   getCurrentHole,
   useGameplay,
 } from "@/contexts/gameplay-context";
+import { usePreferences } from "@/contexts/preferences-context";
 import { useSubscription } from "@/contexts/subscription-context";
 import { usePlayerLocation } from "@/hooks/use-player-location";
+import { useWeather } from "@/hooks/use-weather";
 import { distanceInYards } from "@/lib/geo";
 import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -49,6 +51,7 @@ export default function GameplayScreen() {
 function GameplayScreenContent() {
   const { user } = useAuth();
   const { isPro } = useSubscription();
+  const { tempUnit } = usePreferences();
   const router = useRouter();
   const {
     round,
@@ -73,6 +76,8 @@ function GameplayScreenContent() {
     greenCenters,
     hasGreenCenters,
   } = useGameplay();
+
+  const { weather } = useWeather();
 
   // GPS distance to pin
   const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
@@ -237,8 +242,16 @@ function GameplayScreenContent() {
           }}
           style={gameStyles.navBack}
         >
-          <AdaptiveText style={gameStyles.navBackText}>{"\u2039"} Dashboard</AdaptiveText>
+          <AdaptiveText style={gameStyles.navBackChevron}>{"\u2039"}</AdaptiveText>
+          <AdaptiveText style={gameStyles.navBackText}>Dashboard</AdaptiveText>
         </Pressable>
+        {weather && (
+          <AdaptiveText style={gameStyles.tempDisplay}>
+            {tempUnit === "celsius"
+              ? `${Math.round((weather.temp - 32) * 5 / 9)}°C`
+              : `${weather.temp}°F`}
+          </AdaptiveText>
+        )}
       </View>
 
       {/* Scorecard + HoleEntryPanel */}
@@ -313,7 +326,7 @@ function GameplayScreenContent() {
         )}
 
         <View style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}>
-          <Text style={gameStyles.scorecardLabel}>SCORECARD</Text>
+          <AdaptiveText style={gameStyles.scorecardLabel}>SCORECARD</AdaptiveText>
           <Scorecard
             ref={scorecardRef}
             teeboxData={round.teebox_data}
@@ -325,16 +338,16 @@ function GameplayScreenContent() {
         </View>
 
         {!myFinished && (
-          <Button
-            mode="text"
+          <Pressable
             onPress={onFinishRound}
-            loading={isQuitting}
-            textColor={Color.neutral500}
-            style={{ marginTop: Space.xl }}
-            labelStyle={{ fontFamily: Font.medium }}
+            disabled={isQuitting}
+            style={({ pressed }) => [
+              { marginTop: Space.xl, alignSelf: "center", paddingVertical: Space.sm },
+              pressed && { opacity: 0.7 },
+            ]}
           >
-            End Round
-          </Button>
+            <AdaptiveText style={gameStyles.endRoundText}>End Round</AdaptiveText>
+          </Pressable>
         )}
       </ScrollView>
 
@@ -405,10 +418,30 @@ const gameStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  navBackText: {
+  navBackChevron: {
     fontFamily: Font.regular,
-    fontSize: 17,
+    fontSize: 32,
     color: Color.neutral900,
+    lineHeight: 32,
+    marginRight: Space.xs,
+    includeFontPadding: false,
+  },
+  navBackText: {
+    fontFamily: Font.bold,
+    fontSize: 21,
+    color: Color.neutral900,
+    lineHeight: 24,
+    includeFontPadding: false,
+  },
+  tempDisplay: {
+    fontFamily: Font.bold,
+    fontSize: 20,
+    color: Color.neutral900,
+  },
+  endRoundText: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    color: Color.neutral500,
   },
   bottomBar: {
     paddingHorizontal: Space.lg,

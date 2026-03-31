@@ -1,3 +1,4 @@
+import WeatherBadge from "@/components/WeatherBadge";
 import { Color, Font, Space } from "@/constants/design-tokens";
 import { useAppDrawer } from "@/contexts/app-drawer-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -14,7 +15,8 @@ export default function BrandHeader() {
       <View style={styles.logoContainer}>
         <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
       </View>
-      {/* <Text style={styles.brandName}>{BRAND_NAME}</Text> */}
+
+      <WeatherBadge adaptive={false} />
 
       <Pressable
         onPress={openDrawer}
@@ -37,7 +39,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: Space.lg,
     height: 48,
     backgroundColor: Color.screenBg,

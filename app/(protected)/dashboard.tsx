@@ -43,7 +43,7 @@ const PRO_STAT_KEYS = new Set([
 ]);
 
 export default function Dashboard() {
-  const { user, avatarUrl, refreshUser } = useAuth();
+  const { user, avatarUrl, displayName, refreshUser } = useAuth();
   const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
@@ -209,6 +209,7 @@ export default function Dashboard() {
       <StatsStrip
         items={statsItems}
         avatarUrl={avatarUrl}
+        displayName={displayName}
         onAvatarPress={() => router.push("/profile")}
         onItemPress={(key) => {
           if (!isPro && PRO_STAT_KEYS.has(key)) {

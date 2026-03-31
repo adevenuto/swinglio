@@ -33,7 +33,7 @@ import {
   View
 } from "react-native";
 import { Button, Chip, Searchbar, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 function teeboxHasRatings(tb: Teebox): boolean {
   const cr = Number(tb.courseRating);
@@ -163,7 +163,7 @@ export default function AddPastRoundScreen() {
       return;
     }
 
-    Toast.show({ type: "success", text1: "Past round added" });
+    toast.success("Past round added");
     router.back();
   };
 

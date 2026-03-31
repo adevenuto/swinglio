@@ -10,6 +10,7 @@ import { Platform } from "react-native";
 import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
+  PURCHASES_ERROR_CODE,
   PurchasesPackage,
 } from "react-native-purchases";
 import { useRouter } from "expo-router";
@@ -33,7 +34,7 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
   undefined,
 );
 
-const ENTITLEMENT_ID = "pro";
+const ENTITLEMENT_ID = "Swinglio Pro";
 
 const RC_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? "";
 const RC_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? "";
@@ -113,10 +114,12 @@ export function SubscriptionProvider({
     };
   }, [user?.id, isEditor]);
 
-  const updateTierFromCustomerInfo = (info: CustomerInfo) => {
+  const updateTierFromCustomerInfo = useCallback((info: CustomerInfo) => {
     const isActive = info.entitlements.active[ENTITLEMENT_ID] !== undefined;
-    setTier(isActive ? "pro" : "free");
-  };
+    const newTier = isActive ? "pro" : "free";
+    if (__DEV__) console.log("[Subscription] Tier update:", newTier, "entitlements:", Object.keys(info.entitlements.active));
+    setTier(newTier);
+  }, []);
 
   const restore = useCallback(async () => {
     try {
@@ -125,20 +128,28 @@ export function SubscriptionProvider({
     } catch (err) {
       console.error("Restore purchases error:", err);
     }
-  }, []);
+  }, [updateTierFromCustomerInfo]);
 
   const purchase = useCallback(async (pkg: PurchasesPackage) => {
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
+      const isActive = customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      if (__DEV__) console.log("[Subscription] Purchase result — entitlement active:", isActive);
+      if (isActive) {
+        setTier("pro");
+      }
       updateTierFromCustomerInfo(customerInfo);
-      return customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      return isActive;
     } catch (err: any) {
-      if (!err.userCancelled) {
+      const isCancelled =
+        err.userCancelled ||
+        err.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR;
+      if (!isCancelled) {
         console.error("Purchase error:", err);
       }
       return false;
     }
-  }, []);
+  }, [updateTierFromCustomerInfo]);
 
   const presentPaywall = useCallback(() => {
     router.push("/paywall" as any);

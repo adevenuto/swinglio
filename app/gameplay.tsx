@@ -1,5 +1,6 @@
 import DistanceMapModal from "@/components/DistanceMapModal";
 import WeatherBackground from "@/components/WeatherBackground";
+import WeatherBadge from "@/components/WeatherBadge";
 import FinishRoundModal from "@/components/FinishRoundModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
@@ -17,10 +18,8 @@ import {
   getCurrentHole,
   useGameplay,
 } from "@/contexts/gameplay-context";
-import { usePreferences } from "@/contexts/preferences-context";
 import { useSubscription } from "@/contexts/subscription-context";
 import { usePlayerLocation } from "@/hooks/use-player-location";
-import { useWeather } from "@/hooks/use-weather";
 import { distanceInYards } from "@/lib/geo";
 import { supabase } from "@/lib/supabase";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -51,7 +50,6 @@ export default function GameplayScreen() {
 function GameplayScreenContent() {
   const { user } = useAuth();
   const { isPro } = useSubscription();
-  const { tempUnit } = usePreferences();
   const router = useRouter();
   const {
     round,
@@ -76,8 +74,6 @@ function GameplayScreenContent() {
     greenCenters,
     hasGreenCenters,
   } = useGameplay();
-
-  const { weather } = useWeather();
 
   // GPS distance to pin
   const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
@@ -221,7 +217,7 @@ function GameplayScreenContent() {
   if (!round) {
     return (
       <View style={gameStyles.centeredContainer}>
-        <Text style={{ ...Type.body }}>Round not found</Text>
+        <AdaptiveText style={{ ...Type.body }}>Round not found</AdaptiveText>
       </View>
     );
   }
@@ -245,13 +241,7 @@ function GameplayScreenContent() {
           <AdaptiveText style={gameStyles.navBackChevron}>{"\u2039"}</AdaptiveText>
           <AdaptiveText style={gameStyles.navBackText}>Dashboard</AdaptiveText>
         </Pressable>
-        {weather && (
-          <AdaptiveText style={gameStyles.tempDisplay}>
-            {tempUnit === "celsius"
-              ? `${Math.round((weather.temp - 32) * 5 / 9)}°C`
-              : `${weather.temp}°F`}
-          </AdaptiveText>
-        )}
+        <WeatherBadge />
       </View>
 
       {/* Scorecard + HoleEntryPanel */}
@@ -432,11 +422,6 @@ const gameStyles = StyleSheet.create({
     color: Color.neutral900,
     lineHeight: 24,
     includeFontPadding: false,
-  },
-  tempDisplay: {
-    fontFamily: Font.bold,
-    fontSize: 20,
-    color: Color.neutral900,
   },
   endRoundText: {
     fontFamily: Font.medium,

@@ -21,7 +21,7 @@ import {
   View,
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -82,7 +82,7 @@ export default function FriendsScreen() {
     if (error) {
       Alert.alert("Error", error);
     } else {
-      Toast.show({ type: "success", text1: "Friend invite sent!" });
+      toast.success("Friend invite sent!");
     }
   };
 
@@ -91,10 +91,7 @@ export default function FriendsScreen() {
     if (error) {
       Alert.alert("Error", "Failed to accept invite.");
     } else {
-      Toast.show({
-        type: "success",
-        text1: `You and ${getName(friendRow)} are now friends!`,
-      });
+      toast.success(`You and ${getName(friendRow)} are now friends!`);
     }
   };
 

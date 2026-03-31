@@ -4,7 +4,7 @@ import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // and this avoids stale closure issues since the callback is created once.
       if (_event === "USER_UPDATED") {
         setIsRecoveryMode(false);
-        Toast.show({ type: "success", text1: "Password reset successful" });
+        toast.success("Password reset successful");
       }
 
       setSession(session);

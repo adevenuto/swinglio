@@ -10,7 +10,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import GradientButton from "@/components/GradientButton";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -18,13 +18,14 @@ import {
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 import { PACKAGE_TYPE } from "react-native-purchases";
 
 const FEATURES = [
   { icon: "trending-up" as const, text: "Full handicap index with trends" },
   { icon: "bar-chart-2" as const, text: "Detailed stats — FWY%, GIR, putts & more" },
   { icon: "clock" as const, text: "Unlimited round history" },
+  { icon: "cloud" as const, text: "Live weather backgrounds & on-course conditions" },
 ];
 
 export default function PaywallScreen() {
@@ -39,11 +40,17 @@ export default function PaywallScreen() {
     return annualIdx >= 0 ? annualIdx : 0;
   });
 
-  // Redirect if already pro
-  if (isPro) {
-    router.back();
-    return null;
-  }
+  const justPurchased = useRef(false);
+
+  // Navigate back reactively once isPro flips to true
+  useEffect(() => {
+    if (isPro) {
+      if (justPurchased.current) {
+        toast.success("Welcome to Swinglio Pro!");
+      }
+      router.back();
+    }
+  }, [isPro]);
 
   const monthlyPkg = offerings.find(
     (p) => p.packageType === PACKAGE_TYPE.MONTHLY,
@@ -63,8 +70,7 @@ export default function PaywallScreen() {
     setLoading(false);
 
     if (success) {
-      Toast.show({ type: "success", text1: "Welcome to Swinglio Pro!" });
-      router.back();
+      justPurchased.current = true;
     }
   };
 
@@ -72,7 +78,7 @@ export default function PaywallScreen() {
     setLoading(true);
     await restore();
     setLoading(false);
-    Toast.show({ type: "success", text1: "Purchases restored" });
+    toast.success("Purchases restored");
   };
 
   return (

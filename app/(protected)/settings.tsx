@@ -18,7 +18,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
   { value: "yards", label: "Yards" },
@@ -52,18 +52,15 @@ export default function SettingsScreen() {
 
   const handleChangePassword = async () => {
     if (!newPassword.trim()) {
-      Toast.show({ type: "error", text1: "Please enter a new password" });
+      toast.error("Please enter a new password");
       return;
     }
     if (newPassword.length < 6) {
-      Toast.show({
-        type: "error",
-        text1: "Password must be at least 6 characters",
-      });
+      toast.error("Password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
-      Toast.show({ type: "error", text1: "Passwords do not match" });
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -77,7 +74,7 @@ export default function SettingsScreen() {
 
     if (signInError) {
       setPasswordLoading(false);
-      Toast.show({ type: "error", text1: "Current password is incorrect" });
+      toast.error("Current password is incorrect");
       return;
     }
 
@@ -85,10 +82,7 @@ export default function SettingsScreen() {
     setPasswordLoading(false);
 
     if (error) {
-      Toast.show({
-        type: "error",
-        text1: error.message || "Failed to update password",
-      });
+      toast.error(error.message || "Failed to update password");
       return;
     }
 
@@ -96,7 +90,7 @@ export default function SettingsScreen() {
     setNewPassword("");
     setConfirmPassword("");
     setPasswordExpanded(false);
-    Toast.show({ type: "success", text1: "Password updated" });
+    toast.success("Password updated");
   };
 
   const handleDeleteAccount = () => {

@@ -1,7 +1,9 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import GameplayHeader from "@/components/GameplayHeader";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
+import WeatherBackground from "@/components/WeatherBackground";
 import {
   Color,
   Font,
@@ -11,6 +13,7 @@ import {
   Type,
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { useAttestations } from "@/hooks/use-attestations";
 import GradientButton from "@/components/GradientButton";
 import { formatDisplayDate } from "@/lib/date-utils";
@@ -36,7 +39,7 @@ import {
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 type RoundData = {
   id: number;
@@ -76,6 +79,7 @@ function formatScoreToPar(score: number): string {
 
 export default function RoundSummaryScreen() {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
   const router = useRouter();
   const { roundId, completed } = useLocalSearchParams<{
     roundId: string;
@@ -218,10 +222,7 @@ export default function RoundSummaryScreen() {
       !toastFired.current
     ) {
       toastFired.current = true;
-      Toast.show({
-        type: "success",
-        text1: `Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`,
-      });
+      toast.success(`Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`);
     }
   }, [completed, myResult, myPlayerStatus]);
 
@@ -254,27 +255,25 @@ export default function RoundSummaryScreen() {
   if (!round) {
     return (
       <View style={s.centeredContainer}>
-        <Text style={{ ...Type.body }}>Round not found</Text>
+        <AdaptiveText style={{ ...Type.body }}>Round not found</AdaptiveText>
       </View>
     );
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg }}>
+    <WeatherBackground />
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
+      style={{ flex: 1, paddingTop: 20 }}
     >
       {/* Header */}
       <View style={s.header}>
         <Pressable onPress={() => router.back()} style={s.backButton}>
-          <MaterialIcons
-            name="chevron-left"
-            size={28}
-            color={Color.neutral900}
-          />
-          <Text style={s.backText}>Back</Text>
+          <AdaptiveText style={s.backChevron}>{"\u2039"}</AdaptiveText>
+          <AdaptiveText style={s.backText}>Back</AdaptiveText>
         </Pressable>
-        <Text style={s.headerTitle}>Round Summary</Text>
+        <AdaptiveText style={s.headerTitle}>Round Summary</AdaptiveText>
         <View style={{ width: 80 }} />
       </View>
 
@@ -312,7 +311,7 @@ export default function RoundSummaryScreen() {
 
         {/* Scorecard */}
         <View style={{ paddingHorizontal: Space.lg, marginTop: Space.lg }}>
-          <Text style={s.sectionLabel}>SCORECARD</Text>
+          <AdaptiveText style={s.sectionLabel}>SCORECARD</AdaptiveText>
           <Scorecard
             teeboxData={round.teebox_data}
             players={scorecardPlayers}
@@ -323,7 +322,7 @@ export default function RoundSummaryScreen() {
         {/* Results card */}
         {resultsData && resultsData.players.length > 0 && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>RESULTS</Text>
+            <AdaptiveText style={s.sectionLabel}>RESULTS</AdaptiveText>
             <View style={s.resultsCard}>
               {resultsData.players.map((pr) => {
                 const playerData = players.find(
@@ -409,7 +408,7 @@ export default function RoundSummaryScreen() {
         {/* Continue Round — for incomplete players */}
         {myIncomplete && isParticipant && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>RESUME</Text>
+            <AdaptiveText style={s.sectionLabel}>RESUME</AdaptiveText>
             <View style={s.attestCard}>
               <Text style={s.attestCount}>
                 You scored {myResult?.holes_completed ?? 0} of{" "}
@@ -429,7 +428,7 @@ export default function RoundSummaryScreen() {
           !myWithdrew &&
           !myIncomplete && (
             <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-              <Text style={s.sectionLabel}>ATTESTATION</Text>
+              <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
               <View style={s.attestCard}>
                 <Text style={s.attestCount}>
                   {attestCount} of {eligiblePlayerCount} players attested
@@ -457,7 +456,7 @@ export default function RoundSummaryScreen() {
         {/* Self-confirmed indicator — for effectively-solo rounds */}
         {isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>SCORE CONFIRMATION</Text>
+            <AdaptiveText style={s.sectionLabel}>SCORE CONFIRMATION</AdaptiveText>
             <View style={s.attestCard}>
               <View style={s.attestedRow}>
                 <MaterialIcons
@@ -474,6 +473,7 @@ export default function RoundSummaryScreen() {
         <View style={{ height: Space.xxxl }} />
       </ScrollView>
     </SafeAreaView>
+    </View>
   );
 }
 
@@ -495,12 +495,22 @@ const s = StyleSheet.create({
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-    width: 80,
+    width: 100,
+  },
+  backChevron: {
+    fontFamily: Font.regular,
+    fontSize: 32,
+    color: Color.neutral900,
+    lineHeight: 32,
+    marginRight: Space.xs,
+    includeFontPadding: false,
   },
   backText: {
-    fontFamily: Font.regular,
-    fontSize: 17,
+    fontFamily: Font.bold,
+    fontSize: 21,
     color: Color.neutral900,
+    lineHeight: 24,
+    includeFontPadding: false,
   },
   headerTitle: {
     fontFamily: Font.bold,

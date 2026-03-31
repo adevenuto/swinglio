@@ -59,6 +59,17 @@ function getAdaptiveColor(
 }
 
 /**
+ * Hook to get the current weather-adaptive color.
+ * Returns null when weather is not active (free users or no data).
+ */
+export function useAdaptiveColor(): string | null {
+  const { isPro } = useSubscription();
+  const { weather } = useWeather();
+  if (!isPro || !weather) return null;
+  return getAdaptiveColor(weather.condition, weather.isNight);
+}
+
+/**
  * Weather-aware Text component.
  * Automatically adjusts text color based on the active weather background.
  * On screens without weather (or for free users), passes through styles unchanged.

@@ -58,7 +58,7 @@ export default function RoundListSection({
 
       {visible.length === 0 && emptyText ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>{emptyText}</Text>
+          <AdaptiveText style={styles.emptyText}>{emptyText}</AdaptiveText>
         </View>
       ) : (
         visible.map((round) => (

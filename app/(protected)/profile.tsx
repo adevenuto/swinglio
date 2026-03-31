@@ -36,7 +36,7 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 export default function Profile() {
   const { user, signOut, refreshUser, refreshProfile } = useAuth();
@@ -141,12 +141,12 @@ export default function Profile() {
         .eq("id", user.id);
 
       if (error) {
-        Toast.show({ type: "error", text1: "Failed to save" });
+        toast.error("Failed to save");
         return;
       }
 
       savedValues.current = current;
-      Toast.show({ type: "success", text1: "Profile updated" });
+      toast.success("Profile updated");
     },
     [user?.id, displayName, firstName, lastName],
   );
@@ -232,7 +232,7 @@ export default function Profile() {
 
     setAvatarUrl(publicUrl);
     await refreshProfile();
-    Toast.show({ type: "success", text1: "Photo updated" });
+    toast.success("Photo updated");
   };
 
   const removeAvatar = async () => {
@@ -247,7 +247,7 @@ export default function Profile() {
 
     setAvatarUrl(null);
     await refreshProfile();
-    Toast.show({ type: "success", text1: "Photo removed" });
+    toast.success("Photo removed");
   };
 
   const handleAvatarPress = () => {

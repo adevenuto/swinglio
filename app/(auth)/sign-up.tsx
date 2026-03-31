@@ -6,7 +6,6 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -14,7 +13,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 export default function SignUp() {
@@ -85,7 +84,10 @@ export default function SignUp() {
     if (error) {
       Alert.alert("Error", error.message);
     } else {
-      Alert.alert("Sent", "A new verification code has been sent to your email");
+      Alert.alert(
+        "Sent",
+        "A new verification code has been sent to your email",
+      );
     }
   };
 
@@ -166,11 +168,11 @@ export default function SignUp() {
 
   return (
     <View style={styles.screen}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-        >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+      >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
             <Image
@@ -269,7 +271,7 @@ export default function SignUp() {
             </Link>
           </View>
         </View>
-        </ScrollView>
+      </ScrollView>
     </View>
   );
 }
@@ -373,6 +375,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Space.lg,
+    marginTop: Space.lg,
   },
   dividerLine: {
     flex: 1,

@@ -5,15 +5,14 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
 } from "react-native";
 
 export default function SignIn() {
@@ -54,14 +53,18 @@ export default function SignIn() {
 
   return (
     <View style={styles.screen}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-        >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+      >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
-            <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={require("@/assets/images/brand.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.subtitle}>Welcome back to the course</Text>
 
@@ -150,7 +153,7 @@ export default function SignIn() {
             </Link>
           </View>
         </View>
-        </ScrollView>
+      </ScrollView>
     </View>
   );
 }
@@ -234,6 +237,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Space.lg,
+    marginTop: Space.lg,
   },
   dividerLine: {
     flex: 1,

@@ -2,6 +2,7 @@ import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { DistanceUnit, TempUnit, usePreferences } from "@/contexts/preferences-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { supabase } from "@/lib/supabase";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -11,6 +12,7 @@ import React, { useState } from "react";
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,6 +34,7 @@ const TEMP_OPTIONS: { value: TempUnit; label: string }[] = [
 
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
+  const { isPro, presentPaywall } = useSubscription();
   const { distanceUnit, setDistanceUnit, tempUnit, setTempUnit } = usePreferences();
 
   // Change password state
@@ -156,6 +159,53 @@ export default function SettingsScreen() {
           <View style={styles.inner}>
             <Text style={styles.title}>Settings</Text>
             <Text style={styles.subtitle}>Manage your preferences</Text>
+
+            {/* ── SUBSCRIPTION ── */}
+            <Text style={styles.sectionLabel}>SUBSCRIPTION</Text>
+            <View style={styles.card}>
+              <View style={styles.row}>
+                <Text style={styles.rowText}>Plan</Text>
+                {isPro ? (
+                  <View style={styles.proBadge}>
+                    <Text style={styles.proBadgeText}>PRO</Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={presentPaywall}
+                    style={({ pressed }) => [
+                      styles.upgradeBadge,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.upgradeBadgeText}>Upgrade</Text>
+                  </Pressable>
+                )}
+              </View>
+              {isPro && (
+                <>
+                  <View style={styles.rowDivider} />
+                  <Pressable
+                    onPress={() => {
+                      const url = Platform.OS === "ios"
+                        ? "https://apps.apple.com/account/subscriptions"
+                        : "https://play.google.com/store/account/subscriptions";
+                      Linking.openURL(url);
+                    }}
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.rowText}>Manage Subscription</Text>
+                    <Feather
+                      name="external-link"
+                      size={18}
+                      color={Color.neutral400}
+                    />
+                  </Pressable>
+                </>
+              )}
+            </View>
 
             {/* ── PREFERENCES ── */}
             <Text style={styles.sectionLabel}>PREFERENCES</Text>
@@ -485,6 +535,29 @@ const styles = StyleSheet.create({
   rowDivider: {
     height: 1,
     backgroundColor: Color.neutral200,
+  },
+  proBadge: {
+    backgroundColor: Color.primary,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.lg,
+  },
+  proBadgeText: {
+    fontFamily: Font.bold,
+    fontSize: 12,
+    color: Color.white,
+    letterSpacing: 0.5,
+  },
+  upgradeBadge: {
+    backgroundColor: Color.primaryLight,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.lg,
+  },
+  upgradeBadgeText: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    color: Color.primary,
   },
 
   // Password section

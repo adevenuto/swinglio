@@ -21,6 +21,7 @@ type GameplayHeaderProps = {
   distanceToPin?: number | null;
   distanceLoading?: boolean;
   onDistancePress?: () => void;
+  connectedBottom?: boolean;
 };
 
 export default function GameplayHeader({
@@ -37,6 +38,7 @@ export default function GameplayHeader({
   distanceToPin,
   distanceLoading,
   onDistancePress,
+  connectedBottom = false,
 }: GameplayHeaderProps) {
   const { distanceUnit } = usePreferences();
   const yardageDisplay =
@@ -46,7 +48,17 @@ export default function GameplayHeader({
   const showDistance =
     distanceLoading || (distanceToPin != null && distanceToPin > 0);
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        connectedBottom && {
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
+    >
       <Image
         source={getCourseImageSource(courseId, featuredImageUrl)}
         style={styles.thumbnail}
@@ -109,17 +121,15 @@ export default function GameplayHeader({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
-    padding: Space.md,
-    gap: Space.md,
+    padding: Space.lg,
+    gap: Space.lg,
     ...Shadow.sm,
   },
   thumbnail: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     borderRadius: Radius.sm,
   },
   info: {
@@ -127,21 +137,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   courseName: {
-    fontFamily: Font.semiBold,
-    fontSize: 17,
+    fontFamily: Font.bold,
+    fontSize: 19,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
   courseNameSub: {
     fontFamily: Font.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: Color.neutral500,
     marginTop: 1,
   },
   statsLine: {
-    fontSize: 14,
+    fontSize: 15,
     color: Color.neutral500,
-    marginTop: 2,
+    marginTop: 4,
   },
   statsLabel: {
     fontFamily: Font.regular,

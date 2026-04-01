@@ -1,9 +1,9 @@
+import { Color, Font } from "@/constants/design-tokens";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import * as Haptics from "expo-haptics";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Color, Font } from "@/constants/design-tokens";
 
 const CENTER_BUTTON_SIZE = 64;
 
@@ -18,12 +18,13 @@ export default function BottomTabBar({
   const insets = useSafeAreaInsets();
 
   // Sort visible routes into the desired visual order
-  const orderedEntries = TAB_VISUAL_ORDER
-    .map((name) => {
-      const index = state.routes.findIndex((r) => r.name === name);
-      return index >= 0 ? { route: state.routes[index], index } : null;
-    })
-    .filter(Boolean) as { route: (typeof state.routes)[number]; index: number }[];
+  const orderedEntries = TAB_VISUAL_ORDER.map((name) => {
+    const index = state.routes.findIndex((r) => r.name === name);
+    return index >= 0 ? { route: state.routes[index], index } : null;
+  }).filter(Boolean) as {
+    route: (typeof state.routes)[number];
+    index: number;
+  }[];
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom }]}>
@@ -80,9 +81,7 @@ export default function BottomTabBar({
                   </View>
                 )}
               </View>
-              <Text
-                style={[styles.label, isFocused && styles.labelActive]}
-              >
+              <Text style={[styles.label, isFocused && styles.labelActive]}>
                 {label}
               </Text>
             </Pressable>
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
     width: CENTER_BUTTON_SIZE,
     height: CENTER_BUTTON_SIZE,
     borderRadius: CENTER_BUTTON_SIZE / 2,
-    backgroundColor: Color.primary,
+    // backgroundColor: Color.primary,
     justifyContent: "center",
     alignItems: "center",
     marginTop: -24,

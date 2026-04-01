@@ -1,3 +1,4 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { supabase } from "@/lib/supabase";
 import { Link } from "expo-router";
@@ -105,17 +106,12 @@ export default function ForgotPassword() {
               />
             </View>
 
-            <Pressable
-              style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+            <GradientButton
               onPress={handleVerifyCode}
+              label="Verify Code"
+              loading={loading}
               disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={Color.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Verify Code</Text>
-              )}
-            </Pressable>
+            />
 
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>Didn't get the email? </Text>
@@ -169,17 +165,12 @@ export default function ForgotPassword() {
             />
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+          <GradientButton
             onPress={handleSendReset}
+            label="Send Reset Code"
+            loading={loading}
             disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Send Reset Code</Text>
-            )}
-          </Pressable>
+          />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Remember your password? </Text>

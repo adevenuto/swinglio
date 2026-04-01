@@ -2,8 +2,9 @@ import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -11,6 +12,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isProfileLoaded: boolean;
   needsOnboarding: boolean;
   isRecoveryMode: boolean;
   role: string | null;
@@ -20,6 +22,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithApple: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -36,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const fetchProfile = async (userId: string) => {
@@ -55,7 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) await fetchProfile(session.user.id);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      }
+      setIsProfileLoaded(true);
       setIsLoading(false);
     });
 
@@ -63,8 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("Auth state changed:", _event, session?.user?.email);
-
       // Set recovery mode before session/user so it's batched in the same render
       if (_event === "PASSWORD_RECOVERY") {
         setIsRecoveryMode(true);
@@ -75,50 +80,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // and this avoids stale closure issues since the callback is created once.
       if (_event === "USER_UPDATED") {
         setIsRecoveryMode(false);
-        Toast.show({ type: "success", text1: "Password reset successful" });
+        toast.success("Password reset successful");
       }
 
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id); // fire-and-forget — avoid lock deadlock with setSession()
+        setIsProfileLoaded(false);
+        fetchProfile(session.user.id).then(() => setIsProfileLoaded(true));
       } else {
         setRole(null);
         setAvatarUrl(null);
         setDisplayName(null);
         setNeedsOnboarding(false);
+        setIsProfileLoaded(true);
       }
 
     });
 
     // Handle incoming deep links
     const handleUrl = async ({ url }: { url: string }) => {
-      console.log("Deep link received:", url);
-
       try {
-        // Extract session from URL
         const urlObj = new URL(url);
         const hash = urlObj.hash.substring(1);
-
-        console.log("Hash from URL:", hash);
-
         const params = new URLSearchParams(hash);
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
-
-        console.log("Tokens found:", {
-          access_token: !!access_token,
-          refresh_token: !!refresh_token,
-        });
 
         if (access_token && refresh_token) {
           const { error } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
-
-          console.log("Session set result:", error);
 
           if (error) {
             console.error("Error setting session:", error);
@@ -142,9 +136,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: "swinglio://",
-      },
     });
     return { error };
   };
@@ -163,7 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const redirectUrl = "swinglio://";
-      console.log("Redirect URL:", redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -181,27 +171,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: new Error("No OAuth URL returned") };
       }
 
-      console.log("Opening OAuth URL:", data.url);
+      if (Platform.OS === "android") {
+        // Android: open external browser — Chrome Custom Tabs don't reliably
+        // redirect back via custom schemes. The deep link listener
+        // (handleUrl) will catch the swinglio:// redirect and set the session.
+        await Linking.openURL(data.url);
+        return { error: null };
+      }
 
+      // iOS: openAuthSessionAsync works correctly with custom schemes
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectUrl,
       );
 
-      console.log("WebBrowser result:", result);
-
       if (result.type === "success") {
-        // Parse the URL directly from the result
         const url = result.url;
         const params = new URLSearchParams(url.split("#")[1]);
 
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
-
-        console.log("Tokens found:", {
-          access_token: !!access_token,
-          refresh_token: !!refresh_token,
-        });
 
         if (access_token && refresh_token) {
           const { data, error: sessionError } = await supabase.auth.setSession({
@@ -214,7 +203,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { error: sessionError };
           }
 
-          // Set React state immediately — don't rely on onAuthStateChange timing
           if (data.session) {
             setSession(data.session);
             setUser(data.session.user);
@@ -228,6 +216,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: new Error("OAuth flow was cancelled") };
     } catch (error) {
       console.error("OAuth error:", error);
+      return { error };
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const redirectUrl = "swinglio://";
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      if (!data?.url) {
+        return { error: new Error("No OAuth URL returned") };
+      }
+
+      if (Platform.OS === "android") {
+        await Linking.openURL(data.url);
+        return { error: null };
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUrl,
+      );
+
+      if (result.type === "success") {
+        const url = result.url;
+        const params = new URLSearchParams(url.split("#")[1]);
+
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        if (access_token && refresh_token) {
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            console.error("Error setting session:", sessionError);
+            return { error: sessionError };
+          }
+
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+            await fetchProfile(data.session.user.id);
+          }
+
+          return { error: null };
+        }
+      }
+
+      return { error: new Error("OAuth flow was cancelled") };
+    } catch (error) {
+      console.error("Apple OAuth error:", error);
       return { error };
     }
   };
@@ -250,14 +303,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
-    console.log("🔄 Refreshing user session...");
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    console.log("✅ Session refreshed:", {
-      user: session?.user?.email,
-      userId: session?.user?.id,
-    });
     setSession(session);
     setUser(session?.user ?? null);
   };
@@ -268,6 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         isLoading,
+        isProfileLoaded,
         needsOnboarding,
         isRecoveryMode,
         role,
@@ -277,6 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signIn,
         signInWithGoogle,
+        signInWithApple,
         signOut,
         refreshUser,
         refreshProfile,

@@ -8,6 +8,18 @@ You **should** keep this in a private GitHub repo for backup, but it's not requi
 
 ---
 
+## Pre-Flight Checklist (Code Readiness)
+
+Before building, make sure the app is production-ready:
+
+- [x] Remove debug `console.log` statements (keep `console.error` for diagnostics)
+- [x] Add global `ErrorBoundary` wrapping the app (prevents white-screen crashes)
+- [ ] Verify app icon and splash screen look correct on device
+- [ ] Test full user flow end-to-end on a real device (not just Expo Go)
+- [ ] Ensure no hardcoded localhost/dev URLs remain in code
+
+---
+
 ## Step 1: Developer Accounts (Start Now — Takes Days)
 
 These have approval wait times, so do them first.
@@ -79,6 +91,38 @@ Once your Apple Developer account is approved:
 2. Click **+** → **App IDs** → **App**
 3. Description: `Swinglio`, Bundle ID: **Explicit** → `com.swinglio.app`
 4. Register
+
+### Enable Sign in with Apple
+1. In the Bundle ID you just created (`com.swinglio.app`), check **Sign in with Apple** under Capabilities
+2. Click Save
+
+### Create Services ID (for Supabase OAuth)
+1. Go to [Identifiers](https://developer.apple.com/account/resources/identifiers/list) → **+** → **Services IDs**
+2. Description: `Swinglio Auth`, Identifier: `com.swinglio.app.auth`
+3. Register, then click into it and enable **Sign in with Apple**
+4. Click **Configure** next to Sign in with Apple:
+   - Primary App ID: select `com.swinglio.app`
+   - Domains: your Supabase project domain (e.g., `<project-ref>.supabase.co`)
+   - Return URL: `https://<project-ref>.supabase.co/auth/v1/callback`
+5. Save
+
+### Create a Private Key for Apple Sign-In
+1. Go to [Keys](https://developer.apple.com/account/resources/authkeys/list) → **+**
+2. Name: `Swinglio Sign In`, enable **Sign in with Apple**
+3. Click **Configure** → select `com.swinglio.app` as the Primary App ID → Save
+4. Register → **Download** the `.p8` file (you can only download it once!)
+5. Note the **Key ID** shown on the confirmation page
+
+### Configure Supabase
+1. In your Supabase dashboard → **Authentication** → **Providers** → **Apple**
+2. Enable the provider and fill in:
+   - **Services ID**: `com.swinglio.app.auth` (the Services ID, not the App ID)
+   - **Secret Key**: paste the entire contents of the `.p8` file
+   - **Key ID**: from the key you just created
+   - **Team ID**: from [developer.apple.com/account](https://developer.apple.com/account) → Membership → Team ID
+3. Save
+
+> **Note:** Unlike Google, Apple doesn't give you a static client secret. Supabase uses the `.p8` key + Key ID + Team ID to generate a signed JWT automatically. No manual secret rotation needed.
 
 ### Create App in App Store Connect
 1. Go to [App Store Connect](https://appstoreconnect.apple.com) → My Apps → **+** → New App
@@ -205,6 +249,19 @@ Before Apple/Google will approve your app, you need to fill out listing info.
 - [ ] Verify Supabase and Mapbox work in production
 - [ ] Consider adding crash reporting (`sentry-expo` or EAS Insights)
 - [ ] Monitor store reviews and crash reports
+
+---
+
+## OTA Updates (Post-Launch)
+
+After your app is live, you can push JavaScript-only fixes without going through App Store/Play Store review:
+
+```bash
+# Push an over-the-air update (JS changes only — no native code changes)
+eas update --branch production --message "describe the fix"
+```
+
+This updates the app for existing users without a new store submission. Native code changes (new native modules, SDK version bumps, etc.) still require a full build + store submission.
 
 ---
 

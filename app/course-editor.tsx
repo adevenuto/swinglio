@@ -1,5 +1,14 @@
+import GradientButton from "@/components/GradientButton";
 import GreenCenterPicker from "@/components/GreenCenterPicker";
-import { Btn, Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import {
+  Btn,
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { CourseImage, useCourseImages } from "@/hooks/use-course-images";
 import {
   GreenCenter,
@@ -61,7 +70,8 @@ export default function CourseEditorScreen() {
     checkCourseInUse,
     searchCities,
   } = useCourses();
-  const { fetchImages, uploadImage, deleteImage, setFeatured, pickImage } = useCourseImages();
+  const { fetchImages, uploadImage, deleteImage, setFeatured, pickImage } =
+    useCourseImages();
 
   // Course details
   const [clubName, setClubName] = useState("");
@@ -182,10 +192,7 @@ export default function CourseEditorScreen() {
   // Teebox helpers
   const selectedTeebox = teeboxes[selectedTeeboxIndex];
 
-  const updateTeebox = (
-    index: number,
-    updates: Partial<Teebox>,
-  ) => {
+  const updateTeebox = (index: number, updates: Partial<Teebox>) => {
     setTeeboxes((prev) =>
       prev.map((t, i) => (i === index ? { ...t, ...updates } : t)),
     );
@@ -468,9 +475,7 @@ export default function CourseEditorScreen() {
       >
         {/* Section 1: Course Details */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            Course Details
-          </Text>
+          <Text style={styles.sectionLabel}>Course Details</Text>
 
           <TextInput
             label="Club Name *"
@@ -524,7 +529,12 @@ export default function CourseEditorScreen() {
                       pressed && { opacity: 0.7 },
                     ]}
                   >
-                    <Text style={{ fontFamily: Font.regular, color: Color.neutral900 }}>
+                    <Text
+                      style={{
+                        fontFamily: Font.regular,
+                        color: Color.neutral900,
+                      }}
+                    >
                       {city.name}, {city.state_abbr}
                     </Text>
                   </Pressable>
@@ -550,7 +560,13 @@ export default function CourseEditorScreen() {
             style={{ marginBottom: Space.md }}
           />
 
-          <View style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: Space.md,
+              marginBottom: Space.md,
+            }}
+          >
             <TextInput
               label="Phone"
               mode="outlined"
@@ -592,9 +608,22 @@ export default function CourseEditorScreen() {
         {/* Section 2: Course Photos (edit mode only) */}
         {isEdit && (
           <View style={styles.section}>
-            <View style={{ flexDirection: "row", alignItems: "baseline", marginBottom: Space.lg }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                marginBottom: Space.lg,
+              }}
+            >
               <Text style={styles.sectionLabel}>Course Photos</Text>
-              <Text style={{ fontFamily: Font.regular, fontSize: 12, color: Color.neutral400, marginLeft: Space.sm }}>
+              <Text
+                style={{
+                  fontFamily: Font.regular,
+                  fontSize: 12,
+                  color: Color.neutral400,
+                  marginLeft: Space.sm,
+                }}
+              >
                 (max 3)
               </Text>
             </View>
@@ -641,7 +670,11 @@ export default function CourseEditorScreen() {
                   {isUploadingImage ? (
                     <ActivityIndicator size="small" color={Color.neutral400} />
                   ) : (
-                    <MaterialIcons name="add" size={28} color={Color.neutral400} />
+                    <MaterialIcons
+                      name="add"
+                      size={28}
+                      color={Color.neutral400}
+                    />
                   )}
                 </Pressable>
               )}
@@ -651,9 +684,7 @@ export default function CourseEditorScreen() {
 
         {/* Section 3: Layout Data - Teeboxes + Holes */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            Teeboxes & Holes
-          </Text>
+          <Text style={styles.sectionLabel}>Teeboxes & Holes</Text>
 
           {/* Teebox tabs */}
           <ScrollView
@@ -672,7 +703,9 @@ export default function CourseEditorScreen() {
                     t.color
                       ? {
                           borderColor:
-                            i === selectedTeeboxIndex ? t.color : Color.neutral300,
+                            i === selectedTeeboxIndex
+                              ? t.color
+                              : Color.neutral300,
                         }
                       : undefined
                   }
@@ -690,7 +723,11 @@ export default function CourseEditorScreen() {
           {selectedTeebox && (
             <>
               <View
-                style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}
+                style={{
+                  flexDirection: "row",
+                  gap: Space.md,
+                  marginBottom: Space.md,
+                }}
               >
                 <TextInput
                   label="Tee Name"
@@ -754,7 +791,9 @@ export default function CourseEditorScreen() {
                         borderRadius: 16,
                         backgroundColor: color,
                         borderWidth: isSelected ? 2 : 1,
-                        borderColor: isSelected ? Color.neutral900 : Color.neutral300,
+                        borderColor: isSelected
+                          ? Color.neutral900
+                          : Color.neutral300,
                       }}
                     />
                   );
@@ -772,7 +811,13 @@ export default function CourseEditorScreen() {
                       marginBottom: Space.sm,
                     }}
                   >
-                    <Text style={{ fontFamily: Font.medium, fontSize: 14, color: Color.neutral500 }}>
+                    <Text
+                      style={{
+                        fontFamily: Font.medium,
+                        fontSize: 14,
+                        color: Color.neutral500,
+                      }}
+                    >
                       Secondary Color
                     </Text>
                     {selectedTeebox.secondaryColor && (
@@ -784,7 +829,11 @@ export default function CourseEditorScreen() {
                         }
                       >
                         <Text
-                          style={{ fontFamily: Font.medium, fontSize: 12, color: Color.danger }}
+                          style={{
+                            fontFamily: Font.medium,
+                            fontSize: 12,
+                            color: Color.danger,
+                          }}
                         >
                           Clear
                         </Text>
@@ -817,7 +866,9 @@ export default function CourseEditorScreen() {
                             borderRadius: 16,
                             backgroundColor: color,
                             borderWidth: isSelected ? 2 : 1,
-                            borderColor: isSelected ? Color.neutral900 : Color.neutral300,
+                            borderColor: isSelected
+                              ? Color.neutral900
+                              : Color.neutral300,
                           }}
                         />
                       );
@@ -827,7 +878,11 @@ export default function CourseEditorScreen() {
               )}
 
               <View
-                style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.md }}
+                style={{
+                  flexDirection: "row",
+                  gap: Space.md,
+                  marginBottom: Space.md,
+                }}
               >
                 <TextInput
                   label="Slope"
@@ -874,7 +929,13 @@ export default function CourseEditorScreen() {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ fontFamily: Font.medium, fontSize: 15, color: Color.neutral500 }}>
+                <Text
+                  style={{
+                    fontFamily: Font.medium,
+                    fontSize: 15,
+                    color: Color.neutral500,
+                  }}
+                >
                   Holes:
                 </Text>
                 <Chip
@@ -902,23 +963,43 @@ export default function CourseEditorScreen() {
                 }}
               >
                 <Text
-                  style={{ width: 40, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
+                  style={{
+                    width: 40,
+                    fontFamily: Font.semiBold,
+                    fontSize: 12,
+                    color: Color.neutral500,
+                  }}
                 >
                   Hole
                 </Text>
                 <Text
-                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
+                  style={{
+                    flex: 1,
+                    fontFamily: Font.semiBold,
+                    fontSize: 12,
+                    color: Color.neutral500,
+                  }}
                 >
                   Par
                 </Text>
                 <Text
-                  style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
+                  style={{
+                    flex: 1,
+                    fontFamily: Font.semiBold,
+                    fontSize: 12,
+                    color: Color.neutral500,
+                  }}
                 >
                   Yardage
                 </Text>
                 {selectedTeeboxIndex === 0 && (
                   <Text
-                    style={{ flex: 1, fontFamily: Font.semiBold, fontSize: 12, color: Color.neutral500 }}
+                    style={{
+                      flex: 1,
+                      fontFamily: Font.semiBold,
+                      fontSize: 12,
+                      color: Color.neutral500,
+                    }}
                   >
                     Hdcp
                   </Text>
@@ -976,9 +1057,16 @@ export default function CourseEditorScreen() {
                     {selectedTeeboxIndex === 0 && (
                       <TextInput
                         mode="outlined"
-                        value={hole.handicap != null ? String(hole.handicap) : ""}
+                        value={
+                          hole.handicap != null ? String(hole.handicap) : ""
+                        }
                         onChangeText={(v) =>
-                          updateHole(selectedTeeboxIndex, holeKey, "handicap", v)
+                          updateHole(
+                            selectedTeeboxIndex,
+                            holeKey,
+                            "handicap",
+                            v,
+                          )
                         }
                         keyboardType="number-pad"
                         style={{ flex: 1 }}
@@ -1032,7 +1120,6 @@ export default function CourseEditorScreen() {
             Delete Course
           </Button>
         )}
-
       </ScrollView>
 
       <View style={styles.stickyFooter}>
@@ -1047,18 +1134,13 @@ export default function CourseEditorScreen() {
             Cancel
           </Button>
 
-          <Button
-            mode="contained"
-            buttonColor={Color.primary}
-            textColor={Color.white}
+          <GradientButton
             onPress={handleSave}
+            label={isEdit ? "Save" : "Create"}
             loading={isSaving}
             disabled={isSaving}
             style={styles.footerBtnPrimary}
-            labelStyle={{ fontFamily: Font.bold }}
-          >
-            {isEdit ? "Save" : "Create"}
-          </Button>
+          />
         </View>
       </View>
 
@@ -1069,7 +1151,7 @@ export default function CourseEditorScreen() {
         courseLat={pickerFallback.lat}
         courseLng={pickerFallback.lng}
         currentCenter={
-          pickerHole ? greenCenters[`hole-${pickerHole}`] ?? null : null
+          pickerHole ? (greenCenters[`hole-${pickerHole}`] ?? null) : null
         }
         savedCenters={greenCenters}
         isLastHole={pickerHole === holeCount}
@@ -1125,8 +1207,6 @@ const styles = StyleSheet.create({
     marginBottom: Space.lg,
   },
   section: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     padding: Space.lg,
     marginBottom: Space.lg,

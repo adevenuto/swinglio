@@ -1,3 +1,4 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Font, Space } from "@/constants/design-tokens";
 import React from "react";
@@ -16,11 +17,13 @@ export type StatItem = {
 type Props = {
   items: StatItem[];
   avatarUrl?: string | null;
+  displayName?: string | null;
   onAvatarPress?: () => void;
   onItemPress?: (key: string) => void;
 };
 
 const CIRCLE_SIZE = 56;
+const AVATAR_SIZE = 64;
 const STROKE_WIDTH = 3;
 const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2; // 26.5
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -58,7 +61,11 @@ function ProgressRing({ progress }: { progress: number }) {
   );
 }
 
-export default function StatsStrip({ items, avatarUrl, onAvatarPress, onItemPress }: Props) {
+export default function StatsStrip({ items, avatarUrl, displayName, onAvatarPress, onItemPress }: Props) {
+  // Split displayName into firstName/lastName for initials
+  const nameParts = displayName?.trim().split(/\s+/) ?? [];
+  const firstName = nameParts[0] ?? null;
+  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1].replace(".", "") : null;
   return (
     <ScrollView
       horizontal
@@ -74,7 +81,7 @@ export default function StatsStrip({ items, avatarUrl, onAvatarPress, onItemPres
           pressed ? { opacity: 0.7 } : undefined,
         ]}
       >
-        <UserAvatar avatarUrl={avatarUrl} firstName={null} size={CIRCLE_SIZE} />
+        <UserAvatar avatarUrl={avatarUrl} firstName={firstName} lastName={lastName} size={AVATAR_SIZE} />
       </Pressable>
 
       {/* Stat badges */}
@@ -98,7 +105,7 @@ export default function StatsStrip({ items, avatarUrl, onAvatarPress, onItemPres
                 </View>
               )}
             </View>
-            <Text style={styles.label}>{item.label}</Text>
+            <AdaptiveText style={styles.label}>{item.label}</AdaptiveText>
           </>
         );
 
@@ -142,13 +149,17 @@ const styles = StyleSheet.create({
     height: CIRCLE_SIZE,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    borderRadius: CIRCLE_SIZE / 2,
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.4)",
   },
   plainBadge: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
-    backgroundColor: Color.white,
-    borderWidth: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    borderWidth: 3,
     borderColor: Color.neutral200,
     alignItems: "center",
     justifyContent: "center",
@@ -179,7 +190,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Font.medium,
     fontSize: 12,
-    color: Color.neutral500,
+    color: Color.neutral300,
     marginTop: Space.xs,
     textAlign: "center",
   },

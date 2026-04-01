@@ -1,5 +1,5 @@
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
-import Feather from "@expo/vector-icons/Feather";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import { Text } from "react-native-paper";
@@ -21,15 +21,15 @@ type StepperProps = {
 
 const SIZE_CONFIG = {
   lg: {
-    buttonSize: 34,
-    iconSize: 18,
+    buttonSize: 40,
+    iconSize: 24,
     valueFontFamily: Font.bold,
     valueFontSize: 26,
     dimOnZero: false,
   },
   sm: {
     buttonSize: 32,
-    iconSize: 16,
+    iconSize: 18,
     valueFontFamily: Font.semiBold,
     valueFontSize: 16,
     dimOnZero: true,
@@ -63,9 +63,7 @@ export default function Stepper({
 
   const resolvedValueColor =
     valueColor ??
-    (config.dimOnZero && value === 0
-      ? Color.neutral400
-      : Color.neutral900);
+    (config.dimOnZero && value === 0 ? Color.neutral400 : Color.neutral900);
 
   const valueElement = (
     <Text
@@ -90,8 +88,8 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather
-              name="minus"
+            <MaterialCommunityIcons
+              name="minus-thick"
               size={config.iconSize}
               color={Color.white}
             />
@@ -104,8 +102,8 @@ export default function Stepper({
           style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
         >
           <View style={btnStyle}>
-            <Feather
-              name="plus"
+            <MaterialCommunityIcons
+              name="plus-thick"
               size={config.iconSize}
               color={Color.white}
             />
@@ -124,8 +122,8 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather
-            name="plus"
+          <MaterialCommunityIcons
+            name="plus-thick"
             size={config.iconSize}
             color={Color.white}
           />
@@ -138,8 +136,8 @@ export default function Stepper({
         style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
       >
         <View style={btnStyle}>
-          <Feather
-            name="minus"
+          <MaterialCommunityIcons
+            name="minus-thick"
             size={config.iconSize}
             color={Color.white}
           />
@@ -187,15 +185,15 @@ const verticalStyles = StyleSheet.create({
   pill: {
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "space-around",
-    width: 50,
-    minHeight: 120,
+    justifyContent: "center",
+    gap: Space.sm,
+    width: 70,
     alignSelf: "stretch",
-    borderRadius: Radius.full,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Color.neutral300,
     backgroundColor: Color.white,
-    paddingVertical: Space.sm,
+    paddingVertical: Space.md,
   },
 });
 

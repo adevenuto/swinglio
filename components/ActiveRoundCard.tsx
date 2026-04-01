@@ -1,12 +1,26 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import AdaptiveText from "@/components/AdaptiveText";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
+import { LinearGradient } from "expo-linear-gradient";
 import { ActiveRound } from "@/hooks/use-active-rounds";
-import Entypo from "@expo/vector-icons/Entypo";
+import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
 type Props = { rounds: ActiveRound[] };
+
+function formatToPar(toPar: number): string {
+  if (toPar === 0) return "E";
+  return toPar > 0 ? `+${toPar}` : `${toPar}`;
+}
 
 export default function ActiveRoundCard({ rounds }: Props) {
   const router = useRouter();
@@ -15,39 +29,76 @@ export default function ActiveRoundCard({ rounds }: Props) {
 
   return (
     <View style={{ marginTop: Space.lg }}>
-      <Text style={styles.sectionLabel}>Activity Feed</Text>
-      {rounds.map((round) => (
-        <TouchableOpacity
-          key={round.id}
-          onPress={() =>
-            router.push({
-              pathname: "/gameplay",
-              params: { roundId: round.id },
-            })
-          }
-          style={styles.card}
-        >
-          <View style={styles.row}>
-            <View style={styles.leftColumn}>
-              <Text style={styles.courseName}>
-                {round.courses?.club_name || "Unknown Course"}
+      <AdaptiveText style={styles.sectionLabel}>In Progress</AdaptiveText>
+      {rounds.map((round) => {
+        const teeName = (round.teebox_data as any)?.name;
+        const teeLabel = teeName ? `${teeName} tees` : "";
+        const scoreLabel =
+          round.holesCompleted > 0
+            ? `${formatToPar(round.runningToPar)} thru ${round.lastHolePlayed}`
+            : "";
+        const subtitle = [teeLabel, scoreLabel].filter(Boolean).join(" \u00B7 ");
+
+        // Next hole is lastHolePlayed + 1 (or 1 if nothing played yet)
+        const currentHole =
+          round.holesCompleted > 0 ? round.lastHolePlayed + 1 : 1;
+        const displayHole = Math.min(
+          currentHole,
+          round.holeCount || 18,
+        );
+
+        return (
+          <Pressable
+            key={round.id}
+            onPress={() =>
+              router.push({
+                pathname: "/gameplay",
+                params: { roundId: round.id },
+              })
+            }
+            style={({ pressed }) => [
+              styles.card,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            {/* Live badge */}
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveBadgeText}>
+                live {"\u00B7"} hole {displayHole} of{" "}
+                {round.holeCount || 18}
               </Text>
-              {round.courses?.course_name && round.courses.course_name !== round.courses.club_name && (
-                <Text style={styles.subtitle}>- {round.courses.course_name}</Text>
+            </View>
+
+            {/* Course name */}
+            <Text style={styles.courseName}>
+              {round.courses?.club_name || "Unknown Course"}
+            </Text>
+            {round.courses?.course_name &&
+              round.courses.course_name !== round.courses.club_name && (
+                <Text style={styles.courseNameSub}>
+                  {round.courses.course_name}
+                </Text>
               )}
-              <Text style={styles.subtitle}>
-                {(round.teebox_data as any)?.name
-                  ? `${(round.teebox_data as any).name} tees`
-                  : ""}
-              </Text>
-            </View>
-            <View style={styles.badgeColumn}>
-              <Entypo name="chevron-with-circle-right" size={32} color={Color.primary} />
-              <Text style={styles.badgeLabel}>Continue</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      ))}
+
+            {/* Subtitle: tee · score thru hole */}
+            {subtitle ? (
+              <Text style={styles.subtitle}>{subtitle}</Text>
+            ) : null}
+
+            {/* Continue button */}
+            <LinearGradient
+              colors={Color.primaryGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.continueBtn}
+            >
+              <Feather name="play" size={14} color={Color.white} />
+              <Text style={styles.continueBtnText}>continue round</Text>
+            </LinearGradient>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -59,41 +110,68 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Space.lg,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
+    borderWidth: 2,
+    borderColor: Color.primary,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,
     ...Shadow.sm,
   },
-  row: {
+  liveBadge: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: Color.neutral50,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    marginBottom: Space.md,
   },
-  leftColumn: {
-    flex: 1,
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Color.primary,
+    marginRight: Space.sm,
+  },
+  liveBadgeText: {
+    fontFamily: Font.medium,
+    fontSize: 13,
+    color: Color.neutral700,
   },
   courseName: {
     fontFamily: Font.bold,
-    fontSize: 17,
+    fontSize: 18,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
-  badgeColumn: {
-    alignItems: "center",
-  },
-  badgeLabel: {
-    fontFamily: Font.semiBold,
-    fontSize: 13,
-    color: Color.primary,
+  courseNameSub: {
+    fontFamily: Font.regular,
+    fontSize: 14,
+    color: Color.neutral500,
     marginTop: 2,
-    textAlign: "center",
   },
   subtitle: {
     fontFamily: Font.regular,
     fontSize: 14,
     color: Color.neutral500,
+    marginTop: Space.xs,
     textTransform: "capitalize",
+  },
+  continueBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    borderRadius: Radius.lg,
+    overflow: "hidden",
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm + 2,
+    marginTop: Space.md,
+    gap: Space.sm,
+  },
+  continueBtnText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.white,
   },
 });

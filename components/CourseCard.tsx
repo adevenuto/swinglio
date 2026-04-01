@@ -13,6 +13,7 @@ type Props = {
   description?: string;
   featuredImageUrl?: string | null;
   missingRatings?: boolean;
+  hasGreenCenters?: boolean;
   onPress: () => void;
 };
 
@@ -23,6 +24,7 @@ export default function CourseCard({
   description,
   featuredImageUrl,
   missingRatings,
+  hasGreenCenters,
   onPress,
 }: Props) {
   const showCourseName = courseName != null && courseName !== clubName;
@@ -58,6 +60,11 @@ export default function CourseCard({
           ) : null}
         </View>
       </View>
+      {hasGreenCenters && (
+        <View style={styles.gpsIcon}>
+          <MaterialIcons name="gps-fixed" size={14} color={Color.primary} />
+        </View>
+      )}
       {missingRatings && (
         <Pressable
           onPress={(e) => {
@@ -85,8 +92,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Space.md,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     marginBottom: Space.sm,
@@ -127,6 +132,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Color.neutral500,
     marginTop: 2,
+  },
+  gpsIcon: {
+    position: "absolute" as const,
+    top: Space.sm,
+    right: Space.sm,
   },
   badge: {
     flexDirection: "row",

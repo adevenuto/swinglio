@@ -1,10 +1,9 @@
-import SwinglioLogo from "@/assets/images/swinglio.svg";
+import WeatherBadge from "@/components/WeatherBadge";
 import { Color, Font, Space } from "@/constants/design-tokens";
 import { useAppDrawer } from "@/contexts/app-drawer-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { Text } from "react-native-paper";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 
 // const BRAND_NAME = "Swinglio";
 
@@ -14,9 +13,10 @@ export default function BrandHeader() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <SwinglioLogo height={36} fill={Color.neutral900} />
+        <Image source={require("@/assets/images/brand.png")} style={styles.logo} resizeMode="contain" />
       </View>
-      {/* <Text style={styles.brandName}>{BRAND_NAME}</Text> */}
+
+      <WeatherBadge adaptive={false} />
 
       <Pressable
         onPress={openDrawer}
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: Space.lg,
     height: 48,
     backgroundColor: Color.screenBg,
@@ -49,6 +49,10 @@ const styles = StyleSheet.create({
     fontFamily: Font.bold,
     fontSize: 22,
     color: Color.neutral900,
+  },
+  logo: {
+    height: 44,
+    width: 108,
   },
   logoContainer: {
     ...StyleSheet.absoluteFillObject,

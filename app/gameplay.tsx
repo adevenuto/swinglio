@@ -1,4 +1,7 @@
 import DistanceMapModal from "@/components/DistanceMapModal";
+import WeatherBackground from "@/components/WeatherBackground";
+import WeatherBadge from "@/components/WeatherBadge";
+import FinishRoundModal from "@/components/FinishRoundModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import HoleEntryPanel from "@/components/HoleEntryPanel";
 import HoleNavigation from "@/components/HoleNavigation";
@@ -15,6 +18,7 @@ import {
   getCurrentHole,
   useGameplay,
 } from "@/contexts/gameplay-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { usePlayerLocation } from "@/hooks/use-player-location";
 import { distanceInYards } from "@/lib/geo";
 import { supabase } from "@/lib/supabase";
@@ -29,6 +33,7 @@ import {
   View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import AdaptiveText from "@/components/AdaptiveText";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
 import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -44,6 +49,7 @@ export default function GameplayScreen() {
 
 function GameplayScreenContent() {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
   const router = useRouter();
   const {
     round,
@@ -63,7 +69,8 @@ function GameplayScreenContent() {
     updateHole,
     flushPersist,
     setActiveHole,
-    handleQuitRound,
+    quitWithStatus,
+    getHolesScored,
     greenCenters,
     hasGreenCenters,
   } = useGameplay();
@@ -71,6 +78,7 @@ function GameplayScreenContent() {
   // GPS distance to pin
   const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
   const [showDistanceMap, setShowDistanceMap] = useState(false);
+  const [showFinishModal, setShowFinishModal] = useState(false);
 
   const activeGreenCenter = greenCenters[`hole-${activeHole}`] ?? null;
 
@@ -181,8 +189,17 @@ function GameplayScreenContent() {
   // Flush current hole then show quit/finish modal
   const onFinishRound = useCallback(() => {
     flushPersist();
-    handleQuitRound();
-  }, [handleQuitRound, flushPersist]);
+    setShowFinishModal(true);
+  }, [flushPersist]);
+
+  const holesScored = getHolesScored();
+  const totalHoles = holeCount;
+  const finishMessage =
+    holesScored === 0
+      ? "You haven't scored any holes yet."
+      : holesScored >= totalHoles
+        ? `You've scored all ${totalHoles} holes.`
+        : `You've scored ${holesScored} of ${totalHoles} holes.`;
 
   // Flush persist (used by HoleNavigation)
   const saveCurrentHole = useCallback(() => {
@@ -200,16 +217,18 @@ function GameplayScreenContent() {
   if (!round) {
     return (
       <View style={gameStyles.centeredContainer}>
-        <Text style={{ ...Type.body }}>Round not found</Text>
+        <AdaptiveText style={{ ...Type.body }}>Round not found</AdaptiveText>
       </View>
     );
   }
 
   return (
-    <SafeAreaView
-      edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
-    >
+    <View style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg }}>
+      <WeatherBackground />
+      <SafeAreaView
+        edges={["top"]}
+        style={{ flex: 1, paddingTop: 20 }}
+      >
       {/* Nav header */}
       <View style={gameStyles.navHeader}>
         <Pressable
@@ -219,35 +238,10 @@ function GameplayScreenContent() {
           }}
           style={gameStyles.navBack}
         >
-          <MaterialIcons
-            name="chevron-left"
-            size={28}
-            color={Color.neutral900}
-          />
-          <Text style={gameStyles.navBackText}>Dashboard</Text>
+          <AdaptiveText style={gameStyles.navBackChevron}>{"\u2039"}</AdaptiveText>
+          <AdaptiveText style={gameStyles.navBackText}>Dashboard</AdaptiveText>
         </Pressable>
-      </View>
-
-      {/* Course header */}
-      <View style={gameStyles.courseCardWrapper}>
-        <GameplayHeader
-          courseId={round.course_id}
-          courseName={round.courses?.club_name || "Unknown"}
-          courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
-          featuredImageUrl={featuredImageUrl}
-          holeCount={holeCount}
-          activeHole={activeHole}
-          par={teeboxHoleData?.par}
-          yardage={teeboxHoleData?.length}
-          teeboxName={(round.teebox_data as any)?.name}
-          distanceToPin={distanceToPin}
-          distanceLoading={hasGreenCenters && gpsLoading}
-          onDistancePress={
-            distanceToPin != null && activeGreenCenter
-              ? () => setShowDistanceMap(true)
-              : undefined
-          }
-        />
+        <WeatherBadge />
       </View>
 
       {/* Scorecard + HoleEntryPanel */}
@@ -288,6 +282,26 @@ function GameplayScreenContent() {
             <View
               style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}
             >
+              {/* Course header + HoleEntryPanel unified card */}
+              <GameplayHeader
+                courseId={round.course_id}
+                courseName={round.courses?.club_name || "Unknown"}
+                courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
+                featuredImageUrl={featuredImageUrl}
+                holeCount={holeCount}
+                activeHole={activeHole}
+                par={teeboxHoleData?.par}
+                yardage={teeboxHoleData?.length}
+                teeboxName={(round.teebox_data as any)?.name}
+                distanceToPin={distanceToPin}
+                distanceLoading={hasGreenCenters && gpsLoading}
+                onDistancePress={
+                  distanceToPin != null && activeGreenCenter
+                    ? () => setShowDistanceMap(true)
+                    : undefined
+                }
+                connectedBottom
+              />
               <HoleEntryPanel
                 holeNumber={activeHole}
                 par={teeboxHoleData.par}
@@ -295,13 +309,14 @@ function GameplayScreenContent() {
                 currentScore={activeHoleData?.score ?? ""}
                 currentStats={activeHoleData?.stats}
                 onSave={updateHole}
+                connectedTop
               />
             </View>
           </GestureDetector>
         )}
 
         <View style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}>
-          <Text style={gameStyles.scorecardLabel}>SCORECARD</Text>
+          <AdaptiveText style={gameStyles.scorecardLabel}>SCORECARD</AdaptiveText>
           <Scorecard
             ref={scorecardRef}
             teeboxData={round.teebox_data}
@@ -313,16 +328,16 @@ function GameplayScreenContent() {
         </View>
 
         {!myFinished && (
-          <Button
-            mode="text"
+          <Pressable
             onPress={onFinishRound}
-            loading={isQuitting}
-            textColor={Color.neutral500}
-            style={{ marginTop: Space.xl }}
-            labelStyle={{ fontFamily: Font.medium }}
+            disabled={isQuitting}
+            style={({ pressed }) => [
+              { marginTop: Space.xl, alignSelf: "center", paddingVertical: Space.sm },
+              pressed && { opacity: 0.7 },
+            ]}
           >
-            Quit Round
-          </Button>
+            <AdaptiveText style={gameStyles.endRoundText}>End Round</AdaptiveText>
+          </Pressable>
         )}
       </ScrollView>
 
@@ -349,7 +364,28 @@ function GameplayScreenContent() {
           distanceYards={distanceToPin}
         />
       )}
-    </SafeAreaView>
+
+      <FinishRoundModal
+        visible={showFinishModal}
+        message={finishMessage}
+        showComplete={holesScored >= totalHoles}
+        showIncomplete={holesScored > 0 && holesScored < totalHoles}
+        onComplete={() => {
+          setShowFinishModal(false);
+          quitWithStatus("completed");
+        }}
+        onIncomplete={() => {
+          setShowFinishModal(false);
+          quitWithStatus("incomplete");
+        }}
+        onWithdraw={() => {
+          setShowFinishModal(false);
+          quitWithStatus("withdrew");
+        }}
+        onCancel={() => setShowFinishModal(false)}
+      />
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -372,10 +408,25 @@ const gameStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  navBackText: {
+  navBackChevron: {
     fontFamily: Font.regular,
-    fontSize: 17,
+    fontSize: 32,
     color: Color.neutral900,
+    lineHeight: 32,
+    marginRight: Space.xs,
+    includeFontPadding: false,
+  },
+  navBackText: {
+    fontFamily: Font.bold,
+    fontSize: 21,
+    color: Color.neutral900,
+    lineHeight: 24,
+    includeFontPadding: false,
+  },
+  endRoundText: {
+    fontFamily: Font.medium,
+    fontSize: 14,
+    color: Color.neutral500,
   },
   bottomBar: {
     paddingHorizontal: Space.lg,
@@ -387,7 +438,7 @@ const gameStyles = StyleSheet.create({
   courseCardWrapper: {
     paddingHorizontal: Space.lg,
     marginBottom: Space.md,
-  },
+  }, // kept for potential reuse
   scorecardLabel: {
     ...Type.caption,
     marginBottom: Space.sm,

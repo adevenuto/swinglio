@@ -1,9 +1,8 @@
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import {
-  DistanceUnit,
-  usePreferences,
-} from "@/contexts/preferences-context";
+import { DistanceUnit, TempUnit, usePreferences } from "@/contexts/preferences-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { supabase } from "@/lib/supabase";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -13,6 +12,7 @@ import React, { useState } from "react";
 import {
   Alert,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,16 +20,22 @@ import {
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 const UNIT_OPTIONS: { value: DistanceUnit; label: string }[] = [
   { value: "yards", label: "Yards" },
   { value: "meters", label: "Meters" },
 ];
 
+const TEMP_OPTIONS: { value: TempUnit; label: string }[] = [
+  { value: "fahrenheit", label: "°F" },
+  { value: "celsius", label: "°C" },
+];
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
-  const { distanceUnit, setDistanceUnit } = usePreferences();
+  const { isPro, presentPaywall } = useSubscription();
+  const { distanceUnit, setDistanceUnit, tempUnit, setTempUnit } = usePreferences();
 
   // Change password state
   const [passwordExpanded, setPasswordExpanded] = useState(false);
@@ -49,15 +55,15 @@ export default function SettingsScreen() {
 
   const handleChangePassword = async () => {
     if (!newPassword.trim()) {
-      Toast.show({ type: "error", text1: "Please enter a new password" });
+      toast.error("Please enter a new password");
       return;
     }
     if (newPassword.length < 6) {
-      Toast.show({ type: "error", text1: "Password must be at least 6 characters" });
+      toast.error("Password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
-      Toast.show({ type: "error", text1: "Passwords do not match" });
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -71,7 +77,7 @@ export default function SettingsScreen() {
 
     if (signInError) {
       setPasswordLoading(false);
-      Toast.show({ type: "error", text1: "Current password is incorrect" });
+      toast.error("Current password is incorrect");
       return;
     }
 
@@ -79,7 +85,7 @@ export default function SettingsScreen() {
     setPasswordLoading(false);
 
     if (error) {
-      Toast.show({ type: "error", text1: error.message || "Failed to update password" });
+      toast.error(error.message || "Failed to update password");
       return;
     }
 
@@ -87,7 +93,7 @@ export default function SettingsScreen() {
     setNewPassword("");
     setConfirmPassword("");
     setPasswordExpanded(false);
-    Toast.show({ type: "success", text1: "Password updated" });
+    toast.success("Password updated");
   };
 
   const handleDeleteAccount = () => {
@@ -109,9 +115,7 @@ export default function SettingsScreen() {
                   text: "Delete",
                   style: "destructive",
                   onPress: async () => {
-                    const { error } = await supabase.rpc(
-                      "delete_user_account",
-                    );
+                    const { error } = await supabase.rpc("delete_user_account");
                     if (error) {
                       Alert.alert(
                         "Error",
@@ -156,6 +160,53 @@ export default function SettingsScreen() {
             <Text style={styles.title}>Settings</Text>
             <Text style={styles.subtitle}>Manage your preferences</Text>
 
+            {/* ── SUBSCRIPTION ── */}
+            <Text style={styles.sectionLabel}>SUBSCRIPTION</Text>
+            <View style={styles.card}>
+              <View style={styles.row}>
+                <Text style={styles.rowText}>Plan</Text>
+                {isPro ? (
+                  <View style={styles.proBadge}>
+                    <Text style={styles.proBadgeText}>PRO</Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={presentPaywall}
+                    style={({ pressed }) => [
+                      styles.upgradeBadge,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.upgradeBadgeText}>Upgrade</Text>
+                  </Pressable>
+                )}
+              </View>
+              {isPro && (
+                <>
+                  <View style={styles.rowDivider} />
+                  <Pressable
+                    onPress={() => {
+                      const url = Platform.OS === "ios"
+                        ? "https://apps.apple.com/account/subscriptions"
+                        : "https://play.google.com/store/account/subscriptions";
+                      Linking.openURL(url);
+                    }}
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text style={styles.rowText}>Manage Subscription</Text>
+                    <Feather
+                      name="external-link"
+                      size={18}
+                      color={Color.neutral400}
+                    />
+                  </Pressable>
+                </>
+              )}
+            </View>
+
             {/* ── PREFERENCES ── */}
             <Text style={styles.sectionLabel}>PREFERENCES</Text>
             <View style={styles.card}>
@@ -168,6 +219,33 @@ export default function SettingsScreen() {
                     <Pressable
                       key={opt.value}
                       onPress={() => setDistanceUnit(opt.value)}
+                      style={[
+                        styles.segmentBtn,
+                        selected && styles.segmentBtnSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentText,
+                          selected && styles.segmentTextSelected,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Temperature Unit */}
+              <Text style={styles.fieldLabel}>Temperature</Text>
+              <View style={styles.segmentedRow}>
+                {TEMP_OPTIONS.map((opt) => {
+                  const selected = tempUnit === opt.value;
+                  return (
+                    <Pressable
+                      key={opt.value}
+                      onPress={() => setTempUnit(opt.value)}
                       style={[
                         styles.segmentBtn,
                         selected && styles.segmentBtnSelected,
@@ -237,19 +315,12 @@ export default function SettingsScreen() {
                         onChangeText={setConfirmPassword}
                         autoCapitalize="none"
                       />
-                      <Pressable
+                      <GradientButton
                         onPress={handleChangePassword}
+                        label="Save"
+                        loading={passwordLoading}
                         disabled={passwordLoading}
-                        style={({ pressed }) => [
-                          styles.saveBtn,
-                          pressed && { opacity: 0.7 },
-                          passwordLoading && { opacity: 0.7 },
-                        ]}
-                      >
-                        <Text style={styles.saveBtnText}>
-                          {passwordLoading ? "Saving..." : "Save"}
-                        </Text>
-                      </Pressable>
+                      />
                     </View>
                   )}
 
@@ -289,9 +360,7 @@ export default function SettingsScreen() {
 
               {/* Privacy Policy */}
               <Pressable
-                onPress={() =>
-                  Linking.openURL("https://swinglio.com/privacy")
-                }
+                onPress={() => Linking.openURL("https://swinglio.com/privacy")}
                 style={({ pressed }) => [
                   styles.row,
                   pressed && { opacity: 0.7 },
@@ -327,9 +396,7 @@ export default function SettingsScreen() {
 
               {/* Support */}
               <Pressable
-                onPress={() =>
-                  Linking.openURL("mailto:support@swinglio.com")
-                }
+                onPress={() => Linking.openURL("mailto:support@swinglio.com")}
                 style={({ pressed }) => [
                   styles.row,
                   pressed && { opacity: 0.7 },
@@ -346,7 +413,6 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-
     </View>
   );
 }
@@ -403,8 +469,6 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -471,6 +535,29 @@ const styles = StyleSheet.create({
   rowDivider: {
     height: 1,
     backgroundColor: Color.neutral200,
+  },
+  proBadge: {
+    backgroundColor: Color.primary,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.lg,
+  },
+  proBadgeText: {
+    fontFamily: Font.bold,
+    fontSize: 12,
+    color: Color.white,
+    letterSpacing: 0.5,
+  },
+  upgradeBadge: {
+    backgroundColor: Color.primaryLight,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.lg,
+  },
+  upgradeBadgeText: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    color: Color.primary,
   },
 
   // Password section

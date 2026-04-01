@@ -10,15 +10,24 @@ export type RecentRound = {
   teebox_data: { name: string; color?: string; holes?: Record<string, { par: string; length: string }> };
   status: string;
   created_at: string;
+  date_played: string | null;
+  display_date: string;
   courses: { club_name: string; course_name: string };
   player_score: number | null;
   player_status: string;
   score_to_par: number | null;
   holes_completed: number | null;
   hole_count: number | null;
+  needsAttestation: boolean;
+  players: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  }[];
 };
 
-export function useRecentRounds(userId: string) {
+export function useRecentRounds(userId: string, limit?: number) {
   const [recentRounds, setRecentRounds] = useState<RecentRound[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,17 +64,62 @@ export function useRecentRounds(userId: string) {
     }
 
     // Step 2: fetch rounds (no round status filter)
-    const { data } = await supabase
+    let query = supabase
       .from("rounds")
       .select(
-        "id, course_id, creator_id, teebox_data, status, created_at, courses(club_name, course_name)",
+        "id, course_id, creator_id, teebox_data, status, created_at, date_played, courses(club_name, course_name)",
       )
       .in("id", roundIds)
-      .order("created_at", { ascending: false })
-      .limit(10);
+      .order("date_played", { ascending: false, nullsFirst: false });
+
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    const { data } = await query;
 
     if (data) {
-      // Step 3: merge + compute score_to_par
+      // Step 3: check attestation status
+      // Fetch user's attestations and player counts for these rounds
+      const fetchedRoundIds = data.map((r: any) => r.id);
+
+      const [{ data: userAttestations }, { data: allScoresForRounds }] =
+        await Promise.all([
+          supabase
+            .from("attestations")
+            .select("round_id")
+            .eq("attester_id", userId)
+            .in("round_id", fetchedRoundIds),
+          supabase
+            .from("scores")
+            .select("round_id, golfer_id, player_status, profiles(first_name, last_name, avatar_url)")
+            .in("round_id", fetchedRoundIds),
+        ]);
+
+      const attestedSet = new Set(
+        (userAttestations || []).map((a: any) => Number(a.round_id)),
+      );
+
+      // Count eligible players per round (exclude withdrew) + build player profiles map
+      const playerCounts: Record<number, number> = {};
+      const roundPlayersMap: Record<number, RecentRound["players"]> = {};
+      for (const s of allScoresForRounds || []) {
+        const rid = Number(s.round_id);
+        if (s.player_status !== "withdrew") {
+          playerCounts[rid] = (playerCounts[rid] || 0) + 1;
+        }
+        // Build player list for each round
+        const profile = (s as any).profiles;
+        if (!roundPlayersMap[rid]) roundPlayersMap[rid] = [];
+        roundPlayersMap[rid].push({
+          id: s.golfer_id as string,
+          firstName: profile?.first_name ?? null,
+          lastName: profile?.last_name ?? null,
+          avatarUrl: profile?.avatar_url ?? null,
+        });
+      }
+
+      // Step 4: merge + compute score_to_par
       const enriched: RecentRound[] = data.map((round: any) => {
         const scoreRow = scoreMap.get(round.id);
         let scoreToPar: number | null = null;
@@ -91,19 +145,25 @@ export function useRecentRounds(userId: string) {
           teebox_data: round.teebox_data,
           status: round.status,
           created_at: round.created_at,
+          date_played: round.date_played ?? null,
+          display_date: round.date_played ?? round.created_at,
           courses: round.courses,
           player_score: scoreRow?.score ?? null,
           player_status: scoreRow?.player_status ?? "completed",
           score_to_par: scoreToPar,
           holes_completed: holesCompleted,
           hole_count: holeCount,
+          needsAttestation:
+            (playerCounts[Number(round.id)] || 0) > 1 &&
+            !attestedSet.has(Number(round.id)),
+          players: roundPlayersMap[Number(round.id)] ?? [],
         };
       });
 
       setRecentRounds(enriched);
     }
     setIsLoading(false);
-  }, [userId]);
+  }, [userId, limit]);
 
   return { recentRounds, isLoading, refresh };
 }

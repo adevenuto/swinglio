@@ -150,8 +150,9 @@ export function GameplayProvider({
   );
 
   // --- Fetch round + scores ---
+  const hasLoadedOnce = useRef(false);
   const fetchRound = useCallback(async () => {
-    setIsLoading(true);
+    if (!hasLoadedOnce.current) setIsLoading(true);
 
     const { data: roundData } = await supabase
       .from("rounds")
@@ -201,6 +202,7 @@ export function GameplayProvider({
 
     if (scoreData) updatePlayers(scoreData as unknown as PlayerScore[]);
 
+    hasLoadedOnce.current = true;
     setIsLoading(false);
   }, [roundId, updatePlayers]);
 

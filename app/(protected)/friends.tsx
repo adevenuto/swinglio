@@ -1,10 +1,14 @@
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
-import { useAuth } from "@/contexts/auth-context";
 import {
-  FriendWithProfile,
-  useFriends,
-} from "@/hooks/use-friends";
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
+import { useAuth } from "@/contexts/auth-context";
+import { FriendWithProfile, useFriends } from "@/hooks/use-friends";
 import { usePlayerSearch } from "@/hooks/use-player-search";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -17,7 +21,7 @@ import {
   View,
 } from "react-native";
 import { Button, Searchbar, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
+import { toast } from "sonner-native";
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -78,7 +82,7 @@ export default function FriendsScreen() {
     if (error) {
       Alert.alert("Error", error);
     } else {
-      Toast.show({ type: "success", text1: "Friend invite sent!" });
+      toast.success("Friend invite sent!");
     }
   };
 
@@ -87,7 +91,7 @@ export default function FriendsScreen() {
     if (error) {
       Alert.alert("Error", "Failed to accept invite.");
     } else {
-      Toast.show({ type: "success", text1: `You and ${getName(friendRow)} are now friends!` });
+      toast.success(`You and ${getName(friendRow)} are now friends!`);
     }
   };
 
@@ -110,21 +114,17 @@ export default function FriendsScreen() {
   };
 
   const handleRemoveFriend = (friendRow: FriendWithProfile) => {
-    Alert.alert(
-      "Disconnect Friend",
-      `Disconnect from ${getName(friendRow)}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Disconnect",
-          style: "destructive",
-          onPress: async () => {
-            const { error } = await declineOrRemove(friendRow.id);
-            if (error) Alert.alert("Error", "Failed to disconnect friend.");
-          },
+    Alert.alert("Disconnect Friend", `Disconnect from ${getName(friendRow)}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Disconnect",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await declineOrRemove(friendRow.id);
+          if (error) Alert.alert("Error", "Failed to disconnect friend.");
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleCancelInvite = (friendRow: FriendWithProfile) => {
@@ -201,7 +201,6 @@ export default function FriendsScreen() {
       >
         <View style={styles.container}>
           <View style={styles.inner}>
-
             {/* Search results */}
             {showSearchResults && (
               <View style={{ marginBottom: Space.lg }}>
@@ -225,7 +224,9 @@ export default function FriendsScreen() {
                         <View style={{ flex: 1, marginLeft: Space.md }}>
                           <Text style={styles.playerName}>{name}</Text>
                           {player.email && (
-                            <Text style={styles.playerEmail}>{player.email}</Text>
+                            <Text style={styles.playerEmail}>
+                              {player.email}
+                            </Text>
                           )}
                         </View>
                         <View style={styles.actionColumn}>
@@ -233,19 +234,20 @@ export default function FriendsScreen() {
                             <Text style={styles.friendsText}>Friends</Text>
                           )}
                           {relationship === "pending_sent" && (
-                            <Text style={styles.inviteSentText}>Invite Sent</Text>
+                            <Text style={styles.inviteSentText}>
+                              Invite Sent
+                            </Text>
                           )}
-                          {relationship === "pending_received" &&
-                            friendRow && (
-                              <Button
-                                mode="outlined"
-                                compact
-                                onPress={() => handleAccept(friendRow)}
-                                labelStyle={{ fontFamily: Font.medium }}
-                              >
-                                Accept
-                              </Button>
-                            )}
+                          {relationship === "pending_received" && friendRow && (
+                            <Button
+                              mode="outlined"
+                              compact
+                              onPress={() => handleAccept(friendRow)}
+                              labelStyle={{ fontFamily: Font.medium }}
+                            >
+                              Accept
+                            </Button>
+                          )}
                           {relationship === "none" && (
                             <Button
                               mode="outlined"
@@ -280,7 +282,9 @@ export default function FriendsScreen() {
                     <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
+                        <Text style={styles.playerEmail}>
+                          {fr.profile.email}
+                        </Text>
                       )}
                     </View>
                     <View style={{ flexDirection: "row", gap: Space.sm }}>
@@ -321,7 +325,9 @@ export default function FriendsScreen() {
                     <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
+                        <Text style={styles.playerEmail}>
+                          {fr.profile.email}
+                        </Text>
                       )}
                     </View>
                     <Pressable
@@ -351,7 +357,9 @@ export default function FriendsScreen() {
                     <View style={{ flex: 1, marginLeft: Space.md }}>
                       <Text style={styles.playerName}>{getName(fr)}</Text>
                       {fr.profile.email && (
-                        <Text style={styles.playerEmail}>{fr.profile.email}</Text>
+                        <Text style={styles.playerEmail}>
+                          {fr.profile.email}
+                        </Text>
                       )}
                     </View>
                     <Text style={styles.inviteSentText}>Invite Sent</Text>
@@ -371,7 +379,6 @@ export default function FriendsScreen() {
           </View>
         </View>
       </ScrollView>
-
     </View>
   );
 }
@@ -413,8 +420,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   card: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     padding: Space.md,

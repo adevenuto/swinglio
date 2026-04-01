@@ -1,17 +1,35 @@
+import AdaptiveText from "@/components/AdaptiveText";
 import GameplayHeader from "@/components/GameplayHeader";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import WeatherBackground from "@/components/WeatherBackground";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { useAttestations } from "@/hooks/use-attestations";
+import GradientButton from "@/components/GradientButton";
+import { formatDisplayDate } from "@/lib/date-utils";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
 import { ScoreDetails } from "@/types/scoring";
+import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Pressable,
   RefreshControl,
@@ -20,8 +38,8 @@ import {
   View,
 } from "react-native";
 import { ActivityIndicator, Button, Text } from "react-native-paper";
-import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type RoundData = {
   id: number;
@@ -29,6 +47,7 @@ type RoundData = {
   course_id: number;
   status: string;
   created_at: string;
+  date_played: string | null;
   results_data: ResultsData | null;
   teebox_data: {
     order: number;
@@ -53,15 +72,6 @@ type PlayerScore = {
   };
 };
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function formatScoreToPar(score: number): string {
   if (score === 0) return "E";
   return score > 0 ? `+${score}` : String(score);
@@ -69,8 +79,12 @@ function formatScoreToPar(score: number): string {
 
 export default function RoundSummaryScreen() {
   const { user } = useAuth();
+  const { isPro } = useSubscription();
   const router = useRouter();
-  const { roundId, completed } = useLocalSearchParams<{ roundId: string; completed?: string }>();
+  const { roundId, completed } = useLocalSearchParams<{
+    roundId: string;
+    completed?: string;
+  }>();
 
   const [round, setRound] = useState<RoundData | null>(null);
   const [players, setPlayers] = useState<PlayerScore[]>([]);
@@ -92,7 +106,7 @@ export default function RoundSummaryScreen() {
     const { data: roundData } = await supabase
       .from("rounds")
       .select(
-        "id, creator_id, course_id, status, created_at, results_data, teebox_data, courses(club_name, course_name)",
+        "id, creator_id, course_id, status, created_at, date_played, results_data, teebox_data, courses(club_name, course_name)",
       )
       .eq("id", roundId)
       .single();
@@ -208,10 +222,7 @@ export default function RoundSummaryScreen() {
       !toastFired.current
     ) {
       toastFired.current = true;
-      Toast.show({
-        type: "success",
-        text1: `Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`,
-      });
+      toast.success(`Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`);
     }
   }, [completed, myResult, myPlayerStatus]);
 
@@ -228,10 +239,7 @@ export default function RoundSummaryScreen() {
       .update({ status: "active", results_data: null })
       .eq("id", round?.id);
 
-    await supabase
-      .from("round_attestations")
-      .delete()
-      .eq("round_id", roundId);
+    await supabase.from("round_attestations").delete().eq("round_id", roundId);
 
     router.replace({ pathname: "/gameplay", params: { roundId } });
   }, [user?.id, roundId, myScore, round?.id, router]);
@@ -247,27 +255,25 @@ export default function RoundSummaryScreen() {
   if (!round) {
     return (
       <View style={s.centeredContainer}>
-        <Text style={{ ...Type.body }}>Round not found</Text>
+        <AdaptiveText style={{ ...Type.body }}>Round not found</AdaptiveText>
       </View>
     );
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg }}>
+    <WeatherBackground />
     <SafeAreaView
       edges={["top"]}
-      style={{ flex: 1, backgroundColor: Color.screenBg, paddingTop: 20 }}
+      style={{ flex: 1, paddingTop: 20 }}
     >
       {/* Header */}
       <View style={s.header}>
         <Pressable onPress={() => router.back()} style={s.backButton}>
-          <MaterialIcons
-            name="chevron-left"
-            size={28}
-            color={Color.neutral900}
-          />
-          <Text style={s.backText}>Back</Text>
+          <AdaptiveText style={s.backChevron}>{"\u2039"}</AdaptiveText>
+          <AdaptiveText style={s.backText}>Back</AdaptiveText>
         </Pressable>
-        <Text style={s.headerTitle}>Round Summary</Text>
+        <AdaptiveText style={s.headerTitle}>Round Summary</AdaptiveText>
         <View style={{ width: 80 }} />
       </View>
 
@@ -287,20 +293,25 @@ export default function RoundSummaryScreen() {
           <GameplayHeader
             courseId={round.course_id}
             courseName={round.courses?.club_name || "Unknown"}
-            courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? round.courses.course_name : null}
+            courseNameSub={
+              round.courses?.course_name &&
+              round.courses.course_name !== round.courses.club_name
+                ? round.courses.course_name
+                : null
+            }
             featuredImageUrl={featuredImageUrl}
             holeCount={
               round.teebox_data?.holes
                 ? Object.keys(round.teebox_data.holes).length
                 : undefined
             }
-            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${resultsData?.completed_at ? formatDate(resultsData.completed_at) : formatDate(round.created_at)}`}
+            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${formatDisplayDate(round.date_played ?? round.created_at, true)}`}
           />
         </View>
 
         {/* Scorecard */}
         <View style={{ paddingHorizontal: Space.lg, marginTop: Space.lg }}>
-          <Text style={s.sectionLabel}>SCORECARD</Text>
+          <AdaptiveText style={s.sectionLabel}>SCORECARD</AdaptiveText>
           <Scorecard
             teeboxData={round.teebox_data}
             players={scorecardPlayers}
@@ -311,7 +322,7 @@ export default function RoundSummaryScreen() {
         {/* Results card */}
         {resultsData && resultsData.players.length > 0 && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>RESULTS</Text>
+            <AdaptiveText style={s.sectionLabel}>RESULTS</AdaptiveText>
             <View style={s.resultsCard}>
               {resultsData.players.map((pr) => {
                 const playerData = players.find(
@@ -332,21 +343,29 @@ export default function RoundSummaryScreen() {
                         {isWd && (
                           <StyledTooltip title="Withdrew">
                             <View>
-                              <MaterialIcons name="block" size={30} color={Color.danger} />
+                              <MaterialIcons
+                                name="block"
+                                size={30}
+                                color={Color.danger}
+                              />
                             </View>
                           </StyledTooltip>
                         )}
                         {pr.player_status === "incomplete" && (
                           <StyledTooltip title="Incomplete">
                             <View>
-                              <MaterialIcons name="warning" size={30} color={Color.warning} />
+                              <MaterialIcons
+                                name="warning"
+                                size={30}
+                                color={Color.warning}
+                              />
                             </View>
                           </StyledTooltip>
                         )}
                         {pr.player_status === "completed" && (
                           <StyledTooltip title="Completed">
-                            <View>
-                              <Ionicons name="checkmark-done-circle" size={30} color={Color.primary} />
+                            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Color.primary, alignItems: "center", justifyContent: "center" }}>
+                              <Feather name="check" size={16} color={Color.white} />
                             </View>
                           </StyledTooltip>
                         )}
@@ -389,66 +408,55 @@ export default function RoundSummaryScreen() {
         {/* Continue Round — for incomplete players */}
         {myIncomplete && isParticipant && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>RESUME</Text>
+            <AdaptiveText style={s.sectionLabel}>RESUME</AdaptiveText>
             <View style={s.attestCard}>
               <Text style={s.attestCount}>
                 You scored {myResult?.holes_completed ?? 0} of{" "}
                 {myResult?.hole_count ?? 0} holes.
               </Text>
-              <Button
-                mode="contained"
-                buttonColor={Color.primary}
-                textColor={Color.white}
-                style={s.attestButton}
+              <GradientButton
                 onPress={handleContinueRound}
-                icon="play"
-                labelStyle={{ fontFamily: Font.bold }}
-              >
-                Continue Round
-              </Button>
+                label="Continue Round"
+              />
             </View>
           </View>
         )}
 
         {/* Peer attestation — only for multi-player eligible rounds */}
-        {!isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
-          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>ATTESTATION</Text>
-            <View style={s.attestCard}>
-              <Text style={s.attestCount}>
-                {attestCount} of {eligiblePlayerCount} players attested
-              </Text>
+        {!isEffectivelySolo &&
+          isParticipant &&
+          !myWithdrew &&
+          !myIncomplete && (
+            <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+              <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
+              <View style={s.attestCard}>
+                <Text style={s.attestCount}>
+                  {attestCount} of {eligiblePlayerCount} players attested
+                </Text>
 
-              {hasAttested ? (
-                <View style={s.attestedRow}>
-                  <MaterialIcons
-                    name="check-circle"
-                    size={24}
-                    color={Color.primary}
+                {hasAttested ? (
+                  <View style={s.attestedRow}>
+                    <MaterialIcons
+                      name="check-circle"
+                      size={24}
+                      color={Color.primary}
+                    />
+                    <Text style={s.attestedText}>Attested</Text>
+                  </View>
+                ) : (
+                  <GradientButton
+                    onPress={handleAttest}
+                    label="Attest Scores"
                   />
-                  <Text style={s.attestedText}>Attested</Text>
-                </View>
-              ) : (
-                <Button
-                  mode="contained"
-                  buttonColor={Color.primary}
-                  textColor={Color.white}
-                  style={s.attestButton}
-                  onPress={handleAttest}
-                  icon="check-bold"
-                  labelStyle={{ fontFamily: Font.bold }}
-                >
-                  Attest Scores
-                </Button>
-              )}
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
         {/* Self-confirmed indicator — for effectively-solo rounds */}
         {isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
           <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <Text style={s.sectionLabel}>SCORE CONFIRMATION</Text>
+            <AdaptiveText style={s.sectionLabel}>SCORE CONFIRMATION</AdaptiveText>
             <View style={s.attestCard}>
               <View style={s.attestedRow}>
                 <MaterialIcons
@@ -464,8 +472,8 @@ export default function RoundSummaryScreen() {
 
         <View style={{ height: Space.xxxl }} />
       </ScrollView>
-
     </SafeAreaView>
+    </View>
   );
 }
 
@@ -487,12 +495,22 @@ const s = StyleSheet.create({
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-    width: 80,
+    width: 100,
+  },
+  backChevron: {
+    fontFamily: Font.regular,
+    fontSize: 32,
+    color: Color.neutral900,
+    lineHeight: 32,
+    marginRight: Space.xs,
+    includeFontPadding: false,
   },
   backText: {
-    fontFamily: Font.regular,
-    fontSize: 17,
+    fontFamily: Font.bold,
+    fontSize: 21,
     color: Color.neutral900,
+    lineHeight: 24,
+    includeFontPadding: false,
   },
   headerTitle: {
     fontFamily: Font.bold,
@@ -504,8 +522,6 @@ const s = StyleSheet.create({
     marginBottom: Space.sm,
   },
   resultsCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     overflow: "hidden",
@@ -560,8 +576,6 @@ const s = StyleSheet.create({
     fontSize: 14,
   },
   attestCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,

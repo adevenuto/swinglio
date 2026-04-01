@@ -1,16 +1,19 @@
-import { Color, Font, Radius, Shadow, Space, Type } from "@/constants/design-tokens";
+import HandicapHero from "@/components/HandicapHero";
+import {
+  Color,
+  Font,
+  Radius,
+  Shadow,
+  Space,
+  Type,
+} from "@/constants/design-tokens";
 import { DIFFERENTIAL_TABLE, formatHandicapIndex } from "@/lib/handicap";
 import { HandicapResult } from "@/types/handicap";
-import { MaterialCommunityIcons, Feather, FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   visible: boolean;
@@ -19,9 +22,16 @@ type Props = {
 };
 
 // Subset of DIFFERENTIAL_TABLE rows to show in the modal
-const TABLE_ROWS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const TABLE_ROWS = [
+  3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
 
-export default function HandicapInfoModal({ visible, onClose, handicapResult }: Props) {
+export default function HandicapInfoModal({
+  visible,
+  onClose,
+  handicapResult,
+}: Props) {
+  const insets = useSafeAreaInsets();
   const hIndex = handicapResult?.handicapIndex ?? null;
   const eligibleCount = handicapResult?.eligibleCount ?? 0;
   const methodDescription = handicapResult?.methodDescription ?? "";
@@ -36,27 +46,18 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
     >
       <View style={styles.container}>
         {/* ── Green Hero Header ── */}
-        <View style={styles.hero}>
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed ? { opacity: 0.7 } : undefined,
-            ]}
-            hitSlop={12}
-          >
-            <Feather name="x" size={22} color={Color.white} />
-          </Pressable>
-
-          <MaterialCommunityIcons
-            name="golf-tee"
-            size={32}
-            color={Color.white}
-            style={styles.heroIcon}
-          />
-          <Text style={styles.heroLabel}>Handicap Index</Text>
-          <Text style={styles.heroValue}>{formatHandicapIndex(hIndex)}</Text>
-        </View>
+        <HandicapHero
+          handicapIndex={hIndex}
+          differentials={handicapResult?.differentials}
+          trend={handicapResult?.trend}
+          subtitle={
+            needMore > 0
+              ? `Play ${needMore} more round${needMore > 1 ? "s" : ""} to calculate`
+              : methodDescription
+          }
+          onClose={onClose}
+          style={{ borderRadius: 0, paddingTop: insets.top + Space.lg }}
+        />
 
         {/* ── Scrollable Content ── */}
         <ScrollView
@@ -117,7 +118,8 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
                 >
                   <Text style={styles.tableCell}>{count}</Text>
                   <Text style={styles.tableCell}>
-                    Lowest {entry.used}{adjStr}
+                    Lowest {entry.used}
+                    {adjStr}
                   </Text>
                 </View>
               );
@@ -130,19 +132,31 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
             {hIndex != null ? (
               <>
                 <View style={styles.statusRow}>
-                  <FontAwesome5 name="check-circle" size={16} color={Color.primary} />
+                  <FontAwesome5
+                    name="check-circle"
+                    size={16}
+                    color={Color.primary}
+                  />
                   <Text style={styles.statusText}>
-                    Handicap Index: <Text style={styles.statusBold}>{formatHandicapIndex(hIndex)}</Text>
+                    Handicap Index:{" "}
+                    <Text style={styles.statusBold}>
+                      {formatHandicapIndex(hIndex)}
+                    </Text>
                   </Text>
                 </View>
                 <Text style={styles.statusDetail}>
-                  {methodDescription} ({eligibleCount} eligible round{eligibleCount !== 1 ? "s" : ""})
+                  {methodDescription} ({eligibleCount} eligible round
+                  {eligibleCount !== 1 ? "s" : ""})
                 </Text>
               </>
             ) : (
               <>
                 <View style={styles.statusRow}>
-                  <FontAwesome5 name="circle" size={16} color={Color.neutral400} />
+                  <FontAwesome5
+                    name="circle"
+                    size={16}
+                    color={Color.neutral400}
+                  />
                   <Text style={styles.statusText}>
                     {eligibleCount === 0
                       ? "No eligible rounds yet"
@@ -151,7 +165,8 @@ export default function HandicapInfoModal({ visible, onClose, handicapResult }: 
                 </View>
                 {needMore > 0 && (
                   <Text style={styles.statusDetail}>
-                    Play {needMore} more attested round{needMore > 1 ? "s" : ""} to calculate your index.
+                    Play {needMore} more attested round{needMore > 1 ? "s" : ""}{" "}
+                    to calculate your index.
                   </Text>
                 )}
               </>
@@ -199,7 +214,12 @@ function StepRow({
 function BulletItem({ text }: { text: string }) {
   return (
     <View style={styles.bulletRow}>
-      <FontAwesome5 name="check-circle" size={13} color={Color.primary} style={styles.bulletIcon} />
+      <FontAwesome5
+        name="check-circle"
+        size={13}
+        color={Color.primary}
+        style={styles.bulletIcon}
+      />
       <Text style={styles.bulletText}>{text}</Text>
     </View>
   );
@@ -211,38 +231,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Color.white,
-  },
-
-  // ── Hero ──
-  hero: {
-    backgroundColor: Color.primary,
-    paddingTop: Space.xxxl,
-    paddingBottom: Space.xl,
-    paddingHorizontal: Space.xl,
-    alignItems: "center",
-  },
-  closeBtn: {
-    position: "absolute",
-    top: Space.lg,
-    right: Space.lg,
-    zIndex: 1,
-  },
-  heroIcon: {
-    marginBottom: Space.sm,
-  },
-  heroLabel: {
-    fontFamily: Font.semiBold,
-    fontSize: 13,
-    letterSpacing: 0.5,
-    color: "rgba(255,255,255,0.7)",
-    textTransform: "uppercase",
-    marginBottom: Space.xs,
-  },
-  heroValue: {
-    fontFamily: Font.bold,
-    fontSize: 44,
-    lineHeight: 52,
-    color: Color.white,
   },
 
   // ── Scroll ──
@@ -280,8 +268,8 @@ const styles = StyleSheet.create({
 
   // ── Steps Card ──
   stepsCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
+    // borderWidth: 1,
+    // borderColor: Color.neutral200,
     borderRadius: Radius.md,
     backgroundColor: Color.white,
     padding: Space.lg,
@@ -366,10 +354,6 @@ const styles = StyleSheet.create({
 
   // ── Status Card ──
   statusCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
     padding: Space.lg,
     marginBottom: Space.xl,
     ...Shadow.sm,
@@ -394,10 +378,6 @@ const styles = StyleSheet.create({
 
   // ── What Counts ──
   listCard: {
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.md,
-    backgroundColor: Color.white,
     padding: Space.lg,
     marginBottom: Space.xl,
     gap: Space.md,

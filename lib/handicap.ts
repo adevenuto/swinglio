@@ -206,6 +206,7 @@ export function calculateHandicapIndex(
           ? "No eligible rounds"
           : `Need ${3 - eligibleRounds.length} more eligible round${3 - eligibleRounds.length > 1 ? "s" : ""}`,
       lastUpdated: now,
+      trend: null,
     };
   }
 
@@ -253,6 +254,7 @@ export function calculateHandicapIndex(
     excludedRounds: [],
     methodDescription: getMethodDescription(count, used, adjustment),
     lastUpdated: now,
+    trend: null,
   };
 }
 

@@ -1,19 +1,18 @@
-import SwinglioLogo from "@/assets/images/swinglio.svg";
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 export default function SignIn() {
@@ -21,7 +20,7 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -52,15 +51,32 @@ export default function SignIn() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithApple();
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Apple Sign In Failed", error.message);
+    } else {
+      router.replace("/(protected)/dashboard");
+    }
+  };
+
   return (
     <View style={styles.screen}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
-            <SwinglioLogo height={56} fill={Color.neutral900} />
+            <Image
+              source={require("@/assets/images/brand.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.subtitle}>Welcome back to the course</Text>
 
@@ -118,17 +134,12 @@ export default function SignIn() {
             </Link>
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+          <GradientButton
             onPress={handleSignIn}
+            label="Sign In"
+            loading={loading}
             disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-            )}
-          </Pressable>
+          />
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
@@ -145,6 +156,15 @@ export default function SignIn() {
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
           </Pressable>
 
+          <Pressable
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            disabled={loading}
+          >
+            <AntDesign name="apple" size={20} color={Color.white} />
+            <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+          </Pressable>
+
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <Link href="/(auth)/sign-up" asChild>
@@ -154,7 +174,7 @@ export default function SignIn() {
             </Link>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
     </View>
   );
 }
@@ -164,8 +184,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
   },
   inner: {
@@ -174,6 +194,10 @@ const styles = StyleSheet.create({
   logoRow: {
     alignItems: "center",
     marginBottom: Space.lg,
+  },
+  logo: {
+    height: 72,
+    width: 177,
   },
   subtitle: {
     fontFamily: Font.medium,
@@ -201,6 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     backgroundColor: Color.white,
+    letterSpacing: 0,
   },
   inputFocused: {
     borderColor: Color.primary,
@@ -233,6 +258,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Space.lg,
+    marginTop: Space.lg,
   },
   dividerLine: {
     flex: 1,
@@ -255,12 +281,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Space.sm,
-    marginBottom: Space.xl,
+    marginBottom: Space.md,
   },
   googleButtonText: {
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.neutral700,
+  },
+  appleButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.neutral900,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  appleButtonText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.white,
   },
   footerRow: {
     flexDirection: "row",

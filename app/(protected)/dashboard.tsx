@@ -1,7 +1,9 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import GradientButton from "@/components/GradientButton";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
-import RoundCard from "@/components/RoundCard";
+import RoundListSection from "@/components/RoundListSection";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
+import WeatherBackground from "@/components/WeatherBackground";
 import {
   Color,
   Font,
@@ -11,13 +13,15 @@ import {
   Type,
 } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { useActiveRounds } from "@/hooks/use-active-rounds";
 import { useAttestationStats } from "@/hooks/use-attestation-stats";
 import { useHandicap } from "@/hooks/use-handicap";
-import { usePendingAttestations } from "@/hooks/use-pending-attestations";
 import { useRecentRounds } from "@/hooks/use-recent-rounds";
 import { useRoundStats } from "@/hooks/use-round-stats";
+import { formatDisplayDate } from "@/lib/date-utils";
 import { formatHandicapIndex } from "@/lib/handicap";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -27,16 +31,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Text } from "react-native-paper";
+import AdaptiveText from "@/components/AdaptiveText";
+import { Text } from "react-native-paper";
 
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+const PRO_STAT_KEYS = new Set([
+  "handicap",
+  "fwy-pct",
+  "avg-18",
+  "avg-9",
+  "avg-putts",
+]);
 
 export default function Dashboard() {
-  const { user, avatarUrl, refreshUser } = useAuth();
+  const { user, avatarUrl, displayName, refreshUser } = useAuth();
+  const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [handicapModalVisible, setHandicapModalVisible] = useState(false);
@@ -44,9 +52,6 @@ export default function Dashboard() {
     user?.id ?? "",
   );
   const { recentRounds, refresh: refreshRecent } = useRecentRounds(
-    user?.id ?? "",
-  );
-  const { pendingRounds, refresh: refreshPending } = usePendingAttestations(
     user?.id ?? "",
   );
   const { percentage: attPct, refresh: refreshAttStats } = useAttestationStats(
@@ -70,14 +75,12 @@ export default function Dashboard() {
       refreshRoundStats();
       refreshRounds();
       refreshRecent();
-      refreshPending();
       refreshAttStats();
       refreshHandicap();
     }, [
       refreshRoundStats,
       refreshRounds,
       refreshRecent,
-      refreshPending,
       refreshAttStats,
       refreshHandicap,
     ]),
@@ -90,7 +93,6 @@ export default function Dashboard() {
       refreshRoundStats(),
       refreshRounds(),
       refreshRecent(),
-      refreshPending(),
       refreshAttStats(),
       refreshHandicap(),
     ]);
@@ -100,44 +102,61 @@ export default function Dashboard() {
     refreshRoundStats,
     refreshRounds,
     refreshRecent,
-    refreshPending,
     refreshAttStats,
     refreshHandicap,
   ]);
 
+  const attestNeededRounds = useMemo(
+    () => recentRounds.filter((r) => r.needsAttestation),
+    [recentRounds],
+  );
   const incompleteRounds = useMemo(
     () => recentRounds.filter((r) => r.player_status === "incomplete"),
     [recentRounds],
   );
   const completedRounds = useMemo(
-    () => recentRounds.filter((r) => r.player_status === "completed"),
+    () =>
+      recentRounds.filter(
+        (r) => r.player_status === "completed" && !r.needsAttestation,
+      ),
     [recentRounds],
   );
 
-  const statsItems = useMemo<StatItem[]>(
-    () => [
+  const statsItems = useMemo<StatItem[]>(() => {
+    const locked = (key: string, label: string): StatItem => ({
+      key,
+      value: "\uD83D\uDD12",
+      label,
+      subtitle: "Pro",
+    });
+
+    return [
       {
         key: "attested",
         value: totalRounds > 0 ? `${attPct}%` : "\u2014",
         label: "Attested",
         progress: attPct,
       },
-      {
-        key: "fwy-pct",
-        value: fairwayPct != null ? `${fairwayPct}%` : "\u2014",
-        label: "FWY Hit",
-        progress: fairwayPct ?? 0,
-      },
+      isPro
+        ? {
+            key: "fwy-pct",
+            value: fairwayPct != null ? `${fairwayPct}%` : "\u2014",
+            label: "FWY Hit",
+            progress: fairwayPct ?? 0,
+          }
+        : locked("fwy-pct", "FWY Hit"),
       { key: "rounds", value: String(totalRounds), label: "Rounds" },
-      {
-        key: "handicap",
-        value:
-          handicapResult?.handicapIndex != null
-            ? formatHandicapIndex(handicapResult.handicapIndex)
-            : "\u2014",
-        label: "Handicap",
-        subtitle: "(est)",
-      },
+      isPro
+        ? {
+            key: "handicap",
+            value:
+              handicapResult?.handicapIndex != null
+                ? formatHandicapIndex(handicapResult.handicapIndex)
+                : "\u2014",
+            label: "Handicap",
+            subtitle: "(est)",
+          }
+        : locked("handicap", "Handicap"),
       {
         key: "best",
         value:
@@ -150,27 +169,57 @@ export default function Dashboard() {
             : "\u2014",
         label: "Best",
       },
-      {
-        key: "avg-18",
-        value: avg18 != null ? String(avg18) : "\u2014",
-        label: "Avg 18",
-      },
-      {
-        key: "avg-9",
-        value: avg9 != null ? String(avg9) : "\u2014",
-        label: "Avg 9",
-      },
-      {
-        key: "avg-putts",
-        value: avgPutts != null ? avgPutts.toFixed(1) : "\u2014",
-        label: "Avg Putts",
-      },
-    ],
-    [totalRounds, handicapResult, bestToPar, avg18, avg9, avgPutts, attPct, fairwayPct],
-  );
+      isPro
+        ? {
+            key: "avg-18",
+            value: avg18 != null ? String(avg18) : "\u2014",
+            label: "Avg 18",
+          }
+        : locked("avg-18", "Avg 18"),
+      isPro
+        ? {
+            key: "avg-9",
+            value: avg9 != null ? String(avg9) : "\u2014",
+            label: "Avg 9",
+          }
+        : locked("avg-9", "Avg 9"),
+      isPro
+        ? {
+            key: "avg-putts",
+            value: avgPutts != null ? avgPutts.toFixed(1) : "\u2014",
+            label: "Avg Putts",
+          }
+        : locked("avg-putts", "Avg Putts"),
+    ];
+  }, [
+    totalRounds,
+    handicapResult,
+    bestToPar,
+    avg18,
+    avg9,
+    avgPutts,
+    attPct,
+    fairwayPct,
+    isPro,
+  ]);
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, isPro && { backgroundColor: "transparent" }]}>
+      <WeatherBackground />
+      <StatsStrip
+        items={statsItems}
+        avatarUrl={avatarUrl}
+        displayName={displayName}
+        onAvatarPress={() => router.push("/profile")}
+        onItemPress={(key) => {
+          if (!isPro && PRO_STAT_KEYS.has(key)) {
+            presentPaywall();
+            return;
+          }
+          if (key === "handicap") setHandicapModalVisible(true);
+        }}
+      />
+
       <ScrollView
         style={styles.scroll}
         refreshControl={
@@ -182,70 +231,72 @@ export default function Dashboard() {
           />
         }
       >
-        <StatsStrip
-          items={statsItems}
-          avatarUrl={avatarUrl}
-          onAvatarPress={() => router.push("/profile")}
-          onItemPress={(key) => {
-            if (key === "handicap") setHandicapModalVisible(true);
-          }}
-        />
-
         <View style={styles.contentContainer}>
           <View style={styles.contentInner}>
             {activeRounds.length === 0 && (
-              <Button
-                mode="contained"
-                buttonColor={Color.primary}
-                textColor={Color.white}
+              <GradientButton
                 onPress={() => router.push("/start-round")}
-                style={styles.ctaButton}
-                labelStyle={{ fontFamily: Font.bold }}
-              >
-                Start A Round
-              </Button>
+                label="Start A Round"
+                style={{ marginBottom: Space.lg }}
+              />
             )}
-
 
             <ActiveRoundCard rounds={activeRounds} />
 
             {/* Attestation Requests */}
-            {pendingRounds.length > 0 && (
+            {attestNeededRounds.length > 0 && (
               <View style={{ marginTop: Space.xl }}>
-                <Text style={styles.sectionLabel}>Review & Attest</Text>
-                {pendingRounds.map((pr) => (
+                <AdaptiveText style={styles.sectionLabel}>Review & Attest</AdaptiveText>
+                {attestNeededRounds.map((round) => (
                   <TouchableOpacity
-                    key={pr.round_id}
+                    key={round.id}
                     onPress={() =>
                       router.push({
                         pathname: "/round-summary",
-                        params: { roundId: pr.round_id },
+                        params: { roundId: round.id },
                       })
                     }
                     style={styles.card}
                   >
                     <View style={styles.cardRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.courseName}>{pr.course_name}</Text>
-                        {pr.course_name_sub ? (
-                          <Text style={styles.cardSubtitle}>- {pr.course_name_sub}</Text>
-                        ) : null}
+                        <Text style={styles.courseName}>
+                          {round.courses?.club_name || "Unknown Course"}
+                        </Text>
+                        {round.courses?.course_name &&
+                          round.courses.course_name !==
+                            round.courses.club_name && (
+                            <Text style={styles.cardSubtitle}>
+                              - {round.courses.course_name}
+                            </Text>
+                          )}
                       </View>
-                      <Button
-                        mode="contained"
-                        buttonColor={Color.primary}
-                        textColor={Color.white}
-                        compact
-                        style={{ borderRadius: Radius.lg }}
-                        labelStyle={{ fontFamily: Font.semiBold, fontSize: 12 }}
+                      <LinearGradient
+                        colors={Color.primaryGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                          borderRadius: Radius.lg,
+                          paddingHorizontal: Space.lg,
+                          paddingVertical: Space.sm,
+                        }}
                       >
-                        Review
-                      </Button>
+                        <Text
+                          style={{
+                            fontFamily: Font.semiBold,
+                            fontSize: 12,
+                            color: Color.white,
+                          }}
+                        >
+                          Review
+                        </Text>
+                      </LinearGradient>
                     </View>
                     <Text style={styles.cardSubtitle}>
-                      {pr.player_count} players
-                      {" \u00B7 "}
-                      {formatDate(pr.completed_at)}
+                      {(round.teebox_data as any)?.name
+                        ? `${(round.teebox_data as any).name} Tees \u00B7 `
+                        : ""}
+                      {formatDisplayDate(round.display_date)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -253,67 +304,45 @@ export default function Dashboard() {
             )}
 
             {/* Recent Rounds */}
-            <View style={{ marginTop: Space.xl }}>
-              <Text style={styles.sectionLabel}>Recent Activity</Text>
-
-              {completedRounds.length === 0 ? (
-                <View
-                  style={{ alignItems: "center", paddingVertical: Space.sm }}
-                >
-                  <Text style={styles.emptyText}>
-                    No scores on the board yet. Start a round and let's see
-                    what you've got.
-                  </Text>
-                </View>
-              ) : (
-                completedRounds.map((round) => (
-                  <RoundCard
-                    key={round.id}
-                    courseName={round.courses?.club_name || "Unknown Course"}
-                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
-                    playerStatus={round.player_status}
-                    teeboxName={(round.teebox_data as any)?.name}
-                    date={round.created_at}
-                    playerScore={round.player_score}
-                    scoreToPar={round.score_to_par}
-                    holesCompleted={round.holes_completed}
-                    holeCount={round.hole_count}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/round-summary",
-                        params: { roundId: round.id },
-                      })
-                    }
-                  />
-                ))
-              )}
-            </View>
+            <RoundListSection
+              title="Recent Activity"
+              rounds={completedRounds}
+              limit={3}
+              showLegend
+              emptyText="No scores on the board yet. Start a round and let's see what you've got."
+              onSeeAll={() =>
+                router.push({
+                  pathname: "/round-history",
+                  params: { filter: "completed" },
+                })
+              }
+              onRoundPress={(roundId) =>
+                router.push({
+                  pathname: "/round-summary",
+                  params: { roundId },
+                })
+              }
+            />
 
             {/* Incomplete Rounds */}
             {incompleteRounds.length > 0 && (
-              <View style={{ marginTop: Space.xl }}>
-                <Text style={styles.sectionLabel}>Incomplete Rounds</Text>
-                {incompleteRounds.map((round) => (
-                  <RoundCard
-                    key={round.id}
-                    courseName={round.courses?.club_name || "Unknown Course"}
-                    courseNameSub={round.courses?.course_name && round.courses.course_name !== round.courses.club_name ? `- ${round.courses.course_name}` : null}
-                    playerStatus={round.player_status}
-                    teeboxName={(round.teebox_data as any)?.name}
-                    date={round.created_at}
-                    playerScore={round.player_score}
-                    scoreToPar={round.score_to_par}
-                    holesCompleted={round.holes_completed}
-                    holeCount={round.hole_count}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/round-summary",
-                        params: { roundId: round.id },
-                      })
-                    }
-                  />
-                ))}
-              </View>
+              <RoundListSection
+                title="Incomplete Rounds"
+                rounds={incompleteRounds}
+                limit={3}
+                onSeeAll={() =>
+                  router.push({
+                    pathname: "/round-history",
+                    params: { filter: "incomplete" },
+                  })
+                }
+                onRoundPress={(roundId) =>
+                  router.push({
+                    pathname: "/round-summary",
+                    params: { roundId },
+                  })
+                }
+              />
             )}
           </View>
         </View>
@@ -323,7 +352,6 @@ export default function Dashboard() {
         onClose={() => setHandicapModalVisible(false)}
         handicapResult={handicapResult}
       />
-
     </View>
   );
 }
@@ -359,8 +387,6 @@ const styles = StyleSheet.create({
 
   card: {
     padding: Space.lg,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     marginBottom: Space.sm,
@@ -383,12 +409,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Color.neutral500,
     textTransform: "capitalize",
-  },
-  emptyText: {
-    fontFamily: Font.regular,
-    fontSize: 15,
-    color: Color.neutral400,
-    marginTop: Space.md,
-    textAlign: "center",
   },
 });

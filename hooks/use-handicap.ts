@@ -3,6 +3,7 @@ import {
   calculateAGS,
   calculateDifferential,
   calculateHandicapIndex,
+  DIFFERENTIAL_TABLE,
 } from "@/lib/handicap";
 import { ScoreDetails } from "@/types/scoring";
 import {
@@ -31,7 +32,7 @@ export function useHandicap(userId: string) {
       // 1. Fetch all completed/incomplete score rows for this player
       const { data: scoreRows } = await supabase
         .from("scores")
-        .select("id, round_id, score_details, player_status, self_attested")
+        .select("id, round_id, score, score_details, player_status, self_attested")
         .eq("golfer_id", userId)
         .eq("player_status", "completed");
 
@@ -44,6 +45,7 @@ export function useHandicap(userId: string) {
           excludedRounds: [],
           methodDescription: "No eligible rounds",
           lastUpdated: new Date().toISOString(),
+          trend: null,
         });
         setIsLoading(false);
         return;
@@ -51,10 +53,10 @@ export function useHandicap(userId: string) {
 
       const roundIds = [...new Set(scoreRows.map((s) => s.round_id).filter(Boolean))];
 
-      // 2. Fetch rounds with teebox_data, date_played, status
+      // 2. Fetch rounds with teebox_data, date_played, status, course name
       const { data: roundRows } = await supabase
         .from("rounds")
-        .select("id, teebox_data, date_played, created_at, status")
+        .select("id, teebox_data, date_played, created_at, status, courses(course_name)")
         .in("id", roundIds)
         .in("status", ["completed", "incomplete"]);
 
@@ -67,6 +69,7 @@ export function useHandicap(userId: string) {
           excludedRounds: [],
           methodDescription: "No eligible rounds",
           lastUpdated: new Date().toISOString(),
+          trend: null,
         });
         setIsLoading(false);
         return;
@@ -110,6 +113,75 @@ export function useHandicap(userId: string) {
         // Has hole-by-hole data?
         const sd = scoreRow.score_details as ScoreDetails | null;
         if (!sd || !sd.holes || Object.keys(sd.holes).length === 0) {
+          // Total-only round: use scoreRow.score directly if available
+          const totalScore = (scoreRow as any).score as number | null;
+          if (totalScore != null && totalScore > 0 && teebox) {
+            const courseRatingTotal = Number(teebox.courseRating);
+            const slopeTotal = Number(teebox.slope);
+
+            if (
+              courseRatingTotal &&
+              !isNaN(courseRatingTotal) &&
+              courseRatingTotal >= 20 &&
+              courseRatingTotal <= 90 &&
+              slopeTotal &&
+              !isNaN(slopeTotal) &&
+              slopeTotal >= 55 &&
+              slopeTotal <= 155
+            ) {
+              // Compute par from teebox holes
+              const teeboxHoleKeysTotal = Object.keys(teebox.holes || {});
+              const parTotal = teeboxHoleKeysTotal.reduce((sum, k) => {
+                const p = parseInt(teebox.holes[k].par, 10);
+                return sum + (isNaN(p) ? 0 : p);
+              }, 0);
+
+              if (parTotal > 0) {
+                const holeCountTotal = teeboxHoleKeysTotal.length;
+                let adjCourseRatingTotal = courseRatingTotal;
+                if (holeCountTotal <= 9 && courseRatingTotal > parTotal * 1.5) {
+                  adjCourseRatingTotal = courseRatingTotal / 2;
+                }
+
+                // Skip attestation check for self_attested total-only rounds
+                if (!INCLUDE_UNATTESTED) {
+                  const isSelfAttested = scoreRow.self_attested === true;
+                  const hasPeerAttestation = attestedRoundIds.has(roundId);
+                  if (!isSelfAttested && !hasPeerAttestation) {
+                    excluded.push({ roundId, reason: "not_attested" });
+                    continue;
+                  }
+                }
+
+                const differentialTotal = calculateDifferential(
+                  totalScore,
+                  adjCourseRatingTotal,
+                  slopeTotal,
+                );
+
+                const datePlayedTotal =
+                  (round.date_played as string) ||
+                  (round.created_at as string).split("T")[0];
+
+                eligible.push({
+                  roundId,
+                  datePlayed: datePlayedTotal,
+                  courseRating: adjCourseRatingTotal,
+                  slopeRating: slopeTotal,
+                  par: parTotal,
+                  holeCount: holeCountTotal,
+                  grossScore: totalScore,
+                  adjustedGrossScore: totalScore,
+                  wasAdjusted: false,
+                  hasStrokeIndex: false,
+                  isAttested: true,
+                  differential: differentialTotal,
+                });
+                continue;
+              }
+            }
+          }
+
           excluded.push({ roundId, reason: "total_only" });
           continue;
         }
@@ -211,13 +283,6 @@ export function useHandicap(userId: string) {
           (round.date_played as string) ||
           (round.created_at as string).split("T")[0];
 
-        // --- DEBUG: remove after verifying handicap is correct ---
-        console.log(`[HANDICAP DEBUG] Round ${roundId}: ` +
-          `scoredHoles=${scoredHoleCount}, par=${par}, gross=${grossScore}, ` +
-          `AGS=${adjustedGrossScore}, CR=${courseRating}, adjCR=${adjCourseRating}, ` +
-          `slope=${slopeRating}, diff=${differential.toFixed(2)}`);
-        // --- END DEBUG ---
-
         eligible.push({
           roundId,
           datePlayed,
@@ -234,15 +299,57 @@ export function useHandicap(userId: string) {
         });
       }
 
+      // Build lookup for enriching differentials with course name + gross score
+      const roundDetailMap = new Map<number, { courseName: string; grossScore: number }>();
+      for (const e of eligible) {
+        const round = roundMap.get(e.roundId);
+        const courses = (round as any)?.courses;
+        const courseName = courses?.course_name ?? "";
+        roundDetailMap.set(e.roundId, { courseName, grossScore: e.grossScore });
+      }
+
       // 5. Calculate handicap index
-      // --- DEBUG: remove after verifying handicap is correct ---
-      console.log(`[HANDICAP DEBUG] Eligible: ${eligible.length}, Excluded: ${excluded.length} (${excluded.map(e => `${e.roundId}:${e.reason}`).join(', ')})`);
-      // --- END DEBUG ---
       const handicapResult = calculateHandicapIndex(eligible);
       handicapResult.excludedRounds = excluded;
-      // --- DEBUG: remove after verifying handicap is correct ---
-      console.log(`[HANDICAP DEBUG] Result: index=${handicapResult.handicapIndex}, method="${handicapResult.methodDescription}"`);
-      // --- END DEBUG ---
+
+      // 5b. Compute trend (normalized — uses same table entry for both sets
+      // so threshold changes don't produce misleading arrows)
+      if (handicapResult.handicapIndex != null && eligible.length >= 4) {
+        const sorted = [...eligible].sort((a, b) => {
+          const dateDiff =
+            new Date(b.datePlayed).getTime() - new Date(a.datePlayed).getTime();
+          if (dateDiff !== 0) return dateDiff;
+          return b.roundId - a.roundId;
+        });
+
+        const recent = sorted.slice(0, 20);
+        const count = recent.length;
+        const { used, adjustment } = DIFFERENTIAL_TABLE[Math.min(count, 20)];
+
+        // "Previous" index: same table entry but exclude the newest round
+        const withoutNewest = recent.slice(1);
+        const prevByDiff = [...withoutNewest].sort(
+          (a, b) => a.differential - b.differential,
+        );
+        const prevSum = prevByDiff
+          .slice(0, used)
+          .reduce((s, r) => s + r.differential, 0);
+        const prevAvg = prevSum / used;
+        const prevIndex = Math.round((prevAvg + adjustment) * 10) / 10;
+
+        handicapResult.trend = Math.round(
+          (handicapResult.handicapIndex - prevIndex) * 10,
+        ) / 10;
+      }
+
+      // Enrich differentials with course name and gross score
+      for (const diff of handicapResult.differentials) {
+        const detail = roundDetailMap.get(diff.roundId);
+        if (detail) {
+          diff.courseName = detail.courseName;
+          diff.grossScore = detail.grossScore;
+        }
+      }
 
       // 6. Cache to profile
       if (handicapResult.handicapIndex != null) {

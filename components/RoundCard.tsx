@@ -1,5 +1,7 @@
+import PlayerAvatarRow, { PlayerAvatarInfo } from "@/components/PlayerAvatarRow";
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { formatDisplayDate } from "@/lib/date-utils";
+import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -16,13 +18,9 @@ type RoundCardProps = {
   scoreToPar?: number | null;
   holesCompleted?: number | null;
   holeCount?: number | null;
+  players?: PlayerAvatarInfo[];
   onPress: () => void;
 };
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 function formatToPar(toPar: number): string {
   if (toPar === 0) return "E";
@@ -39,10 +37,11 @@ export default function RoundCard({
   scoreToPar,
   holesCompleted,
   holeCount,
+  players,
   onPress,
 }: RoundCardProps) {
   const teeLabel = teeboxName ? `${teeboxName} tees` : "";
-  const dateLabel = formatDate(date);
+  const dateLabel = formatDisplayDate(date);
   const subtitle = [teeLabel, dateLabel].filter(Boolean).join(" \u00B7 ");
   const showHoles =
     holesCompleted != null && holeCount != null && holesCompleted < holeCount;
@@ -70,7 +69,14 @@ export default function RoundCard({
           {hasBadge && <View style={styles.badgeSpacer} />}
         </View>
 
-        {/* Row 2: tees · date | score + holes */}
+        {/* Row 2: player avatars */}
+        {players && players.length > 0 && (
+          <View style={styles.avatarRow}>
+            <PlayerAvatarRow players={players} size={24} overlap={6} />
+          </View>
+        )}
+
+        {/* Row 3: tees · date | score + holes */}
         <View style={styles.cardBottomRow}>
           <Text style={styles.cardSubtitle}>{subtitle}</Text>
           <View style={styles.scoreContainer}>
@@ -89,7 +95,7 @@ export default function RoundCard({
                   {
                     color:
                       scoreToPar > 0
-                        ? Color.danger
+                        ? Color.warning
                         : scoreToPar < 0
                           ? Color.primary
                           : Color.neutral500,
@@ -101,6 +107,7 @@ export default function RoundCard({
             )}
           </View>
         </View>
+
       </Pressable>
 
       {/* Badge overlay — outside the Pressable so Tooltip long-press works */}
@@ -125,12 +132,8 @@ export default function RoundCard({
       {playerStatus === "completed" && (
         <View style={styles.badgeOverlay}>
           <StyledTooltip title="Completed">
-            <View>
-              <Ionicons
-                name="checkmark-done-circle"
-                size={30}
-                color={Color.primary}
-              />
+            <View style={styles.completedBadge}>
+              <Feather name="check" size={16} color={Color.white} />
             </View>
           </StyledTooltip>
         </View>
@@ -145,8 +148,6 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: Space.lg,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
     backgroundColor: Color.white,
     borderRadius: Radius.md,
     ...Shadow.sm,
@@ -167,6 +168,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Color.neutral500,
     marginTop: 2,
+  },
+  avatarRow: {
+    marginTop: Space.sm,
   },
   cardBottomRow: {
     flexDirection: "row",
@@ -207,5 +211,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Space.lg,
     right: Space.lg,
+  },
+  completedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Color.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

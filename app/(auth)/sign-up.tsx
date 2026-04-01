@@ -1,28 +1,30 @@
-import SwinglioLogo from "@/assets/images/swinglio.svg";
+import GradientButton from "@/components/GradientButton";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
+import { supabase } from "@/lib/supabase";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, signInWithApple } = useAuth();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -47,15 +49,44 @@ export default function SignUp() {
     if (error) {
       Alert.alert("Sign Up Failed", error.message);
     } else {
+      setSent(true);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!code.trim()) {
+      Alert.alert("Error", "Please enter the code from your email");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code.trim(),
+      type: "signup",
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    }
+    // On success, onAuthStateChange fires → session established → auto-redirect
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
       Alert.alert(
-        "Success",
-        "Account created! Please check your email to verify your account.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/(auth)/sign-in"),
-          },
-        ],
+        "Sent",
+        "A new verification code has been sent to your email",
       );
     }
   };
@@ -72,17 +103,99 @@ export default function SignUp() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithApple();
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Apple Sign In Failed", error.message);
+    } else {
+      router.replace("/(protected)/dashboard");
+    }
+  };
+
+  if (sent) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
+          <View style={styles.inner}>
+            <Text style={styles.title}>Check Your Email</Text>
+            <Text style={styles.verifySubtitle}>
+              We sent a verification code to {email}. Enter it below to verify
+              your account.
+            </Text>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Verification Code</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.codeInput,
+                  focusedField === "code" && styles.inputFocused,
+                ]}
+                placeholder="00000000"
+                placeholderTextColor={Color.neutral400}
+                value={code}
+                onChangeText={setCode}
+                onFocus={() => setFocusedField("code")}
+                onBlur={() => setFocusedField(null)}
+                keyboardType="number-pad"
+                maxLength={8}
+                editable={!loading}
+              />
+            </View>
+
+            <GradientButton
+              onPress={handleVerifyCode}
+              label="Verify Code"
+              loading={loading}
+              disabled={loading}
+            />
+
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Didn't get the email? </Text>
+              <Pressable onPress={handleResend} disabled={loading}>
+                {({ pressed }) => (
+                  <Text
+                    style={[
+                      styles.footerLink,
+                      pressed ? { opacity: 0.7 } : undefined,
+                    ]}
+                  >
+                    Resend
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
         <View style={styles.inner}>
           <View style={styles.logoRow}>
-            <SwinglioLogo height={56} fill={Color.neutral900} />
+            <Image
+              source={require("@/assets/images/brand.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
-          <Text style={styles.subtitle}>Create your account to get started</Text>
+          <Text style={styles.subtitle}>
+            Create your account to get started
+          </Text>
 
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
@@ -139,17 +252,12 @@ export default function SignUp() {
             />
           </View>
 
-          <Pressable
-            style={[styles.primaryButton, loading && { opacity: 0.7 }]}
+          <GradientButton
             onPress={handleSignUp}
+            label="Sign Up"
+            loading={loading}
             disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={Color.white} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Sign Up</Text>
-            )}
-          </Pressable>
+          />
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
@@ -166,6 +274,15 @@ export default function SignUp() {
             <Text style={styles.googleButtonText}>Sign up with Google</Text>
           </Pressable>
 
+          <Pressable
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            disabled={loading}
+          >
+            <AntDesign name="apple" size={20} color={Color.white} />
+            <Text style={styles.appleButtonText}>Sign up with Apple</Text>
+          </Pressable>
+
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <Link href="/(auth)/sign-in" asChild>
@@ -175,7 +292,7 @@ export default function SignUp() {
             </Link>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
     </View>
   );
 }
@@ -185,8 +302,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
   },
   inner: {
@@ -196,10 +313,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Space.lg,
   },
+  logo: {
+    height: 72,
+    width: 177,
+  },
+  title: {
+    fontFamily: Font.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Color.neutral900,
+    textAlign: "center",
+    marginBottom: Space.xs,
+  },
   subtitle: {
     fontFamily: Font.medium,
     fontSize: 16,
     color: Color.neutral700,
+    textAlign: "center",
+    marginBottom: Space.xxl,
+  },
+  verifySubtitle: {
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral500,
     textAlign: "center",
     marginBottom: Space.xxl,
   },
@@ -222,6 +358,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     backgroundColor: Color.white,
+    letterSpacing: 0,
+  },
+  codeInput: {
+    fontSize: 24,
+    fontFamily: Font.semiBold,
+    textAlign: "center",
+    letterSpacing: 8,
   },
   inputFocused: {
     borderColor: Color.primary,
@@ -235,6 +378,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Space.lg,
   },
+  verifyButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: Space.sm,
+    marginBottom: Space.xl,
+  },
   primaryButtonText: {
     fontFamily: Font.bold,
     fontSize: 16,
@@ -244,6 +396,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Space.lg,
+    marginTop: Space.lg,
   },
   dividerLine: {
     flex: 1,
@@ -266,12 +419,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Space.sm,
-    marginBottom: Space.xl,
+    marginBottom: Space.md,
   },
   googleButtonText: {
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.neutral700,
+  },
+  appleButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.neutral900,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  appleButtonText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.white,
   },
   footerRow: {
     flexDirection: "row",

@@ -24,7 +24,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, signInWithApple } = useAuth();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -98,6 +98,18 @@ export default function SignUp() {
 
     if (error) {
       Alert.alert("Google Sign In Failed", error.message);
+    } else {
+      router.replace("/(protected)/dashboard");
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithApple();
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Apple Sign In Failed", error.message);
     } else {
       router.replace("/(protected)/dashboard");
     }
@@ -262,6 +274,15 @@ export default function SignUp() {
             <Text style={styles.googleButtonText}>Sign up with Google</Text>
           </Pressable>
 
+          <Pressable
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            disabled={loading}
+          >
+            <AntDesign name="apple" size={20} color={Color.white} />
+            <Text style={styles.appleButtonText}>Sign up with Apple</Text>
+          </Pressable>
+
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <Link href="/(auth)/sign-in" asChild>
@@ -398,12 +419,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Space.sm,
-    marginBottom: Space.xl,
+    marginBottom: Space.md,
   },
   googleButtonText: {
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.neutral700,
+  },
+  appleButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.neutral900,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  appleButtonText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.white,
   },
   footerRow: {
     flexDirection: "row",

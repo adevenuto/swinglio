@@ -20,7 +20,7 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -46,6 +46,18 @@ export default function SignIn() {
 
     if (error) {
       Alert.alert("Google Sign In Failed", error.message);
+    } else {
+      router.replace("/(protected)/dashboard");
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithApple();
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Apple Sign In Failed", error.message);
     } else {
       router.replace("/(protected)/dashboard");
     }
@@ -142,6 +154,15 @@ export default function SignIn() {
           >
             <AntDesign name="google" size={20} color={Color.neutral700} />
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.appleButton}
+            onPress={handleAppleSignIn}
+            disabled={loading}
+          >
+            <AntDesign name="apple" size={20} color={Color.white} />
+            <Text style={styles.appleButtonText}>Sign in with Apple</Text>
           </Pressable>
 
           <View style={styles.footerRow}>
@@ -260,12 +281,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Space.sm,
-    marginBottom: Space.xl,
+    marginBottom: Space.md,
   },
   googleButtonText: {
     fontFamily: Font.semiBold,
     fontSize: 15,
     color: Color.neutral700,
+  },
+  appleButton: {
+    height: 52,
+    borderRadius: Radius.lg,
+    backgroundColor: Color.neutral900,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  appleButtonText: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.white,
   },
   footerRow: {
     flexDirection: "row",

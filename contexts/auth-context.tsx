@@ -22,6 +22,7 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithApple: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -219,6 +220,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    try {
+      const redirectUrl = "swinglio://";
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      if (!data?.url) {
+        return { error: new Error("No OAuth URL returned") };
+      }
+
+      if (Platform.OS === "android") {
+        await Linking.openURL(data.url);
+        return { error: null };
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUrl,
+      );
+
+      if (result.type === "success") {
+        const url = result.url;
+        const params = new URLSearchParams(url.split("#")[1]);
+
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        if (access_token && refresh_token) {
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            console.error("Error setting session:", sessionError);
+            return { error: sessionError };
+          }
+
+          if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+            await fetchProfile(data.session.user.id);
+          }
+
+          return { error: null };
+        }
+      }
+
+      return { error: new Error("OAuth flow was cancelled") };
+    } catch (error) {
+      console.error("Apple OAuth error:", error);
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     setRole(null);
     setAvatarUrl(null);
@@ -260,6 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signIn,
         signInWithGoogle,
+        signInWithApple,
         signOut,
         refreshUser,
         refreshProfile,

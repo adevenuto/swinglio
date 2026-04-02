@@ -1,0 +1,38 @@
+# Dependencies (EAS installs fresh)
+node_modules/
+
+# Native dirs (EAS generates these)
+/ios
+/android
+
+# Dev/build artifacts
+.expo/
+dist/
+web-build/
+.metro-health-check*
+*.tsbuildinfo
+
+# Docs and scripts not needed for build
+docs/
+scripts/
+db/
+
+# macOS
+.DS_Store
+
+# Local env
+.env
+.env*.local
+
+# Git
+.git
+
+# Credentials
+*.p8
+*.p12
+*.key
+*.keystore
+*.jks
+*.mobileprovision
+*.pem
+play-store-key.json

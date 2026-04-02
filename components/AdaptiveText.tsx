@@ -65,8 +65,11 @@ function getAdaptiveColor(
 export function useAdaptiveColor(): string | null {
   const { isPro } = useSubscription();
   const { weather } = useWeather();
-  if (!isPro || !weather) return null;
-  return getAdaptiveColor(weather.condition, weather.isNight);
+  if (!isPro) return null;
+  // Match WeatherBackground fallback: default to clear/day while loading
+  const condition = weather?.condition ?? "clear";
+  const isNight = weather?.isNight ?? (new Date().getHours() >= 19 || new Date().getHours() < 6);
+  return getAdaptiveColor(condition, isNight);
 }
 
 /**
@@ -86,7 +89,7 @@ export default function AdaptiveText({
   const variantStyle = variant ? VARIANT_STYLES[variant] : undefined;
 
   // No weather active — use styles as-is
-  if (!isPro || !weather) {
+  if (!isPro) {
     return (
       <Text style={[variantStyle, style]} {...rest}>
         {children}
@@ -94,9 +97,13 @@ export default function AdaptiveText({
     );
   }
 
+  // Match WeatherBackground fallback: default to clear/day while loading
+  const condition = weather?.condition ?? "clear";
+  const isNight = weather?.isNight ?? (new Date().getHours() >= 19 || new Date().getHours() < 6);
+
   const adaptiveColor = getAdaptiveColor(
-    weather.condition,
-    weather.isNight,
+    condition,
+    isNight,
     variant,
   );
 

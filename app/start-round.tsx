@@ -38,7 +38,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { Button, Chip, Searchbar, Text } from "react-native-paper";
+import { Button, Searchbar, Text } from "react-native-paper";
 
 function buildScoreDetails(teebox: Teebox): ScoreDetails {
   const holes: Record<string, HoleData> = {};
@@ -294,12 +294,37 @@ export default function StartRoundScreen() {
 
   // --- Step 1b: Teebox selection ---
   if (!selectedTeebox) {
+    const holeCount = Object.keys(teeboxes[0]?.holes ?? {}).length;
+
     return (
       <View style={styles.screen}>
         <View style={styles.section}>
           <View style={styles.courseCard}>
             <View style={styles.cardRow}>
-              <Text style={styles.courseName}>{selectedCourse.club_name}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.courseName}>
+                  {selectedCourse.club_name}
+                </Text>
+                {selectedCourse.course_name &&
+                  selectedCourse.course_name !== selectedCourse.club_name && (
+                    <Text style={styles.courseSubtitle}>
+                      {selectedCourse.course_name}
+                    </Text>
+                  )}
+                {selectedCourse.street && (
+                  <Text style={styles.courseDetail}>
+                    {selectedCourse.street}
+                  </Text>
+                )}
+                <Text style={styles.courseDetail}>
+                  {[
+                    selectedCourse.state,
+                    holeCount > 0 ? `${holeCount} holes` : null,
+                  ]
+                    .filter(Boolean)
+                    .join("  ·  ")}
+                </Text>
+              </View>
               <Button
                 mode="outlined"
                 onPress={handleChangeCourse}
@@ -314,20 +339,58 @@ export default function StartRoundScreen() {
           </View>
 
           <Text style={styles.sectionLabel}>Select Tee Box</Text>
-          <View
-            style={{ flexDirection: "row", flexWrap: "wrap", gap: Space.sm }}
-          >
-            {teeboxes.map((tb) => (
-              <Chip
+          <View style={styles.teeboxGrid}>
+          {teeboxes.map((tb) => {
+            const label =
+              tb.name.charAt(0).toUpperCase() + tb.name.slice(1);
+            const accentColor = tb.color ?? Color.neutral300;
+            const hasMeta = tb.slope != null || tb.courseRating != null;
+
+            return (
+              <Pressable
                 key={tb.name}
-                mode="flat"
                 onPress={() => setSelectedTeebox(tb)}
-                style={{ backgroundColor: Color.primary }}
-                textStyle={{ fontFamily: Font.medium, color: Color.white }}
+                style={({ pressed }) => [
+                  styles.teeboxCard,
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                {tb.name.charAt(0).toUpperCase() + tb.name.slice(1)}
-              </Chip>
-            ))}
+                <View
+                  style={[
+                    styles.teeboxAccent,
+                    { backgroundColor: accentColor },
+                  ]}
+                >
+                  {tb.secondaryColor && (
+                    <View
+                      style={[
+                        styles.teeboxAccentInner,
+                        { backgroundColor: tb.secondaryColor },
+                      ]}
+                    />
+                  )}
+                </View>
+                <View style={styles.teeboxCardLeft}>
+                  <Text style={styles.teeboxCardName}>{label}</Text>
+                  {hasMeta && (
+                    <Text style={styles.teeboxCardMeta}>
+                      {[
+                        tb.slope != null ? `Slope ${tb.slope}` : null,
+                        tb.courseRating != null ? `${tb.courseRating}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join("  ·  ")}
+                    </Text>
+                  )}
+                  {tb.totalYardage != null && (
+                    <Text style={styles.teeboxYardageText}>
+                      {tb.totalYardage.toLocaleString()} yds
+                    </Text>
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
           </View>
         </View>
       </View>
@@ -464,6 +527,66 @@ const styles = StyleSheet.create({
   sectionLabel: {
     ...Type.caption,
     marginBottom: Space.md,
+  },
+  teeboxGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Space.sm,
+  },
+  teeboxCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    paddingVertical: Space.md,
+    paddingHorizontal: Space.md,
+    width: "48.5%",
+    ...Shadow.sm,
+  },
+  teeboxAccent: {
+    width: 4,
+    alignSelf: "stretch",
+    borderRadius: 2,
+    marginRight: Space.md,
+    overflow: "hidden",
+  },
+  teeboxAccentInner: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
+  teeboxCardLeft: {
+    flex: 1,
+  },
+  teeboxCardName: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral900,
+    textTransform: "capitalize",
+  },
+  teeboxCardMeta: {
+    fontFamily: Font.regular,
+    fontSize: 12,
+    color: Color.neutral400,
+    marginTop: 2,
+  },
+  teeboxYardageText: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    color: Color.neutral700,
+    marginTop: Space.xs,
+  },
+  courseDetail: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral400,
+    marginTop: 2,
   },
   searchbar: {
     backgroundColor: "transparent",

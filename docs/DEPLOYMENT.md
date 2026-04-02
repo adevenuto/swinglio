@@ -53,11 +53,23 @@ eas init
 ### Set EAS Secrets (keeps sensitive values out of code)
 
 ```bash
+# Supabase
 eas secret:create --name EXPO_PUBLIC_SUPABASE_URL --value "<your-supabase-url>" --scope project
 eas secret:create --name EXPO_PUBLIC_SUPABASE_KEY --value "<your-supabase-anon-key>" --scope project
+
+# Mapbox
 eas secret:create --name EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN --value "<your-mapbox-public-token>" --scope project
 eas secret:create --name RNMAPBOX_MAPS_DOWNLOAD_TOKEN --value "<your-mapbox-secret-token>" --scope project
+
+# RevenueCat (subscriptions)
+eas secret:create --name EXPO_PUBLIC_REVENUECAT_IOS_KEY --value "<your-revenuecat-ios-key>" --scope project
+eas secret:create --name EXPO_PUBLIC_REVENUECAT_ANDROID_KEY --value "<your-revenuecat-android-key>" --scope project
+
+# Weather
+eas secret:create --name EXPO_PUBLIC_OPENWEATHERMAP_KEY --value "<your-openweathermap-key>" --scope project
 ```
+
+> **Note:** `DATABASE_URL`, `DIRECT_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `GOOGLE_GEOCODING_API_KEY` are only used by local scripts and Drizzle — they do NOT need to be EAS secrets.
 
 ---
 
@@ -65,18 +77,20 @@ eas secret:create --name RNMAPBOX_MAPS_DOWNLOAD_TOKEN --value "<your-mapbox-secr
 
 You need production-quality assets before submitting.
 
-| Asset | Size | File |
-|-------|------|------|
-| App icon (both platforms) | 1024x1024 px | `assets/images/icon.png` |
+| Asset                       | Size                                 | File                                        |
+| --------------------------- | ------------------------------------ | ------------------------------------------- |
+| App icon (both platforms)   | 1024x1024 px                         | `assets/images/icon.png`                    |
 | Android adaptive foreground | 1024x1024 px (content in center 66%) | `assets/images/android-icon-foreground.png` |
-| Splash screen graphic | 200x200 px minimum | `assets/images/splash-icon.png` |
+| Splash screen graphic       | 200x200 px minimum                   | `assets/images/splash-icon.png`             |
 
 **Tools to create icons:**
+
 - [Figma](https://figma.com) — design from scratch
 - [Icon Kitchen](https://icon.kitchen) — free, generates all sizes
 - [AppIcon.co](https://appicon.co) — upload 1024px, get all sizes
 
 **Rules:**
+
 - iOS icon: no transparency, no rounded corners (Apple adds them)
 - Android adaptive: keep important content in the center 66% safe zone
 
@@ -87,16 +101,19 @@ You need production-quality assets before submitting.
 Once your Apple Developer account is approved:
 
 ### Register Bundle ID
+
 1. Go to [Identifiers](https://developer.apple.com/account/resources/identifiers/list)
 2. Click **+** → **App IDs** → **App**
 3. Description: `Swinglio`, Bundle ID: **Explicit** → `com.swinglio.app`
 4. Register
 
 ### Enable Sign in with Apple
+
 1. In the Bundle ID you just created (`com.swinglio.app`), check **Sign in with Apple** under Capabilities
 2. Click Save
 
 ### Create Services ID (for Supabase OAuth)
+
 1. Go to [Identifiers](https://developer.apple.com/account/resources/identifiers/list) → **+** → **Services IDs**
 2. Description: `Swinglio Auth`, Identifier: `com.swinglio.app.auth`
 3. Register, then click into it and enable **Sign in with Apple**
@@ -107,6 +124,7 @@ Once your Apple Developer account is approved:
 5. Save
 
 ### Create a Private Key for Apple Sign-In
+
 1. Go to [Keys](https://developer.apple.com/account/resources/authkeys/list) → **+**
 2. Name: `Swinglio Sign In`, enable **Sign in with Apple**
 3. Click **Configure** → select `com.swinglio.app` as the Primary App ID → Save
@@ -114,6 +132,7 @@ Once your Apple Developer account is approved:
 5. Note the **Key ID** shown on the confirmation page
 
 ### Configure Supabase
+
 1. In your Supabase dashboard → **Authentication** → **Providers** → **Apple**
 2. Enable the provider and fill in:
    - **Services ID**: `com.swinglio.app.auth` (the Services ID, not the App ID)
@@ -125,6 +144,7 @@ Once your Apple Developer account is approved:
 > **Note:** Unlike Google, Apple doesn't give you a static client secret. Supabase uses the `.p8` key + Key ID + Team ID to generate a signed JWT automatically. No manual secret rotation needed.
 
 ### Create App in App Store Connect
+
 1. Go to [App Store Connect](https://appstoreconnect.apple.com) → My Apps → **+** → New App
 2. Platform: iOS
 3. Name: **Swinglio**
@@ -133,7 +153,9 @@ Once your Apple Developer account is approved:
 6. Create
 
 ### Update eas.json
+
 Fill in the placeholders in `eas.json` → `submit.production.ios`:
+
 - `appleId` — your Apple ID email
 - `ascAppId` — from App Store Connect (the numeric app ID)
 - `appleTeamId` — from [developer.apple.com/account](https://developer.apple.com/account) (Membership → Team ID)
@@ -145,11 +167,13 @@ Fill in the placeholders in `eas.json` → `submit.production.ios`:
 Once your Google Play Console account is approved:
 
 ### Create App
+
 1. Go to [Google Play Console](https://play.google.com/console) → **Create app**
 2. App name: **Swinglio**, Language: English, Type: App, Free
 3. Accept declarations → Create
 
 ### Set Up Service Account (for automated uploads)
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Create project: "Swinglio Play Console"
 3. Enable **Google Play Android Developer API** (APIs & Services → Library)
@@ -165,6 +189,7 @@ Once your Google Play Console account is approved:
 ## Step 6: Build & Test
 
 ### Preview Build (test on real device first!)
+
 ```bash
 # iOS preview (installs on real device via QR code)
 eas build --platform ios --profile preview
@@ -174,6 +199,7 @@ eas build --platform android --profile preview
 ```
 
 Install the preview builds and test everything end-to-end:
+
 - [ ] Fresh sign-up flow works
 - [ ] Google OAuth works
 - [ ] Course search + nearby courses work (Mapbox)
@@ -182,6 +208,7 @@ Install the preview builds and test everything end-to-end:
 - [ ] No crashes
 
 ### Production Build
+
 ```bash
 # Build both platforms
 eas build --platform all --profile production
@@ -208,6 +235,7 @@ eas submit --platform android --profile production
 Before Apple/Google will approve your app, you need to fill out listing info.
 
 ### Both Stores Require
+
 - [ ] **Privacy Policy** at a public URL (e.g. `https://swinglio.com/privacy`)
   - Cover: data collected (email, name, location, golf scores), how it's used, third parties (Supabase, Mapbox), data retention/deletion, contact info
   - Can use [Termly](https://termly.io) to generate one
@@ -217,12 +245,14 @@ Before Apple/Google will approve your app, you need to fill out listing info.
 - [ ] **Age rating** — complete the questionnaire (likely 4+)
 
 ### Apple-Specific
+
 - [ ] Screenshots for 6.7" (iPhone 15 Pro Max) and 6.5" (iPhone 11 Pro Max) at minimum
 - [ ] Keywords (100 char max): `golf,scorecard,handicap,round tracker,golf stats`
 - [ ] Support URL
 - [ ] Demo account credentials for the App Review team
 
 ### Google-Specific
+
 - [ ] Feature graphic (1024x500 px banner)
 - [ ] Short description (80 chars)
 - [ ] Content rating (IARC questionnaire)
@@ -233,6 +263,7 @@ Before Apple/Google will approve your app, you need to fill out listing info.
 ## Step 9: App Review
 
 **Apple:** 24-48 hours typical, up to a week. Common rejection reasons:
+
 - Crashes on launch
 - Missing demo login credentials in review notes
 - Incomplete features (every button must work)

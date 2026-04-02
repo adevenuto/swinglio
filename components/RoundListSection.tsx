@@ -92,9 +92,7 @@ export default function RoundListSection({
             pressed && { opacity: 0.7 },
           ]}
         >
-          <Text style={styles.seeAllText}>
-            See all {rounds.length} rounds
-          </Text>
+          <Text style={styles.seeAllText}>See all {rounds.length} rounds</Text>
           <Feather name="chevron-right" size={16} color={Color.primary} />
         </Pressable>
       )}

@@ -268,9 +268,9 @@ function GameplayScreenContent() {
               size={48}
               color={Color.primary}
             />
-            <Text style={gameStyles.finishedTitle}>
+            <AdaptiveText style={gameStyles.finishedTitle}>
               You've completed your round!
-            </Text>
+            </AdaptiveText>
             <Text style={gameStyles.finishedSubtitle}>
               Waiting for other players to finish.
             </Text>

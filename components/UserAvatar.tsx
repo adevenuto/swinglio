@@ -1,6 +1,6 @@
 import { Color, Font } from "@/constants/design-tokens";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React from "react";
+import React, { useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
@@ -23,10 +23,13 @@ function getInitials(
 }
 
 export default function UserAvatar({ avatarUrl, firstName, lastName, size }: Props) {
-  if (avatarUrl) {
+  const [imgError, setImgError] = useState(false);
+
+  if (avatarUrl && !imgError) {
     return (
       <Image
         source={{ uri: avatarUrl }}
+        onError={() => setImgError(true)}
         style={{
           width: size,
           height: size,

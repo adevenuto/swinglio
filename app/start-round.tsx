@@ -38,7 +38,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { Button, Chip, Searchbar, Text } from "react-native-paper";
+import { Button, Searchbar, Text } from "react-native-paper";
 
 function buildScoreDetails(teebox: Teebox): ScoreDetails {
   const holes: Record<string, HoleData> = {};
@@ -317,17 +317,53 @@ export default function StartRoundScreen() {
           <View
             style={{ flexDirection: "row", flexWrap: "wrap", gap: Space.sm }}
           >
-            {teeboxes.map((tb) => (
-              <Chip
-                key={tb.name}
-                mode="flat"
-                onPress={() => setSelectedTeebox(tb)}
-                style={{ backgroundColor: Color.primary }}
-                textStyle={{ fontFamily: Font.medium, color: Color.white }}
-              >
-                {tb.name.charAt(0).toUpperCase() + tb.name.slice(1)}
-              </Chip>
-            ))}
+            {teeboxes.map((tb) => {
+              const label =
+                tb.name.charAt(0).toUpperCase() + tb.name.slice(1);
+              const borderColor = tb.color ?? Color.neutral300;
+
+              if (tb.secondaryColor) {
+                return (
+                  <Pressable
+                    key={tb.name}
+                    onPress={() => setSelectedTeebox(tb)}
+                    style={({ pressed }) => [
+                      styles.teeboxBtn,
+                      styles.teeboxBtnOuter,
+                      { borderColor },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.teeboxInset,
+                        { borderColor: tb.secondaryColor },
+                      ]}
+                    >
+                      <Text style={[styles.teeboxBtnText, { color: Color.neutral700 }]}>
+                        {label}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              }
+
+              return (
+                <Pressable
+                  key={tb.name}
+                  onPress={() => setSelectedTeebox(tb)}
+                  style={({ pressed }) => [
+                    styles.teeboxBtn,
+                    { borderColor },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text style={[styles.teeboxBtnText, { color: Color.neutral700 }]}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       </View>
@@ -464,6 +500,33 @@ const styles = StyleSheet.create({
   sectionLabel: {
     ...Type.caption,
     marginBottom: Space.md,
+  },
+  teeboxBtn: {
+    height: 40,
+    paddingHorizontal: Space.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    backgroundColor: Color.neutral50,
+    justifyContent: "center",
+    alignItems: "center",
+    ...Shadow.md,
+  },
+  teeboxBtnOuter: {
+    paddingHorizontal: 0,
+    padding: 2,
+  },
+  teeboxInset: {
+    flex: 1,
+    width: "100%",
+    borderWidth: 1.5,
+    borderRadius: Radius.lg - 2,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Space.md,
+  },
+  teeboxBtnText: {
+    fontFamily: Font.semiBold,
+    fontSize: 14,
   },
   searchbar: {
     backgroundColor: "transparent",

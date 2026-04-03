@@ -58,6 +58,8 @@ export function SubscriptionProvider({
 
   // Initialize RevenueCat when user is available
   useEffect(() => {
+    let listenerActive = false;
+
     const init = async () => {
       if (!user?.id) {
         setTier("free");
@@ -72,45 +74,63 @@ export function SubscriptionProvider({
         return;
       }
 
-      try {
-        const apiKey = Platform.OS === "ios" ? RC_IOS_KEY : RC_ANDROID_KEY;
-        if (!apiKey) {
-          // RevenueCat not configured yet — default to free
-          setTier("free");
-          setIsLoading(false);
-          return;
-        }
+      const apiKey = Platform.OS === "ios" ? RC_IOS_KEY : RC_ANDROID_KEY;
+      if (!apiKey) {
+        // RevenueCat not configured yet — default to free
+        setTier("free");
+        setIsLoading(false);
+        return;
+      }
 
+      try {
         if (__DEV__) {
           Purchases.setLogLevel(LOG_LEVEL.DEBUG);
         }
 
         Purchases.configure({ apiKey, appUserID: user.id });
+      } catch (err) {
+        console.error("RevenueCat configure error:", err);
+        setTier("free");
+        setIsLoading(false);
+        return;
+      }
 
+      try {
         // Check current entitlements
         const customerInfo = await Purchases.getCustomerInfo();
         updateTierFromCustomerInfo(customerInfo);
+      } catch (err) {
+        console.error("RevenueCat getCustomerInfo error:", err);
+        setTier("free");
+      }
 
+      try {
         // Fetch available packages
         const offeringsResult = await Purchases.getOfferings();
         if (offeringsResult.current?.availablePackages) {
           setOfferings(offeringsResult.current.availablePackages);
         }
+      } catch (err) {
+        console.error("RevenueCat getOfferings error:", err);
+      }
 
+      try {
         // Listen for subscription changes
         Purchases.addCustomerInfoUpdateListener(updateTierFromCustomerInfo);
+        listenerActive = true;
       } catch (err) {
-        console.error("RevenueCat init error:", err);
-        setTier("free");
-      } finally {
-        setIsLoading(false);
+        console.error("RevenueCat listener error:", err);
       }
+
+      setIsLoading(false);
     };
 
     init();
 
     return () => {
-      Purchases.removeCustomerInfoUpdateListener(updateTierFromCustomerInfo);
+      if (listenerActive) {
+        Purchases.removeCustomerInfoUpdateListener(updateTierFromCustomerInfo);
+      }
     };
   }, [user?.id, isEditor]);
 

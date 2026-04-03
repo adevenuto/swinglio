@@ -62,5 +62,6 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: Space.sm,
+    marginLeft: "auto",
   },
 });

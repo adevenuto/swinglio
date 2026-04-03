@@ -77,11 +77,13 @@ eas secret:create --name EXPO_PUBLIC_OPENWEATHERMAP_KEY --value "<your-openweath
 
 You need production-quality assets before submitting.
 
-| Asset                       | Size                                 | File                                        |
-| --------------------------- | ------------------------------------ | ------------------------------------------- |
-| App icon (both platforms)   | 1024x1024 px                         | `assets/images/icon.png`                    |
-| Android adaptive foreground | 1024x1024 px (content in center 66%) | `assets/images/android-icon-foreground.png` |
-| Splash screen graphic       | 200x200 px minimum                   | `assets/images/splash-icon.png`             |
+| Asset                       | Size                                 | File                                    |
+| --------------------------- | ------------------------------------ | --------------------------------------- |
+| App icon (both platforms)   | 1024x1024 px                         | `assets/icon.png`                       |
+| Android adaptive foreground | 1024x1024 px (content in center 66%) | `assets/android-icon-foreground.png`    |
+| Splash screen graphic       | 200x200 px minimum                   | `assets/splash-icon.png`                |
+
+> **Important:** The paths in `app.json` must match where the files actually live. The current setup uses `./assets/` (not `./assets/images/`). If these paths are wrong, the EAS Prebuild phase will fail with `ENOENT: no such file or directory`.
 
 **Tools to create icons:**
 

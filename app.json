@@ -4,7 +4,7 @@
     "slug": "swinglio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "swinglio",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -14,30 +14,33 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Swinglio uses your location to find nearby golf courses.",
         "NSCameraUsageDescription": "Swinglio needs camera access for your profile photo.",
-        "NSPhotoLibraryUsageDescription": "Swinglio needs photo library access for your profile photo."
+        "NSPhotoLibraryUsageDescription": "Swinglio needs photo library access for your profile photo.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#15603A",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.swinglio.app"
+      "package": "com.swinglio.app",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -61,6 +64,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "79364071-d079-46c1-bbac-27d01eb14d5b"
+      }
+    },
+    "owner": "adev312"
   }
 }

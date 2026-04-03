@@ -98,6 +98,11 @@ export const Color = {
     string,
     string,
   ],
+  secondaryGradient: ["#E0DC4A", "#D3CF37", "#B8B52E"] as readonly [
+    string,
+    string,
+    string,
+  ],
 } as const;
 
 // === Typography ===

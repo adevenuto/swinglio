@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   courseName: {
     fontFamily: Font.bold,
-    fontSize: 19,
+    fontSize: 20,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontFamily: Font.regular,
     fontSize: 14,
     color: Color.neutral500,
-    marginTop: 1,
+    marginTop: 2,
   },
   statsLine: {
     fontSize: 15,

@@ -1,5 +1,6 @@
 import AdaptiveText from "@/components/AdaptiveText";
 import GameplayHeader from "@/components/GameplayHeader";
+import GradientButton from "@/components/GradientButton";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
@@ -15,7 +16,6 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAttestations } from "@/hooks/use-attestations";
-import GradientButton from "@/components/GradientButton";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { ResultsData } from "@/lib/scoring-utils";
 import { supabase } from "@/lib/supabase";
@@ -37,7 +37,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { ActivityIndicator, Button, Text } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
@@ -222,7 +222,9 @@ export default function RoundSummaryScreen() {
       !toastFired.current
     ) {
       toastFired.current = true;
-      toast.success(`Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`);
+      toast.success(
+        `Great round! You shot ${myResult.total_score} (${formatScoreToPar(myResult.score_to_par)})`,
+      );
     }
   }, [completed, myResult, myPlayerStatus]);
 
@@ -261,218 +263,243 @@ export default function RoundSummaryScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: isPro ? "transparent" : Color.screenBg }}>
-    <WeatherBackground />
-    <SafeAreaView
-      edges={["top"]}
-      style={{ flex: 1, paddingTop: 20 }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isPro ? "transparent" : Color.screenBg,
+      }}
     >
-      {/* Header */}
-      <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backButton}>
-          <AdaptiveText style={s.backChevron}>{"\u2039"}</AdaptiveText>
-          <AdaptiveText style={s.backText}>Back</AdaptiveText>
-        </Pressable>
-        <AdaptiveText style={s.headerTitle}>Round Summary</AdaptiveText>
-        <View style={{ width: 80 }} />
-      </View>
-
-      <ScrollView
-        style={{ flex: 1 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Color.info}
-            colors={[Color.info]}
-          />
-        }
-      >
-        {/* Course info card */}
-        <View style={{ paddingHorizontal: Space.lg }}>
-          <GameplayHeader
-            courseId={round.course_id}
-            courseName={round.courses?.club_name || "Unknown"}
-            courseNameSub={
-              round.courses?.course_name &&
-              round.courses.course_name !== round.courses.club_name
-                ? round.courses.course_name
-                : null
-            }
-            featuredImageUrl={featuredImageUrl}
-            holeCount={
-              round.teebox_data?.holes
-                ? Object.keys(round.teebox_data.holes).length
-                : undefined
-            }
-            subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${formatDisplayDate(round.date_played ?? round.created_at, true)}`}
-          />
+      <WeatherBackground />
+      <SafeAreaView edges={["top"]} style={{ flex: 1, paddingTop: 20 }}>
+        {/* Header */}
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} style={s.backButton}>
+            <AdaptiveText style={s.backChevron}>{"\u2039"}</AdaptiveText>
+            <AdaptiveText style={s.backText}>Back</AdaptiveText>
+          </Pressable>
+          <AdaptiveText style={s.headerTitle}>Round Summary</AdaptiveText>
+          <View style={{ width: 80 }} />
         </View>
 
-        {/* Scorecard */}
-        <View style={{ paddingHorizontal: Space.lg, marginTop: Space.lg }}>
-          <AdaptiveText style={s.sectionLabel}>SCORECARD</AdaptiveText>
-          <Scorecard
-            teeboxData={round.teebox_data}
-            players={scorecardPlayers}
-            currentUserId={user?.id}
-          />
-        </View>
+        <ScrollView
+          style={{ flex: 1 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Color.info}
+              colors={[Color.info]}
+            />
+          }
+        >
+          {/* Course info card */}
+          <View style={{ paddingHorizontal: Space.lg }}>
+            <GameplayHeader
+              courseId={round.course_id}
+              courseName={round.courses?.club_name || "Unknown"}
+              courseNameSub={
+                round.courses?.course_name &&
+                round.courses.course_name !== round.courses.club_name
+                  ? round.courses.course_name
+                  : null
+              }
+              featuredImageUrl={featuredImageUrl}
+              holeCount={
+                round.teebox_data?.holes
+                  ? Object.keys(round.teebox_data.holes).length
+                  : undefined
+              }
+              subtitle={`${(round.teebox_data as any)?.name ? `${(round.teebox_data as any).name} Tees · ` : ""}${formatDisplayDate(round.date_played ?? round.created_at, true)}`}
+            />
+          </View>
 
-        {/* Results card */}
-        {resultsData && resultsData.players.length > 0 && (
-          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <AdaptiveText style={s.sectionLabel}>RESULTS</AdaptiveText>
-            <View style={s.resultsCard}>
-              {resultsData.players.map((pr) => {
-                const playerData = players.find(
-                  (p) => p.golfer_id === pr.golfer_id,
-                );
-                const isWd = pr.player_status === "withdrew";
-                const partialHoles = pr.holes_completed < pr.hole_count;
-                return (
-                  <View key={pr.golfer_id} style={s.resultRow}>
-                    <UserAvatar
-                      avatarUrl={playerData?.profiles?.avatar_url}
-                      firstName={playerData?.profiles?.first_name}
-                      size={40}
-                    />
-                    <View style={s.resultInfo}>
-                      <View style={s.resultTopRow}>
-                        <Text style={s.resultName}>{pr.display_name}</Text>
-                        {isWd && (
-                          <StyledTooltip title="Withdrew">
-                            <View>
-                              <MaterialIcons
-                                name="block"
-                                size={30}
-                                color={Color.danger}
-                              />
-                            </View>
-                          </StyledTooltip>
-                        )}
-                        {pr.player_status === "incomplete" && (
-                          <StyledTooltip title="Incomplete">
-                            <View>
-                              <MaterialIcons
-                                name="warning"
-                                size={30}
-                                color={Color.warning}
-                              />
-                            </View>
-                          </StyledTooltip>
-                        )}
-                        {pr.player_status === "completed" && (
-                          <StyledTooltip title="Completed">
-                            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: Color.primary, alignItems: "center", justifyContent: "center" }}>
-                              <Feather name="check" size={16} color={Color.white} />
-                            </View>
-                          </StyledTooltip>
-                        )}
-                      </View>
-                      <View style={s.resultBottomRow}>
-                        <Text style={s.resultSub}>
-                          {partialHoles
-                            ? `${pr.holes_completed} of ${pr.hole_count} holes`
-                            : pr.hole_count <= 9
-                              ? `${pr.hole_count} holes`
-                              : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
-                        </Text>
-                        <View style={s.scoreContainer}>
-                          <Text style={s.scoreTotal}>{pr.total_score}</Text>
-                          <Text
-                            style={[
-                              s.scoreToPar,
-                              {
-                                color:
-                                  pr.score_to_par > 0
-                                    ? Color.danger
-                                    : pr.score_to_par < 0
-                                      ? Color.primary
-                                      : Color.neutral500,
-                              },
-                            ]}
-                          >
-                            ({formatScoreToPar(pr.score_to_par)})
+          {/* Scorecard */}
+          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.lg }}>
+            <AdaptiveText style={s.sectionLabel}>SCORECARD</AdaptiveText>
+            <Scorecard
+              teeboxData={round.teebox_data}
+              players={scorecardPlayers}
+              currentUserId={user?.id}
+            />
+          </View>
+
+          {/* Results card */}
+          {resultsData && resultsData.players.length > 0 && (
+            <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+              <AdaptiveText style={s.sectionLabel}>RESULTS</AdaptiveText>
+              <View style={s.resultsCard}>
+                {resultsData.players.map((pr) => {
+                  const playerData = players.find(
+                    (p) => p.golfer_id === pr.golfer_id,
+                  );
+                  const isWd = pr.player_status === "withdrew";
+                  const partialHoles = pr.holes_completed < pr.hole_count;
+                  return (
+                    <View key={pr.golfer_id} style={s.resultRow}>
+                      <UserAvatar
+                        avatarUrl={playerData?.profiles?.avatar_url}
+                        firstName={playerData?.profiles?.first_name}
+                        size={40}
+                      />
+                      <View style={s.resultInfo}>
+                        <View style={s.resultTopRow}>
+                          <Text style={s.resultName}>{pr.display_name}</Text>
+                          {isWd && (
+                            <StyledTooltip title="Withdrew">
+                              <View>
+                                <MaterialIcons
+                                  name="block"
+                                  size={30}
+                                  color={Color.danger}
+                                />
+                              </View>
+                            </StyledTooltip>
+                          )}
+                          {pr.player_status === "incomplete" && (
+                            <StyledTooltip title="Incomplete">
+                              <View>
+                                <MaterialIcons
+                                  name="warning"
+                                  size={30}
+                                  color={Color.warning}
+                                />
+                              </View>
+                            </StyledTooltip>
+                          )}
+                          {pr.player_status === "completed" && (
+                            <StyledTooltip title="Completed">
+                              <View
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: Color.primary,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Feather
+                                  name="check"
+                                  size={16}
+                                  color={Color.white}
+                                />
+                              </View>
+                            </StyledTooltip>
+                          )}
+                        </View>
+                        <View style={s.resultBottomRow}>
+                          <Text style={s.resultSub}>
+                            {partialHoles
+                              ? `${pr.holes_completed} of ${pr.hole_count} holes`
+                              : pr.hole_count <= 9
+                                ? `${pr.hole_count} holes`
+                                : `Front ${pr.front_nine} / Back ${pr.back_nine}`}
                           </Text>
+                          <View style={s.scoreContainer}>
+                            <Text style={s.scoreTotal}>{pr.total_score}</Text>
+                            <Text
+                              style={[
+                                s.scoreToPar,
+                                {
+                                  color:
+                                    pr.score_to_par > 0
+                                      ? Color.danger
+                                      : pr.score_to_par < 0
+                                        ? Color.primary
+                                        : Color.neutral500,
+                                },
+                              ]}
+                            >
+                              ({formatScoreToPar(pr.score_to_par)})
+                            </Text>
+                          </View>
                         </View>
                       </View>
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* Continue Round — for incomplete players */}
-        {myIncomplete && isParticipant && (
-          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <AdaptiveText style={s.sectionLabel}>RESUME</AdaptiveText>
-            <View style={s.attestCard}>
-              <Text style={s.attestCount}>
-                You scored {myResult?.holes_completed ?? 0} of{" "}
-                {myResult?.hole_count ?? 0} holes.
-              </Text>
-              <GradientButton
-                onPress={handleContinueRound}
-                label="Continue Round"
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Peer attestation — only for multi-player eligible rounds */}
-        {!isEffectivelySolo &&
-          isParticipant &&
-          !myWithdrew &&
-          !myIncomplete && (
+          {/* Continue Round — for incomplete players */}
+          {myIncomplete && isParticipant && (
             <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-              <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
+              <AdaptiveText style={s.sectionLabel}>RESUME</AdaptiveText>
               <View style={s.attestCard}>
                 <Text style={s.attestCount}>
-                  {attestCount} of {eligiblePlayerCount} players attested
+                  You scored {myResult?.holes_completed ?? 0} of{" "}
+                  {myResult?.hole_count ?? 0} holes.
                 </Text>
+                <GradientButton
+                  onPress={handleContinueRound}
+                  label="Continue Round"
+                />
+              </View>
+            </View>
+          )}
 
-                {hasAttested ? (
+          {/* Peer attestation — only for multi-player eligible rounds */}
+          {!isEffectivelySolo &&
+            isParticipant &&
+            !myWithdrew &&
+            !myIncomplete && (
+              <View
+                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
+              >
+                <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
+                <View style={s.attestCard}>
+                  <Text style={s.attestCount}>
+                    {attestCount} of {eligiblePlayerCount} players attested
+                  </Text>
+
+                  {hasAttested ? (
+                    <View style={s.attestedRow}>
+                      <MaterialIcons
+                        name="check-circle"
+                        size={24}
+                        color={Color.primary}
+                      />
+                      <Text style={s.attestedText}>Attested</Text>
+                    </View>
+                  ) : (
+                    <GradientButton
+                      onPress={handleAttest}
+                      label="Attest Scores"
+                      colors={Color.secondaryGradient}
+                    />
+                  )}
+                </View>
+              </View>
+            )}
+
+          {/* Self-confirmed indicator — for effectively-solo rounds */}
+          {isEffectivelySolo &&
+            isParticipant &&
+            !myWithdrew &&
+            !myIncomplete && (
+              <View
+                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
+              >
+                <AdaptiveText style={s.sectionLabel}>
+                  SCORE CONFIRMATION
+                </AdaptiveText>
+                <View style={s.attestCard}>
                   <View style={s.attestedRow}>
                     <MaterialIcons
                       name="check-circle"
                       size={24}
                       color={Color.primary}
                     />
-                    <Text style={s.attestedText}>Attested</Text>
+                    <Text style={s.attestedText}>Scores Confirmed</Text>
                   </View>
-                ) : (
-                  <GradientButton
-                    onPress={handleAttest}
-                    label="Attest Scores"
-                  />
-                )}
+                </View>
               </View>
-            </View>
-          )}
+            )}
 
-        {/* Self-confirmed indicator — for effectively-solo rounds */}
-        {isEffectivelySolo && isParticipant && !myWithdrew && !myIncomplete && (
-          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
-            <AdaptiveText style={s.sectionLabel}>SCORE CONFIRMATION</AdaptiveText>
-            <View style={s.attestCard}>
-              <View style={s.attestedRow}>
-                <MaterialIcons
-                  name="check-circle"
-                  size={24}
-                  color={Color.primary}
-                />
-                <Text style={s.attestedText}>Scores Confirmed</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        <View style={{ height: Space.xxxl }} />
-      </ScrollView>
-    </SafeAreaView>
+          <View style={{ height: Space.xxxl }} />
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }

@@ -16,6 +16,7 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  colors?: readonly [string, string, string];
 };
 
 export default function GradientButton({
@@ -24,6 +25,7 @@ export default function GradientButton({
   disabled,
   loading,
   style,
+  colors,
 }: Props) {
   return (
     <Pressable
@@ -34,7 +36,7 @@ export default function GradientButton({
       ]}
     >
       <LinearGradient
-        colors={Color.primaryGradient}
+        colors={colors ?? Color.primaryGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.gradient, style]}

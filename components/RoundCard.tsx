@@ -1,4 +1,6 @@
-import PlayerAvatarRow, { PlayerAvatarInfo } from "@/components/PlayerAvatarRow";
+import PlayerAvatarRow, {
+  PlayerAvatarInfo,
+} from "@/components/PlayerAvatarRow";
 import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { formatDisplayDate } from "@/lib/date-utils";
 import Feather from "@expo/vector-icons/Feather";
@@ -72,7 +74,7 @@ export default function RoundCard({
         {/* Row 2: player avatars */}
         {players && players.length > 0 && (
           <View style={styles.avatarRow}>
-            <PlayerAvatarRow players={players} size={24} overlap={6} />
+            <PlayerAvatarRow players={players} size={30} overlap={6} />
           </View>
         )}
 
@@ -107,7 +109,6 @@ export default function RoundCard({
             )}
           </View>
         </View>
-
       </Pressable>
 
       {/* Badge overlay — outside the Pressable so Tooltip long-press works */}
@@ -159,13 +160,13 @@ const styles = StyleSheet.create({
   },
   courseName: {
     fontFamily: Font.bold,
-    fontSize: 17,
+    fontSize: 20,
     color: Color.neutral900,
     textTransform: "capitalize",
   },
   courseNameSub: {
     fontFamily: Font.regular,
-    fontSize: 13,
+    fontSize: 14,
     color: Color.neutral500,
     marginTop: 2,
   },

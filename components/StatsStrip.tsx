@@ -22,8 +22,8 @@ type Props = {
   onItemPress?: (key: string) => void;
 };
 
-const CIRCLE_SIZE = 56;
-const AVATAR_SIZE = 64;
+const CIRCLE_SIZE = 68;
+const AVATAR_SIZE = 78;
 const STROKE_WIDTH = 3;
 const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2; // 26.5
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -61,11 +61,20 @@ function ProgressRing({ progress }: { progress: number }) {
   );
 }
 
-export default function StatsStrip({ items, avatarUrl, displayName, onAvatarPress, onItemPress }: Props) {
+export default function StatsStrip({
+  items,
+  avatarUrl,
+  displayName,
+  onAvatarPress,
+  onItemPress,
+}: Props) {
   // Split displayName into firstName/lastName for initials
   const nameParts = displayName?.trim().split(/\s+/) ?? [];
   const firstName = nameParts[0] ?? null;
-  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1].replace(".", "") : null;
+  const lastName =
+    nameParts.length > 1
+      ? nameParts[nameParts.length - 1].replace(".", "")
+      : null;
   return (
     <ScrollView
       horizontal
@@ -81,7 +90,12 @@ export default function StatsStrip({ items, avatarUrl, displayName, onAvatarPres
           pressed ? { opacity: 0.7 } : undefined,
         ]}
       >
-        <UserAvatar avatarUrl={avatarUrl} firstName={firstName} lastName={lastName} size={AVATAR_SIZE} />
+        <UserAvatar
+          avatarUrl={avatarUrl}
+          firstName={firstName}
+          lastName={lastName}
+          size={AVATAR_SIZE}
+        />
       </Pressable>
 
       {/* Stat badges */}
@@ -166,12 +180,12 @@ const styles = StyleSheet.create({
   },
   plainValue: {
     fontFamily: Font.bold,
-    fontSize: 16,
+    fontSize: 20,
     color: Color.neutral900,
   },
   badgeSubtitle: {
     fontFamily: Font.medium,
-    fontSize: 9,
+    fontSize: 11,
     color: Color.neutral500,
     marginTop: -1,
   },
@@ -184,12 +198,12 @@ const styles = StyleSheet.create({
   },
   progressValue: {
     fontFamily: Font.bold,
-    fontSize: 14,
+    fontSize: 18,
     color: Color.neutral900,
   },
   label: {
     fontFamily: Font.medium,
-    fontSize: 12,
+    fontSize: 14,
     color: Color.neutral300,
     marginTop: Space.xs,
     textAlign: "center",

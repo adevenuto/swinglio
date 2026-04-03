@@ -1,4 +1,5 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
+import AdaptiveText from "@/components/AdaptiveText";
 import GradientButton from "@/components/GradientButton";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
 import RoundListSection from "@/components/RoundListSection";
@@ -31,7 +32,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import AdaptiveText from "@/components/AdaptiveText";
 import { Text } from "react-native-paper";
 
 const PRO_STAT_KEYS = new Set([
@@ -246,7 +246,9 @@ export default function Dashboard() {
             {/* Attestation Requests */}
             {attestNeededRounds.length > 0 && (
               <View style={{ marginTop: Space.xl }}>
-                <AdaptiveText style={styles.sectionLabel}>Review & Attest</AdaptiveText>
+                <AdaptiveText style={styles.sectionLabel}>
+                  Review & Attest
+                </AdaptiveText>
                 {attestNeededRounds.map((round) => (
                   <TouchableOpacity
                     key={round.id}
@@ -272,7 +274,7 @@ export default function Dashboard() {
                           )}
                       </View>
                       <LinearGradient
-                        colors={Color.primaryGradient}
+                        colors={Color.secondaryGradient}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={{
@@ -399,7 +401,7 @@ const styles = StyleSheet.create({
   },
   courseName: {
     fontFamily: Font.bold,
-    fontSize: 17,
+    fontSize: 20,
     color: Color.neutral900,
     flex: 1,
     textTransform: "capitalize",
@@ -407,6 +409,7 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontFamily: Font.regular,
     fontSize: 14,
+    marginTop: 2,
     color: Color.neutral500,
     textTransform: "capitalize",
   },

@@ -39,6 +39,11 @@ const ENTITLEMENT_ID = "Swinglio Pro";
 const RC_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? "";
 const RC_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? "";
 
+// TODO: Re-enable once RevenueCat ships iOS 26 compatibility fix.
+// Native Swift assertion failure in RC's async health check crashes the app
+// on iOS 26 preview builds (~0.2s after Purchases.configure()).
+const RC_DISABLED = true;
+
 export function SubscriptionProvider({
   children,
 }: {
@@ -70,6 +75,13 @@ export function SubscriptionProvider({
       // Skip RevenueCat if editor (they get everything for free)
       if (isEditor) {
         setTier("pro");
+        setIsLoading(false);
+        return;
+      }
+
+      // Skip RevenueCat entirely — native crash on iOS 26
+      if (RC_DISABLED) {
+        setTier("free");
         setIsLoading(false);
         return;
       }

@@ -49,3 +49,6 @@ app-example
 
 # Google Play service account key
 play-store-key.json
+
+# temp docs (maintained in separate site repo)
+docs/temp/

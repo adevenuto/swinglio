@@ -1,4 +1,5 @@
 import DistanceMapModal from "@/components/DistanceMapModal";
+import LiveRoundStatsModal from "@/components/LiveRoundStatsModal";
 import WeatherBackground from "@/components/WeatherBackground";
 import WeatherBadge from "@/components/WeatherBadge";
 import FinishRoundModal from "@/components/FinishRoundModal";
@@ -9,6 +10,7 @@ import Scorecard, { ScorecardRef } from "@/components/Scorecard";
 import {
   Color,
   Font,
+  Radius,
   Space,
   Type,
 } from "@/constants/design-tokens";
@@ -79,6 +81,7 @@ function GameplayScreenContent() {
   const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
   const [showDistanceMap, setShowDistanceMap] = useState(false);
   const [showFinishModal, setShowFinishModal] = useState(false);
+  const [showRoundStats, setShowRoundStats] = useState(false);
 
   const activeGreenCenter = greenCenters[`hole-${activeHole}`] ?? null;
 
@@ -315,6 +318,22 @@ function GameplayScreenContent() {
           </GestureDetector>
         )}
 
+        {isPro && round && (
+          <Pressable
+            onPress={() => setShowRoundStats(true)}
+            style={({ pressed }) => [
+              gameStyles.roundStatsButton,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <MaterialIcons name="insights" size={18} color={Color.primary} />
+            <AdaptiveText style={gameStyles.roundStatsText}>
+              Round Stats
+            </AdaptiveText>
+            <MaterialIcons name="chevron-right" size={18} color={Color.neutral400} />
+          </Pressable>
+        )}
+
         <View style={{ paddingHorizontal: Space.lg, paddingBottom: Space.lg }}>
           <AdaptiveText style={gameStyles.scorecardLabel}>SCORECARD</AdaptiveText>
           <Scorecard
@@ -364,6 +383,13 @@ function GameplayScreenContent() {
           distanceYards={distanceToPin}
         />
       )}
+
+      <LiveRoundStatsModal
+        visible={showRoundStats}
+        onClose={() => setShowRoundStats(false)}
+        scoreDetails={myScore?.score_details ?? null}
+        teeboxHoles={round?.teebox_data?.holes}
+      />
 
       <FinishRoundModal
         visible={showFinishModal}
@@ -422,6 +448,25 @@ const gameStyles = StyleSheet.create({
     color: Color.neutral900,
     lineHeight: 24,
     includeFontPadding: false,
+  },
+  roundStatsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.sm,
+    marginHorizontal: Space.lg,
+    marginBottom: Space.lg,
+    backgroundColor: Color.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    paddingVertical: Space.md,
+    paddingHorizontal: Space.lg,
+  },
+  roundStatsText: {
+    flex: 1,
+    fontFamily: Font.semiBold,
+    fontSize: 14,
+    color: Color.neutral900,
   },
   endRoundText: {
     fontFamily: Font.medium,

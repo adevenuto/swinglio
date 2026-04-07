@@ -1,6 +1,8 @@
 import AdaptiveText from "@/components/AdaptiveText";
+import CourseIntelligenceModal from "@/components/CourseIntelligenceModal";
 import GameplayHeader from "@/components/GameplayHeader";
 import GradientButton from "@/components/GradientButton";
+import ProGate from "@/components/ProGate";
 import Scorecard, { ScorecardPlayer } from "@/components/Scorecard";
 import StyledTooltip from "@/components/StyledTooltip";
 import UserAvatar from "@/components/UserAvatar";
@@ -91,6 +93,7 @@ export default function RoundSummaryScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(null);
+  const [showCourseIntel, setShowCourseIntel] = useState(false);
   const toastFired = useRef(false);
 
   const {
@@ -422,6 +425,29 @@ export default function RoundSummaryScreen() {
             </View>
           )}
 
+          {/* Course Intelligence */}
+          <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
+            <AdaptiveText style={s.sectionLabel}>COURSE INTELLIGENCE</AdaptiveText>
+            <ProGate>
+              <Pressable
+                onPress={() => setShowCourseIntel(true)}
+                style={({ pressed }) => [
+                  s.courseIntelCard,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <MaterialIcons name="insights" size={20} color={Color.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.courseIntelTitle}>View Course Insights</Text>
+                  <Text style={s.courseIntelSub}>
+                    Hole averages, trends, and trouble spots
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={Color.neutral400} />
+              </Pressable>
+            </ProGate>
+          </View>
+
           {/* Continue Round — for incomplete players */}
           {myIncomplete && isParticipant && (
             <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
@@ -499,6 +525,14 @@ export default function RoundSummaryScreen() {
 
           <View style={{ height: Space.xxxl }} />
         </ScrollView>
+      {round && (
+        <CourseIntelligenceModal
+          visible={showCourseIntel}
+          onClose={() => setShowCourseIntel(false)}
+          courseId={round.course_id}
+          courseName={round.courses?.club_name || "Unknown"}
+        />
+      )}
       </SafeAreaView>
     </View>
   );
@@ -627,5 +661,27 @@ const s = StyleSheet.create({
   attestButton: {
     borderRadius: Radius.lg,
     padding: 5,
+  },
+  courseIntelCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Space.md,
+    borderRadius: Radius.md,
+    backgroundColor: Color.white,
+    padding: Space.lg,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    ...Shadow.sm,
+  },
+  courseIntelTitle: {
+    fontFamily: Font.semiBold,
+    fontSize: 15,
+    color: Color.neutral900,
+  },
+  courseIntelSub: {
+    fontFamily: Font.regular,
+    fontSize: 13,
+    color: Color.neutral500,
+    marginTop: 2,
   },
 });

@@ -2,11 +2,12 @@ import RoundCard from "@/components/RoundCard";
 import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
-import { RecentRound, useRecentRounds } from "@/hooks/use-recent-rounds";
+import { RecentRound } from "@/hooks/use-recent-rounds";
+import { usePaginatedRounds } from "@/hooks/use-paginated-rounds";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 
 export default function RoundHistoryScreen() {
@@ -16,10 +17,11 @@ export default function RoundHistoryScreen() {
   const { user } = useAuth();
   const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
-  const { recentRounds, isLoading, refresh } = useRecentRounds(
-    user?.id ?? "",
-    isPro ? undefined : 10,
-  );
+  const { rounds, isLoading, isLoadingMore, hasMore, refresh, loadMore } =
+    usePaginatedRounds(user?.id ?? "", {
+      pageSize: 20,
+      maxTotal: isPro ? undefined : 10,
+    });
 
   useFocusEffect(
     useCallback(() => {
@@ -29,11 +31,11 @@ export default function RoundHistoryScreen() {
 
   const filtered = useMemo(() => {
     if (filter === "completed")
-      return recentRounds.filter((r) => r.player_status === "completed");
+      return rounds.filter((r) => r.player_status === "completed");
     if (filter === "incomplete")
-      return recentRounds.filter((r) => r.player_status === "incomplete");
-    return recentRounds;
-  }, [recentRounds, filter]);
+      return rounds.filter((r) => r.player_status === "incomplete");
+    return rounds;
+  }, [rounds, filter]);
 
   const renderItem = useCallback(
     ({ item }: { item: RecentRound }) => (
@@ -78,6 +80,8 @@ export default function RoundHistoryScreen() {
         contentContainerStyle={styles.list}
         onRefresh={refresh}
         refreshing={isLoading}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.emptyWrap}>
@@ -99,6 +103,11 @@ export default function RoundHistoryScreen() {
                 Viewing last 10 rounds — Upgrade to see all
               </Text>
             </Pressable>
+          ) : isLoadingMore ? (
+            <ActivityIndicator
+              style={styles.loadingMore}
+              color={Color.primary}
+            />
           ) : null
         }
       />
@@ -139,5 +148,8 @@ const styles = StyleSheet.create({
     fontFamily: Font.semiBold,
     fontSize: 14,
     color: Color.primary,
+  },
+  loadingMore: {
+    paddingVertical: Space.lg,
   },
 });

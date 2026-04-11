@@ -136,6 +136,15 @@ export function useRecentRounds(userId: string, limit?: number) {
           scoreToPar = result.score_to_par;
           holesCompleted = result.holes_completed;
           holeCount = result.hole_count;
+        } else if (scoreRow?.score != null && round.teebox_data?.holes) {
+          // Past rounds: no score_details, but we have total score + teebox pars
+          const holes = round.teebox_data.holes as Record<string, { par: string }>;
+          const totalPar = Object.values(holes).reduce(
+            (sum, h) => sum + (parseInt(h.par, 10) || 0), 0,
+          );
+          holeCount = Object.keys(holes).length;
+          holesCompleted = holeCount;
+          scoreToPar = scoreRow.score - totalPar;
         }
 
         return {

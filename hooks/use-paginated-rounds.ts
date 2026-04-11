@@ -7,37 +7,61 @@ import { useCallback, useRef, useState } from "react";
 type Options = {
   pageSize?: number;
   maxTotal?: number;
+  searchQuery?: string;
+  sortBy?: "date" | "score";
+  sortDir?: "asc" | "desc";
 };
 
 export function usePaginatedRounds(userId: string, options?: Options) {
   const pageSize = options?.pageSize ?? 20;
   const maxTotal = options?.maxTotal;
+  const searchQuery = options?.searchQuery?.trim() || "";
+  const sortBy = options?.sortBy ?? "date";
+  const sortDir = options?.sortDir ?? "desc";
 
   const [rounds, setRounds] = useState<RecentRound[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const offsetRef = useRef(0);
   const scoreMapRef = useRef<Map<number, any>>(new Map());
   const allRoundIdsRef = useRef<number[]>([]);
+  const sortedIdsRef = useRef<number[]>([]);
+  const scoresToParRef = useRef<Map<number, number | null>>(new Map());
+
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
 
   const fetchPage = useCallback(
     async (offset: number, limit: number): Promise<RecentRound[]> => {
-      const ids = allRoundIdsRef.current;
+      const ids = sortedIdsRef.current;
       if (ids.length === 0) return [];
 
-      const from = offset;
-      const to = offset + limit - 1;
+      const pageIds = ids.slice(offset, offset + limit);
+      if (pageIds.length === 0) return [];
 
-      const { data } = await supabase
+      const search = searchQueryRef.current;
+
+      let query = supabase
         .from("rounds")
         .select(
-          "id, course_id, creator_id, teebox_data, status, created_at, date_played, courses(club_name, course_name)",
+          search
+            ? "id, course_id, creator_id, teebox_data, status, created_at, date_played, courses!inner(club_name, course_name)"
+            : "id, course_id, creator_id, teebox_data, status, created_at, date_played, courses(club_name, course_name)",
         )
-        .in("id", ids)
-        .order("date_played", { ascending: false, nullsFirst: false })
-        .range(from, to);
+        .in("id", pageIds);
+
+      if (search) {
+        const pattern = `%${search}%`;
+        query = query.or(
+          `club_name.ilike.${pattern},course_name.ilike.${pattern}`,
+          { referencedTable: "courses" },
+        );
+      }
+
+      const { data } = await query;
 
       if (!data || data.length === 0) return [];
 
@@ -64,6 +88,9 @@ export function usePaginatedRounds(userId: string, options?: Options) {
       }
 
       const scoreMap = scoreMapRef.current;
+
+      // Build an order map from the pre-sorted pageIds so results match our sort
+      const orderMap = new Map(pageIds.map((id, i) => [id, i]));
 
       return data.map((round: any) => {
         const scoreRow = scoreMap.get(round.id);
@@ -101,7 +128,10 @@ export function usePaginatedRounds(userId: string, options?: Options) {
           needsAttestation: false,
           players: roundPlayersMap[Number(round.id)] ?? [],
         };
-      });
+      }).sort(
+        (a, b) =>
+          (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+      );
     },
     [userId],
   );
@@ -134,6 +164,52 @@ export function usePaginatedRounds(userId: string, options?: Options) {
     scoreMapRef.current = new Map(scoreRows.map((s) => [s.round_id, s]));
     allRoundIdsRef.current = [...scoreMapRef.current.keys()].filter(Boolean);
 
+    // Fetch lightweight round metadata for sorting
+    const { data: roundMeta } = await supabase
+      .from("rounds")
+      .select("id, teebox_data, date_played")
+      .in("id", allRoundIdsRef.current);
+
+    // Compute score_to_par for all rounds (used for score sorting)
+    const parMap = new Map<number, number | null>();
+    const dateMap = new Map<number, string | null>();
+    for (const rm of roundMeta || []) {
+      dateMap.set(rm.id, rm.date_played);
+      const scoreRow = scoreMapRef.current.get(rm.id);
+      if (scoreRow?.score_details && rm.teebox_data?.holes) {
+        const result = computePlayerResult(
+          scoreRow.score_details as ScoreDetails,
+          rm.teebox_data.holes,
+          userId,
+          "",
+        );
+        parMap.set(rm.id, result.score_to_par);
+      } else {
+        parMap.set(rm.id, null);
+      }
+    }
+    scoresToParRef.current = parMap;
+
+    // Sort IDs based on current sort mode
+    const sorted = [...allRoundIdsRef.current];
+    if (sortBy === "score") {
+      const nullVal = sortDir === "asc" ? 999 : -999;
+      sorted.sort((a, b) => {
+        const sa = parMap.get(a) ?? nullVal;
+        const sb = parMap.get(b) ?? nullVal;
+        return sortDir === "asc" ? sa - sb : sb - sa;
+      });
+    } else {
+      sorted.sort((a, b) => {
+        const da = dateMap.get(a) ?? "";
+        const db = dateMap.get(b) ?? "";
+        return sortDir === "asc"
+          ? da.localeCompare(db)
+          : db.localeCompare(da);
+      });
+    }
+    sortedIdsRef.current = sorted;
+
     const effectiveLimit =
       maxTotal != null ? Math.min(pageSize, maxTotal) : pageSize;
     const firstPage = await fetchPage(0, effectiveLimit);
@@ -145,7 +221,7 @@ export function usePaginatedRounds(userId: string, options?: Options) {
         (maxTotal == null || firstPage.length < maxTotal),
     );
     setIsLoading(false);
-  }, [userId, pageSize, maxTotal, fetchPage]);
+  }, [userId, pageSize, maxTotal, searchQuery, sortBy, sortDir, fetchPage]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore || isLoading) return;
@@ -167,5 +243,11 @@ export function usePaginatedRounds(userId: string, options?: Options) {
     setIsLoadingMore(false);
   }, [hasMore, isLoadingMore, isLoading, rounds.length, maxTotal, pageSize, fetchPage]);
 
-  return { rounds, isLoading, isLoadingMore, hasMore, refresh, loadMore };
+  const pullToRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await refresh();
+    setIsRefreshing(false);
+  }, [refresh]);
+
+  return { rounds, isLoading, isRefreshing, isLoadingMore, hasMore, refresh, pullToRefresh, loadMore };
 }

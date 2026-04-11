@@ -1,13 +1,20 @@
 import RoundCard from "@/components/RoundCard";
-import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
+import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
-import { RecentRound } from "@/hooks/use-recent-rounds";
 import { usePaginatedRounds } from "@/hooks/use-paginated-rounds";
+import { RecentRound } from "@/hooks/use-recent-rounds";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { Text } from "react-native-paper";
 
 export default function RoundHistoryScreen() {
@@ -17,10 +24,29 @@ export default function RoundHistoryScreen() {
   const { user } = useAuth();
   const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
-  const { rounds, isLoading, isLoadingMore, hasMore, refresh, loadMore } =
-    usePaginatedRounds(user?.id ?? "", {
+  const listRef = useRef<FlatList<RecentRound>>(null);
+
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortMode, setSortMode] = useState<
+    "date-desc" | "date-asc" | "score-low" | "score-high"
+  >("date-desc");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchText), 300);
+    return () => clearTimeout(t);
+  }, [searchText]);
+
+  const {
+    rounds, isLoading, isRefreshing, isLoadingMore, hasMore,
+    refresh, pullToRefresh, loadMore,
+  } = usePaginatedRounds(user?.id ?? "", {
       pageSize: 20,
       maxTotal: isPro ? undefined : 10,
+      searchQuery: debouncedSearch,
+      sortBy: sortMode.startsWith("date") ? "date" : "score",
+      sortDir:
+        sortMode === "date-asc" || sortMode === "score-low" ? "asc" : "desc",
     });
 
   useFocusEffect(
@@ -28,6 +54,14 @@ export default function RoundHistoryScreen() {
       refresh();
     }, [refresh]),
   );
+
+  useEffect(() => {
+    refresh();
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [sortMode]);
 
   const filtered = useMemo(() => {
     if (filter === "completed")
@@ -66,20 +100,84 @@ export default function RoundHistoryScreen() {
     [router],
   );
 
-  const keyExtractor = useCallback(
-    (item: RecentRound) => String(item.id),
-    [],
-  );
+  const keyExtractor = useCallback((item: RecentRound) => String(item.id), []);
 
   return (
     <View style={styles.screen}>
+      <View style={styles.searchWrap}>
+        <Feather
+          name="search"
+          size={18}
+          color={Color.neutral400}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by course name..."
+          placeholderTextColor={Color.neutral400}
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          returnKeyType="search"
+        />
+        {searchText.length > 0 && (
+          <Pressable
+            onPress={() => setSearchText("")}
+            style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
+            hitSlop={8}
+          >
+            <Feather name="x" size={18} color={Color.neutral400} />
+          </Pressable>
+        )}
+      </View>
+      <View style={styles.sortRow}>
+        <Pressable
+          onPress={() =>
+            setSortMode((m) => (m === "date-desc" ? "date-asc" : "date-desc"))
+          }
+          style={({ pressed }) => [
+            styles.sortChip,
+            sortMode.startsWith("date") && styles.sortChipActive,
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Text
+            style={[
+              styles.sortChipText,
+              sortMode.startsWith("date") && styles.sortChipTextActive,
+            ]}
+          >
+            {sortMode === "date-asc" ? "Date - Oldest" : "Date - Recent"}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            setSortMode((m) => (m === "score-low" ? "score-high" : "score-low"))
+          }
+          style={({ pressed }) => [
+            styles.sortChip,
+            sortMode.startsWith("score") && styles.sortChipActive,
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Text
+            style={[
+              styles.sortChipText,
+              sortMode.startsWith("score") && styles.sortChipTextActive,
+            ]}
+          >
+            {sortMode === "score-high" ? "Score - High" : "Score - Low"}
+          </Text>
+        </Pressable>
+      </View>
       <FlatList
+        ref={listRef}
         data={filtered}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.list}
-        onRefresh={refresh}
-        refreshing={isLoading}
+        onRefresh={pullToRefresh}
+        refreshing={isRefreshing}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
@@ -119,6 +217,58 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Color.screenBg,
+  },
+  searchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Color.white,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    borderRadius: Radius.lg,
+    marginHorizontal: Space.lg,
+    marginTop: Space.lg,
+    paddingHorizontal: Space.md,
+    height: 44,
+  },
+  searchIcon: {
+    marginRight: Space.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: Font.regular,
+    fontSize: 15,
+    color: Color.neutral900,
+    paddingVertical: 0,
+  },
+  sortRow: {
+    flexDirection: "row",
+    gap: Space.sm,
+    marginHorizontal: Space.lg,
+    marginTop: Space.sm,
+    marginBottom: Space.sm,
+  },
+  sortChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Color.neutral200,
+    backgroundColor: Color.white,
+  },
+  sortChipActive: {
+    borderColor: Color.primary,
+    backgroundColor: Color.primaryLight,
+  },
+  sortChipText: {
+    fontFamily: Font.medium,
+    fontSize: 13,
+    color: Color.neutral500,
+  },
+  sortChipTextActive: {
+    color: Color.primary,
   },
   list: {
     padding: Space.lg,

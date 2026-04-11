@@ -1,3 +1,4 @@
+import InlineSpinner from "@/components/InlineSpinner";
 import RoundCard from "@/components/RoundCard";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
@@ -12,10 +13,9 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
-import { Text } from "react-native-paper";
+import { Searchbar, Text } from "react-native-paper";
 
 export default function RoundHistoryScreen() {
   const { filter = "all" } = useLocalSearchParams<{
@@ -104,33 +104,17 @@ export default function RoundHistoryScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.searchWrap}>
-        <Feather
-          name="search"
-          size={18}
-          color={Color.neutral400}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
+      <View style={styles.toolbar}>
+        <Searchbar
           placeholder="Search by course name..."
-          placeholderTextColor={Color.neutral400}
-          value={searchText}
           onChangeText={setSearchText}
+          value={searchText}
+          mode="bar"
+          style={styles.searchbar}
+          inputStyle={styles.searchInput}
           autoCorrect={false}
-          returnKeyType="search"
         />
-        {searchText.length > 0 && (
-          <Pressable
-            onPress={() => setSearchText("")}
-            style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
-            hitSlop={8}
-          >
-            <Feather name="x" size={18} color={Color.neutral400} />
-          </Pressable>
-        )}
-      </View>
-      <View style={styles.sortRow}>
+        <View style={styles.sortRow}>
         <Pressable
           onPress={() =>
             setSortMode((m) => (m === "date-desc" ? "date-asc" : "date-desc"))
@@ -149,6 +133,9 @@ export default function RoundHistoryScreen() {
           >
             {sortMode === "date-asc" ? "Date - Oldest" : "Date - Recent"}
           </Text>
+          {isLoading && sortMode.startsWith("date") && (
+            <InlineSpinner size={10} style={styles.sortSpinner} />
+          )}
         </Pressable>
         <Pressable
           onPress={() =>
@@ -168,7 +155,11 @@ export default function RoundHistoryScreen() {
           >
             {sortMode === "score-high" ? "Score - High" : "Score - Low"}
           </Text>
+          {isLoading && sortMode.startsWith("score") && (
+            <InlineSpinner size={10} style={styles.sortSpinner} />
+          )}
         </Pressable>
+        </View>
       </View>
       <FlatList
         ref={listRef}
@@ -218,41 +209,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.screenBg,
   },
-  searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Color.white,
-    borderWidth: 1,
-    borderColor: Color.neutral200,
-    borderRadius: Radius.lg,
-    marginHorizontal: Space.lg,
-    marginTop: Space.lg,
-    paddingHorizontal: Space.md,
-    height: 44,
+  toolbar: {
+    paddingHorizontal: Space.lg,
+    paddingTop: Space.lg,
+    gap: Space.sm,
   },
-  searchIcon: {
-    marginRight: Space.sm,
+  searchbar: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Color.neutral300,
+    borderRadius: Radius.full,
   },
   searchInput: {
-    flex: 1,
     fontFamily: Font.regular,
-    fontSize: 15,
     color: Color.neutral900,
-    paddingVertical: 0,
   },
   sortRow: {
     flexDirection: "row",
     gap: Space.sm,
-    marginHorizontal: Space.lg,
-    marginTop: Space.sm,
-    marginBottom: Space.sm,
   },
   sortChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: Space.md,
-    paddingVertical: Space.xs,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Color.neutral200,
@@ -269,6 +250,9 @@ const styles = StyleSheet.create({
   },
   sortChipTextActive: {
     color: Color.primary,
+  },
+  sortSpinner: {
+    marginLeft: Space.xs,
   },
   list: {
     padding: Space.lg,

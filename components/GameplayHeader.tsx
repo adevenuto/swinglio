@@ -3,6 +3,7 @@ import { Color, Font, Radius, Shadow, Space } from "@/constants/design-tokens";
 import { usePreferences } from "@/contexts/preferences-context";
 import { unitLabel, yardsToUnit } from "@/lib/geo";
 import { getCourseImageSource } from "@/utils/golf-image";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -21,6 +22,8 @@ type GameplayHeaderProps = {
   distanceToPin?: number | null;
   distanceLoading?: boolean;
   onDistancePress?: () => void;
+  distanceLocked?: boolean;
+  onDistanceLockedPress?: () => void;
   connectedBottom?: boolean;
 };
 
@@ -38,6 +41,8 @@ export default function GameplayHeader({
   distanceToPin,
   distanceLoading,
   onDistancePress,
+  distanceLocked,
+  onDistanceLockedPress,
   connectedBottom = false,
 }: GameplayHeaderProps) {
   const { distanceUnit } = usePreferences();
@@ -98,7 +103,20 @@ export default function GameplayHeader({
             )}
           </Text>
         ) : null}
-        {showDistance && (
+        {distanceLocked ? (
+          <Pressable
+            onPress={onDistanceLockedPress}
+            style={({ pressed }) => [
+              styles.distanceRow,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <View style={styles.lockedBadge}>
+              <Feather name="lock" size={13} color={Color.primary} />
+              <Text style={styles.lockedBadgeText}>Distance to pin</Text>
+            </View>
+          </Pressable>
+        ) : showDistance ? (
           <Pressable
             onPress={onDistancePress}
             disabled={!onDistancePress || distanceToPin == null}
@@ -112,7 +130,7 @@ export default function GameplayHeader({
               loading={!!distanceLoading}
             />
           </Pressable>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -173,5 +191,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Space.xs,
     marginTop: 2,
+  },
+  lockedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: Space.xs,
+    marginTop: Space.sm,
+    backgroundColor: Color.primaryLight,
+    paddingHorizontal: Space.md,
+    paddingVertical: Space.xs + 2,
+    borderRadius: Radius.lg,
+  },
+  lockedBadgeText: {
+    fontFamily: Font.semiBold,
+    fontSize: 13,
+    color: Color.primary,
   },
 });

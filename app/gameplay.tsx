@@ -77,8 +77,9 @@ function GameplayScreenContent() {
     hasGreenCenters,
   } = useGameplay();
 
-  // GPS distance to pin
-  const { location, loading: gpsLoading } = usePlayerLocation(hasGreenCenters);
+  // GPS distance to pin (Pro only — skip location tracking for free users)
+  const { presentPaywall } = useSubscription();
+  const { location, loading: gpsLoading } = usePlayerLocation(isPro && hasGreenCenters);
   const [showDistanceMap, setShowDistanceMap] = useState(false);
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [showRoundStats, setShowRoundStats] = useState(false);
@@ -296,13 +297,15 @@ function GameplayScreenContent() {
                 par={teeboxHoleData?.par}
                 yardage={teeboxHoleData?.length}
                 teeboxName={(round.teebox_data as any)?.name}
-                distanceToPin={distanceToPin}
-                distanceLoading={hasGreenCenters && gpsLoading}
+                distanceToPin={isPro ? distanceToPin : null}
+                distanceLoading={isPro && hasGreenCenters && gpsLoading}
                 onDistancePress={
-                  distanceToPin != null && activeGreenCenter
+                  isPro && distanceToPin != null && activeGreenCenter
                     ? () => setShowDistanceMap(true)
                     : undefined
                 }
+                distanceLocked={!isPro && hasGreenCenters}
+                onDistanceLockedPress={presentPaywall}
                 connectedBottom
               />
               <HoleEntryPanel

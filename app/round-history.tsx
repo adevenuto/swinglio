@@ -2,10 +2,10 @@ import InlineSpinner from "@/components/InlineSpinner";
 import RoundCard from "@/components/RoundCard";
 import { Color, Font, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
-import { useSubscription } from "@/contexts/subscription-context";
+
 import { usePaginatedRounds } from "@/hooks/use-paginated-rounds";
 import { RecentRound } from "@/hooks/use-recent-rounds";
-import { Feather } from "@expo/vector-icons";
+
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -22,7 +22,6 @@ export default function RoundHistoryScreen() {
     filter?: "completed" | "incomplete" | "all";
   }>();
   const { user } = useAuth();
-  const { isPro, presentPaywall } = useSubscription();
   const router = useRouter();
   const listRef = useRef<FlatList<RecentRound>>(null);
 
@@ -42,7 +41,7 @@ export default function RoundHistoryScreen() {
     refresh, pullToRefresh, loadMore,
   } = usePaginatedRounds(user?.id ?? "", {
       pageSize: 20,
-      maxTotal: isPro ? undefined : 10,
+
       searchQuery: debouncedSearch,
       sortBy: sortMode.startsWith("date") ? "date" : "score",
       sortDir:
@@ -179,20 +178,7 @@ export default function RoundHistoryScreen() {
           ) : null
         }
         ListFooterComponent={
-          !isPro && filtered.length >= 10 ? (
-            <Pressable
-              onPress={presentPaywall}
-              style={({ pressed }) => [
-                styles.upgradeFooter,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Feather name="lock" size={16} color={Color.primary} />
-              <Text style={styles.upgradeFooterText}>
-                Viewing last 10 rounds — Upgrade to see all
-              </Text>
-            </Pressable>
-          ) : isLoadingMore ? (
+          isLoadingMore ? (
             <ActivityIndicator
               style={styles.loadingMore}
               color={Color.primary}
@@ -267,21 +253,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Color.neutral400,
     textAlign: "center",
-  },
-  upgradeFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Space.sm,
-    paddingVertical: Space.lg,
-    marginTop: Space.sm,
-    backgroundColor: Color.primaryLight,
-    borderRadius: Radius.md,
-  },
-  upgradeFooterText: {
-    fontFamily: Font.semiBold,
-    fontSize: 14,
-    color: Color.primary,
   },
   loadingMore: {
     paddingVertical: Space.lg,

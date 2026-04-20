@@ -1,31 +1,31 @@
+import GradientButton from "@/components/GradientButton";
 import {
   Color,
   Font,
   Radius,
-  Shadow,
   Space,
-  Type,
+  Type
 } from "@/constants/design-tokens";
 import { useSubscription } from "@/contexts/subscription-context";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import GradientButton from "@/components/GradientButton";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
-import { toast } from "sonner-native";
 import { PACKAGE_TYPE } from "react-native-purchases";
+import { toast } from "sonner-native";
 
 const FEATURES = [
   { icon: "trending-up" as const, text: "Full handicap index with trends" },
-  { icon: "bar-chart-2" as const, text: "Detailed stats — FWY%, GIR, putts & more" },
-  { icon: "clock" as const, text: "Unlimited round history" },
-  { icon: "cloud" as const, text: "Live weather backgrounds & on-course conditions" },
+  {
+    icon: "bar-chart-2" as const,
+    text: "Detailed stats — FWY%, GIR, putts & more",
+  },
+  { icon: "map-pin" as const, text: "GPS yardage on supported courses" },
+  {
+    icon: "cloud" as const,
+    text: "Live weather backgrounds & on-course conditions",
+  },
 ];
 
 export default function PaywallScreen() {
@@ -86,10 +86,7 @@ export default function PaywallScreen() {
       {/* Close button */}
       <Pressable
         onPress={() => router.back()}
-        style={({ pressed }) => [
-          styles.closeBtn,
-          pressed && { opacity: 0.7 },
-        ]}
+        style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
         hitSlop={12}
       >
         <Feather name="x" size={24} color={Color.neutral700} />

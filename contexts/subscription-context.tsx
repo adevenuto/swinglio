@@ -42,7 +42,7 @@ const RC_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? "";
 // TODO: Re-enable once RevenueCat ships iOS 26 compatibility fix.
 // Native Swift assertion failure in RC's async health check crashes the app
 // on iOS 26 preview builds (~0.2s after Purchases.configure()).
-const RC_DISABLED = true;
+const RC_DISABLED = false;
 
 export function SubscriptionProvider({
   children,

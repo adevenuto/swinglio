@@ -1,6 +1,7 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
 import AdaptiveText from "@/components/AdaptiveText";
 import GradientButton from "@/components/GradientButton";
+import PlayerAvatarRow from "@/components/PlayerAvatarRow";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
 import RoundListSection from "@/components/RoundListSection";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
@@ -131,6 +132,19 @@ export default function Dashboard() {
     });
 
     return [
+      isPro
+        ? {
+            key: "handicap",
+            value:
+              handicapResult?.handicapIndex != null
+                ? formatHandicapIndex(handicapResult.handicapIndex)
+                : "\u2014",
+            label: "Handicap",
+            subtitle: "(est)",
+            tappable: true,
+          }
+        : locked("handicap", "Handicap"),
+      { key: "rounds", value: String(totalRounds), label: "Rounds" },
       {
         key: "attested",
         value: totalRounds > 0 ? `${attPct}%` : "\u2014",
@@ -145,18 +159,6 @@ export default function Dashboard() {
             progress: fairwayPct ?? 0,
           }
         : locked("fwy-pct", "FWY Hit"),
-      { key: "rounds", value: String(totalRounds), label: "Rounds" },
-      isPro
-        ? {
-            key: "handicap",
-            value:
-              handicapResult?.handicapIndex != null
-                ? formatHandicapIndex(handicapResult.handicapIndex)
-                : "\u2014",
-            label: "Handicap",
-            subtitle: "(est)",
-          }
-        : locked("handicap", "Handicap"),
       {
         key: "best",
         value:
@@ -294,6 +296,9 @@ export default function Dashboard() {
                         </Text>
                       </LinearGradient>
                     </View>
+                    {round.players.length > 0 && (
+                      <PlayerAvatarRow players={round.players} size={26} />
+                    )}
                     <Text style={styles.cardSubtitle}>
                       {(round.teebox_data as any)?.name
                         ? `${(round.teebox_data as any).name} Tees \u00B7 `

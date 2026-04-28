@@ -1,6 +1,7 @@
 import AdaptiveText from "@/components/AdaptiveText";
 import UserAvatar from "@/components/UserAvatar";
 import { Color, Font, Space } from "@/constants/design-tokens";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -12,6 +13,7 @@ export type StatItem = {
   label: string;
   subtitle?: string; // small text rendered below value inside badge
   progress?: number; // 0–100; if present, renders SVG progress ring
+  tappable?: boolean; // if true, renders a subtle chevron hint below the label
 };
 
 type Props = {
@@ -120,6 +122,9 @@ export default function StatsStrip({
               )}
             </View>
             <AdaptiveText style={styles.label}>{item.label}</AdaptiveText>
+            {item.tappable && (
+              <Feather name="chevron-down" size={14} color={Color.white} style={styles.tappableHint} />
+            )}
           </>
         );
 
@@ -207,5 +212,8 @@ const styles = StyleSheet.create({
     color: Color.neutral300,
     marginTop: Space.xs,
     textAlign: "center",
+  },
+  tappableHint: {
+    marginTop: 1,
   },
 });

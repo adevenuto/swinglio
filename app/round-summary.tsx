@@ -326,6 +326,64 @@ export default function RoundSummaryScreen() {
             />
           </View>
 
+          {/* Peer attestation — only for multi-player eligible rounds */}
+          {!isEffectivelySolo &&
+            isParticipant &&
+            !myWithdrew &&
+            !myIncomplete && (
+              <View
+                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
+              >
+                <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
+                <View style={s.attestCard}>
+                  <Text style={s.attestCount}>
+                    {attestCount} of {eligiblePlayerCount} players attested
+                  </Text>
+
+                  {hasAttested ? (
+                    <View style={s.attestedRow}>
+                      <MaterialIcons
+                        name="check-circle"
+                        size={24}
+                        color={Color.primary}
+                      />
+                      <Text style={s.attestedText}>Attested</Text>
+                    </View>
+                  ) : (
+                    <GradientButton
+                      onPress={handleAttest}
+                      label="Attest Scores"
+                      colors={Color.secondaryGradient}
+                    />
+                  )}
+                </View>
+              </View>
+            )}
+
+          {/* Self-confirmed indicator — for effectively-solo rounds */}
+          {isEffectivelySolo &&
+            isParticipant &&
+            !myWithdrew &&
+            !myIncomplete && (
+              <View
+                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
+              >
+                <AdaptiveText style={s.sectionLabel}>
+                  SCORE CONFIRMATION
+                </AdaptiveText>
+                <View style={s.attestCard}>
+                  <View style={s.attestedRow}>
+                    <MaterialIcons
+                      name="check-circle"
+                      size={24}
+                      color={Color.primary}
+                    />
+                    <Text style={s.attestedText}>Scores Confirmed</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
           {/* Results card */}
           {resultsData && resultsData.players.length > 0 && (
             <View style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}>
@@ -464,64 +522,6 @@ export default function RoundSummaryScreen() {
               </View>
             </View>
           )}
-
-          {/* Peer attestation — only for multi-player eligible rounds */}
-          {!isEffectivelySolo &&
-            isParticipant &&
-            !myWithdrew &&
-            !myIncomplete && (
-              <View
-                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
-              >
-                <AdaptiveText style={s.sectionLabel}>ATTESTATION</AdaptiveText>
-                <View style={s.attestCard}>
-                  <Text style={s.attestCount}>
-                    {attestCount} of {eligiblePlayerCount} players attested
-                  </Text>
-
-                  {hasAttested ? (
-                    <View style={s.attestedRow}>
-                      <MaterialIcons
-                        name="check-circle"
-                        size={24}
-                        color={Color.primary}
-                      />
-                      <Text style={s.attestedText}>Attested</Text>
-                    </View>
-                  ) : (
-                    <GradientButton
-                      onPress={handleAttest}
-                      label="Attest Scores"
-                      colors={Color.secondaryGradient}
-                    />
-                  )}
-                </View>
-              </View>
-            )}
-
-          {/* Self-confirmed indicator — for effectively-solo rounds */}
-          {isEffectivelySolo &&
-            isParticipant &&
-            !myWithdrew &&
-            !myIncomplete && (
-              <View
-                style={{ paddingHorizontal: Space.lg, marginTop: Space.xl }}
-              >
-                <AdaptiveText style={s.sectionLabel}>
-                  SCORE CONFIRMATION
-                </AdaptiveText>
-                <View style={s.attestCard}>
-                  <View style={s.attestedRow}>
-                    <MaterialIcons
-                      name="check-circle"
-                      size={24}
-                      color={Color.primary}
-                    />
-                    <Text style={s.attestedText}>Scores Confirmed</Text>
-                  </View>
-                </View>
-              </View>
-            )}
 
           <View style={{ height: Space.xxxl }} />
         </ScrollView>

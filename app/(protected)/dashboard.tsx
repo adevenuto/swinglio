@@ -144,7 +144,7 @@ export default function Dashboard() {
             tappable: true,
           }
         : locked("handicap", "Handicap"),
-      { key: "rounds", value: String(totalRounds), label: "Rounds" },
+      { key: "rounds", value: String(totalRounds), label: "Rounds", tappable: totalRounds > 3 },
       {
         key: "attested",
         value: totalRounds > 0 ? `${attPct}%` : "\u2014",
@@ -219,6 +219,7 @@ export default function Dashboard() {
             return;
           }
           if (key === "handicap") setHandicapModalVisible(true);
+          if (key === "rounds") router.push({ pathname: "/round-history", params: { filter: "completed" } });
         }}
       />
 

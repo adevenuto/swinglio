@@ -123,7 +123,12 @@ export default function StatsStrip({
             </View>
             <AdaptiveText style={styles.label}>{item.label}</AdaptiveText>
             {item.tappable && (
-              <Feather name="chevron-down" size={14} color={Color.white} style={styles.tappableHint} />
+              <Feather
+                name="chevron-down"
+                size={14}
+                color={Color.white}
+                style={styles.tappableHint}
+              />
             )}
           </>
         );
@@ -214,6 +219,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tappableHint: {
-    marginTop: 1,
+    marginTop: -1,
+    marginBottom: -2,
+    height: 14,
   },
 });

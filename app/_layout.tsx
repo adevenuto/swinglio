@@ -3,6 +3,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { PreferencesProvider } from "@/contexts/preferences-context";
+import { WeatherProvider } from "@/contexts/weather-context";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -93,6 +94,7 @@ export default function RootLayout() {
       <AuthProvider>
         <SubscriptionProvider>
         <PreferencesProvider>
+        <WeatherProvider>
           <ThemeProvider value={DefaultTheme}>
             <PaperProvider theme={paperTheme}>
               <Stack screenOptions={{ headerShown: false }}>
@@ -190,6 +192,7 @@ export default function RootLayout() {
               <StatusBar style="auto" />
             </PaperProvider>
           </ThemeProvider>
+        </WeatherProvider>
         </PreferencesProvider>
         </SubscriptionProvider>
       </AuthProvider>

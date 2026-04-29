@@ -48,10 +48,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select("role, avatar_url, first_name, display_name")
       .eq("id", userId)
       .single();
-    setRole(data?.role ?? null);
-    setAvatarUrl(data?.avatar_url ?? null);
-    setDisplayName(data?.display_name || data?.first_name || null);
-    setNeedsOnboarding(!data?.first_name);
+
+    // If profile doesn't exist (deleted user), sign out to clear stale session
+    if (!data) {
+      await supabase.auth.signOut();
+      return;
+    }
+
+    setRole(data.role ?? null);
+    setAvatarUrl(data.avatar_url ?? null);
+    setDisplayName(data.display_name || data.first_name || null);
+    setNeedsOnboarding(!data.first_name);
   };
 
   useEffect(() => {

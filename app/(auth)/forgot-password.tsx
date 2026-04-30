@@ -1,5 +1,5 @@
 import GradientButton from "@/components/GradientButton";
-import { Color, Font, Radius, Space } from "@/constants/design-tokens";
+import { Color, Font, Layout, Radius, Space } from "@/constants/design-tokens";
 import { supabase } from "@/lib/supabase";
 import { Link } from "expo-router";
 import React, { useState } from "react";
@@ -194,8 +194,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
   },
   inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
     paddingHorizontal: Space.lg,
   },
   title: {

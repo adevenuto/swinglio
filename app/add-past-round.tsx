@@ -3,6 +3,7 @@ import GradientButton from "@/components/GradientButton";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Shadow,
   Space,
@@ -175,6 +176,7 @@ export default function AddPastRoundScreen() {
   if (!selectedCourse) {
     return (
       <View style={styles.screen}>
+        <View style={styles.screenInner}>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Search for a Course</Text>
           <Searchbar
@@ -217,6 +219,7 @@ export default function AddPastRoundScreen() {
             }
           />
         ) : null}
+        </View>
       </View>
     );
   }
@@ -225,6 +228,7 @@ export default function AddPastRoundScreen() {
   if (!selectedTeebox) {
     return (
       <View style={styles.screen}>
+        <View style={styles.screenInner}>
         <View style={styles.section}>
           <View style={styles.courseCard}>
             <View style={styles.cardRow}>
@@ -268,6 +272,7 @@ export default function AddPastRoundScreen() {
             </View>
           )}
         </View>
+        </View>
       </View>
     );
   }
@@ -275,6 +280,7 @@ export default function AddPastRoundScreen() {
   // --- Step 2: Date + Score entry ---
   return (
     <View style={styles.screen}>
+      <View style={styles.screenInner}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
@@ -386,6 +392,7 @@ export default function AddPastRoundScreen() {
           disabled={!canSave}
         />
       </View>
+      </View>
     </View>
   );
 }
@@ -394,6 +401,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Color.screenBg,
+    alignItems: "center",
+  },
+  screenInner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
+    flex: 1,
   },
   section: {
     paddingHorizontal: Space.lg,

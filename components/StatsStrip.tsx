@@ -1,9 +1,15 @@
 import AdaptiveText from "@/components/AdaptiveText";
 import UserAvatar from "@/components/UserAvatar";
-import { Color, Font, Space } from "@/constants/design-tokens";
+import { Color, Font, Layout, Space } from "@/constants/design-tokens";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { Text } from "react-native-paper";
 import Svg, { Circle } from "react-native-svg";
 
@@ -71,6 +77,8 @@ export default function StatsStrip({
   onItemPress,
 }: Props) {
   // Split displayName into firstName/lastName for initials
+  const { width } = useWindowDimensions();
+  const isMobile = width <= Layout.maxWidth;
   const nameParts = displayName?.trim().split(/\s+/) ?? [];
   const firstName = nameParts[0] ?? null;
   const lastName =
@@ -81,7 +89,10 @@ export default function StatsStrip({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        isMobile && { paddingHorizontal: Space.lg },
+      ]}
       style={styles.scrollView}
     >
       {/* Avatar — first item */}
@@ -157,10 +168,11 @@ export default function StatsStrip({
 const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 0,
+    maxWidth: Layout.maxWidth,
+    alignSelf: "center",
+    width: "100%",
   },
   scrollContent: {
-    paddingLeft: Space.lg,
-    paddingRight: Space.lg,
     paddingVertical: Space.lg,
     gap: Space.md,
     alignItems: "flex-start",

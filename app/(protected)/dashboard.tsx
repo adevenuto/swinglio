@@ -1,14 +1,15 @@
 import ActiveRoundCard from "@/components/ActiveRoundCard";
 import AdaptiveText from "@/components/AdaptiveText";
 import GradientButton from "@/components/GradientButton";
-import PlayerAvatarRow from "@/components/PlayerAvatarRow";
 import HandicapInfoModal from "@/components/HandicapInfoModal";
+import PlayerAvatarRow from "@/components/PlayerAvatarRow";
 import RoundListSection from "@/components/RoundListSection";
 import StatsStrip, { type StatItem } from "@/components/StatsStrip";
 import WeatherBackground from "@/components/WeatherBackground";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Shadow,
   Space,
@@ -144,7 +145,12 @@ export default function Dashboard() {
             tappable: true,
           }
         : locked("handicap", "Handicap"),
-      { key: "rounds", value: String(totalRounds), label: "Rounds", tappable: totalRounds > 3 },
+      {
+        key: "rounds",
+        value: String(totalRounds),
+        label: "Rounds",
+        tappable: totalRounds > 3,
+      },
       {
         key: "attested",
         value: totalRounds > 0 ? `${attPct}%` : "\u2014",
@@ -219,7 +225,11 @@ export default function Dashboard() {
             return;
           }
           if (key === "handicap") setHandicapModalVisible(true);
-          if (key === "rounds") router.push({ pathname: "/round-history", params: { filter: "completed" } });
+          if (key === "rounds")
+            router.push({
+              pathname: "/round-history",
+              params: { filter: "completed" },
+            });
         }}
       />
 
@@ -380,7 +390,7 @@ const styles = StyleSheet.create({
   },
   contentInner: {
     width: "100%",
-    maxWidth: 448,
+    maxWidth: Layout.maxWidth,
     marginTop: Space.lg,
   },
   sectionLabel: {

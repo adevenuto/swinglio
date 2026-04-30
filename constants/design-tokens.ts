@@ -12,6 +12,12 @@ export const Space = {
   xxxl: 48,
 } as const;
 
+// === Layout ===
+
+export const Layout = {
+  maxWidth: 448, // max content width for iPad compatibility
+} as const;
+
 // === Border Radius ===
 
 export const Radius = {

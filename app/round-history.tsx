@@ -1,13 +1,19 @@
 import InlineSpinner from "@/components/InlineSpinner";
 import RoundCard from "@/components/RoundCard";
-import { Color, Font, Radius, Space } from "@/constants/design-tokens";
+import { Color, Font, Layout, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 
 import { usePaginatedRounds } from "@/hooks/use-paginated-rounds";
 import { RecentRound } from "@/hooks/use-recent-rounds";
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -37,16 +43,22 @@ export default function RoundHistoryScreen() {
   }, [searchText]);
 
   const {
-    rounds, isLoading, isRefreshing, isLoadingMore, hasMore,
-    refresh, pullToRefresh, loadMore,
+    rounds,
+    isLoading,
+    isRefreshing,
+    isLoadingMore,
+    hasMore,
+    refresh,
+    pullToRefresh,
+    loadMore,
   } = usePaginatedRounds(user?.id ?? "", {
-      pageSize: 20,
+    pageSize: 20,
 
-      searchQuery: debouncedSearch,
-      sortBy: sortMode.startsWith("date") ? "date" : "score",
-      sortDir:
-        sortMode === "date-asc" || sortMode === "score-low" ? "asc" : "desc",
-    });
+    searchQuery: debouncedSearch,
+    sortBy: sortMode.startsWith("date") ? "date" : "score",
+    sortDir:
+      sortMode === "date-asc" || sortMode === "score-low" ? "asc" : "desc",
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -103,89 +115,95 @@ export default function RoundHistoryScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.toolbar}>
-        <Searchbar
-          placeholder="Search by course name..."
-          onChangeText={setSearchText}
-          value={searchText}
-          mode="bar"
-          style={styles.searchbar}
-          inputStyle={styles.searchInput}
-          autoCorrect={false}
-        />
-        <View style={styles.sortRow}>
-        <Pressable
-          onPress={() =>
-            setSortMode((m) => (m === "date-desc" ? "date-asc" : "date-desc"))
-          }
-          style={({ pressed }) => [
-            styles.sortChip,
-            sortMode.startsWith("date") && styles.sortChipActive,
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Text
-            style={[
-              styles.sortChipText,
-              sortMode.startsWith("date") && styles.sortChipTextActive,
-            ]}
-          >
-            {sortMode === "date-asc" ? "Date - Oldest" : "Date - Recent"}
-          </Text>
-          {isLoading && sortMode.startsWith("date") && (
-            <InlineSpinner size={10} style={styles.sortSpinner} />
-          )}
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            setSortMode((m) => (m === "score-low" ? "score-high" : "score-low"))
-          }
-          style={({ pressed }) => [
-            styles.sortChip,
-            sortMode.startsWith("score") && styles.sortChipActive,
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Text
-            style={[
-              styles.sortChipText,
-              sortMode.startsWith("score") && styles.sortChipTextActive,
-            ]}
-          >
-            {sortMode === "score-high" ? "Score - High" : "Score - Low"}
-          </Text>
-          {isLoading && sortMode.startsWith("score") && (
-            <InlineSpinner size={10} style={styles.sortSpinner} />
-          )}
-        </Pressable>
+      <View style={styles.screenInner}>
+        <View style={styles.toolbar}>
+          <Searchbar
+            placeholder="Search by course name..."
+            onChangeText={setSearchText}
+            value={searchText}
+            mode="bar"
+            style={styles.searchbar}
+            inputStyle={styles.searchInput}
+            autoCorrect={false}
+          />
+          <View style={styles.sortRow}>
+            <Pressable
+              onPress={() =>
+                setSortMode((m) =>
+                  m === "date-desc" ? "date-asc" : "date-desc",
+                )
+              }
+              style={({ pressed }) => [
+                styles.sortChip,
+                sortMode.startsWith("date") && styles.sortChipActive,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortChipText,
+                  sortMode.startsWith("date") && styles.sortChipTextActive,
+                ]}
+              >
+                {sortMode === "date-asc" ? "Date - Oldest" : "Date - Recent"}
+              </Text>
+              {isLoading && sortMode.startsWith("date") && (
+                <InlineSpinner size={10} style={styles.sortSpinner} />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                setSortMode((m) =>
+                  m === "score-low" ? "score-high" : "score-low",
+                )
+              }
+              style={({ pressed }) => [
+                styles.sortChip,
+                sortMode.startsWith("score") && styles.sortChipActive,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortChipText,
+                  sortMode.startsWith("score") && styles.sortChipTextActive,
+                ]}
+              >
+                {sortMode === "score-high" ? "Score - High" : "Score - Low"}
+              </Text>
+              {isLoading && sortMode.startsWith("score") && (
+                <InlineSpinner size={10} style={styles.sortSpinner} />
+              )}
+            </Pressable>
+          </View>
         </View>
+        <FlatList
+          ref={listRef}
+          data={filtered}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.list}
+          onRefresh={pullToRefresh}
+          refreshing={isRefreshing}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={
+            !isLoading ? (
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyText}>No rounds to show.</Text>
+              </View>
+            ) : null
+          }
+          ListFooterComponent={
+            isLoadingMore ? (
+              <ActivityIndicator
+                style={styles.loadingMore}
+                color={Color.primary}
+              />
+            ) : null
+          }
+        />
       </View>
-      <FlatList
-        ref={listRef}
-        data={filtered}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.list}
-        onRefresh={pullToRefresh}
-        refreshing={isRefreshing}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyText}>No rounds to show.</Text>
-            </View>
-          ) : null
-        }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <ActivityIndicator
-              style={styles.loadingMore}
-              color={Color.primary}
-            />
-          ) : null
-        }
-      />
     </View>
   );
 }
@@ -194,6 +212,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Color.screenBg,
+    alignItems: "center",
+  },
+  screenInner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
+    flex: 1,
   },
   toolbar: {
     paddingHorizontal: Space.lg,
@@ -213,6 +237,7 @@ const styles = StyleSheet.create({
   sortRow: {
     flexDirection: "row",
     gap: Space.sm,
+    paddingVertical: Space.sm,
   },
   sortChip: {
     flexDirection: "row",

@@ -10,6 +10,7 @@ import WeatherBackground from "@/components/WeatherBackground";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Shadow,
   Space,
@@ -286,6 +287,7 @@ export default function RoundSummaryScreen() {
 
         <ScrollView
           style={{ flex: 1 }}
+          contentContainerStyle={{ alignItems: "center" }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -295,6 +297,7 @@ export default function RoundSummaryScreen() {
             />
           }
         >
+          <View style={s.inner}>
           {/* Course info card */}
           <View style={{ paddingHorizontal: Space.lg }}>
             <GameplayHeader
@@ -524,6 +527,7 @@ export default function RoundSummaryScreen() {
           )}
 
           <View style={{ height: Space.xxxl }} />
+          </View>
         </ScrollView>
       {round && (
         <CourseIntelligenceModal
@@ -544,6 +548,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Color.screenBg,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
   },
   header: {
     flexDirection: "row",

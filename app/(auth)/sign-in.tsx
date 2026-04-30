@@ -1,5 +1,5 @@
 import GradientButton from "@/components/GradientButton";
-import { Color, Font, Radius, Space } from "@/constants/design-tokens";
+import { Color, Font, Layout, Radius, Space } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
@@ -187,8 +187,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
+    alignItems: "center",
   },
   inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
     paddingHorizontal: Space.lg,
   },
   logoRow: {

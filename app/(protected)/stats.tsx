@@ -12,6 +12,7 @@ import ScoringTrendChart from "@/components/stats/ScoringTrendChart";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Shadow,
   Space,
@@ -151,6 +152,7 @@ export default function StatsScreen() {
           />
         }
       >
+        <View style={styles.inner}>
         {isLoading ? (
           <View style={styles.loader}>
             <ActivityIndicator size="large" color={Color.primary} />
@@ -411,6 +413,7 @@ export default function StatsScreen() {
             </View>
           </>
         )}
+        </View>
       </ScrollView>
 
       <HandicapInfoModal
@@ -435,9 +438,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Space.lg,
+    alignItems: "center",
     paddingTop: Space.lg,
     paddingBottom: Space.xxxl,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
+    paddingHorizontal: Space.lg,
   },
   loader: {
     paddingVertical: Space.xxxl,

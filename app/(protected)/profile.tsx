@@ -3,6 +3,7 @@ import {
   Color,
   Font,
   Radius,
+  Layout,
   Shadow,
   Space,
   Type,
@@ -602,7 +603,7 @@ const styles = StyleSheet.create({
   },
   inner: {
     width: "100%",
-    maxWidth: 448,
+    maxWidth: Layout.maxWidth,
     paddingBottom: Space.xxxl,
   },
 

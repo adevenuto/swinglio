@@ -10,6 +10,7 @@ import Scorecard, { ScorecardRef } from "@/components/Scorecard";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Space,
   Type,
@@ -252,6 +253,7 @@ function GameplayScreenContent() {
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
+        contentContainerStyle={{ alignItems: "center" }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -265,6 +267,7 @@ function GameplayScreenContent() {
           />
         }
       >
+        <View style={gameStyles.inner}>
         {myFinished && round?.status !== "completed" && (
           <View style={gameStyles.finishedContainer}>
             <MaterialIcons
@@ -361,6 +364,7 @@ function GameplayScreenContent() {
             <AdaptiveText style={gameStyles.endRoundText}>End Round</AdaptiveText>
           </Pressable>
         )}
+        </View>
       </ScrollView>
 
       {myScore && teeboxHoleData && !myFinished && (
@@ -424,6 +428,10 @@ const gameStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Color.screenBg,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
   },
   navHeader: {
     flexDirection: "row",

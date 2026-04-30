@@ -4,6 +4,7 @@ import UserAvatar from "@/components/UserAvatar";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Shadow,
   Space,
@@ -200,6 +201,7 @@ export default function StartRoundScreen() {
   if (!selectedCourse) {
     return (
       <View style={styles.screen}>
+        <View style={styles.screenInner}>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Search for a Course</Text>
           <Searchbar
@@ -288,6 +290,7 @@ export default function StartRoundScreen() {
             )}
           </ScrollView>
         ) : null}
+        </View>
       </View>
     );
   }
@@ -298,6 +301,7 @@ export default function StartRoundScreen() {
 
     return (
       <View style={styles.screen}>
+        <View style={styles.screenInner}>
         <View style={styles.section}>
           <View style={styles.courseCard}>
             <View style={styles.cardRow}>
@@ -393,6 +397,7 @@ export default function StartRoundScreen() {
           })}
           </View>
         </View>
+        </View>
       </View>
     );
   }
@@ -400,6 +405,7 @@ export default function StartRoundScreen() {
   // --- Step 2: Select friends ---
   return (
     <View style={styles.screen}>
+      <View style={styles.screenInner}>
       {/* Header: Course + Teebox */}
       <View style={styles.section}>
         <View style={styles.courseCard}>
@@ -511,6 +517,7 @@ export default function StartRoundScreen() {
           disabled={isStarting}
         />
       </View>
+      </View>
     </View>
   );
 }
@@ -519,6 +526,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Color.screenBg,
+    alignItems: "center",
+  },
+  screenInner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
+    flex: 1,
   },
   section: {
     paddingHorizontal: Space.lg,

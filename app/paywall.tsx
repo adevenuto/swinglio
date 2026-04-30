@@ -2,6 +2,7 @@ import GradientButton from "@/components/GradientButton";
 import {
   Color,
   Font,
+  Layout,
   Radius,
   Space,
   Type
@@ -96,6 +97,7 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.inner}>
         {/* Header */}
         <Text style={styles.title}>Unlock Swinglio Pro</Text>
         <Text style={styles.subtitle}>
@@ -186,6 +188,7 @@ export default function PaywallScreen() {
         >
           <Text style={styles.restoreText}>Restore Purchases</Text>
         </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -203,9 +206,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   scrollContent: {
+    alignItems: "center",
     paddingHorizontal: Space.xl,
     paddingTop: Space.xxxl + Space.xxxl,
     paddingBottom: Space.xxxl,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: Layout.maxWidth,
   },
   title: {
     ...Type.h1,

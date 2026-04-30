@@ -1,5 +1,5 @@
 import GradientButton from "@/components/GradientButton";
-import { Color, Font, Radius, Space, Type } from "@/constants/design-tokens";
+import { Color, Font, Layout, Radius, Space, Type } from "@/constants/design-tokens";
 import { useAuth } from "@/contexts/auth-context";
 import { DistanceUnit, TempUnit, usePreferences } from "@/contexts/preferences-context";
 import { useSubscription } from "@/contexts/subscription-context";
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   inner: {
     width: "100%",
-    maxWidth: 448,
+    maxWidth: Layout.maxWidth,
     paddingBottom: Space.xxxl,
   },
   title: {

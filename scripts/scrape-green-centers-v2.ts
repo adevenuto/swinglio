@@ -21,9 +21,15 @@
  */
 
 import "dotenv/config";
+import fs from "fs";
 import postgres from "postgres";
 import puppeteer, { type Browser, type Page } from "puppeteer";
 import { distance as levenshtein } from "fastest-levenshtein";
+import { haversineKm, median } from "./lib/green-center-mismatch";
+
+// Reject captured greens that sit more than this far from the course's own
+// lat/lng — a backstop against matching the wrong (similarly-named) course.
+const SANITY_KM = 25;
 
 // ---------------------------------------------------------------------------
 // CLI args
@@ -35,6 +41,7 @@ function getArg(name: string): string | undefined {
 }
 
 const COURSE_ID = getArg("--course-id");
+const IDS_FILE = getArg("--ids-file");
 const LIMIT = getArg("--limit") ? parseInt(getArg("--limit")!, 10) : null;
 const DELAY_MS = parseInt(getArg("--delay") || "3000", 10);
 const COOLDOWN_INTERVAL = parseInt(getArg("--cooldown-interval") || "50", 10);
@@ -42,6 +49,10 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const MIN_CONFIDENCE = parseFloat(getArg("--min-confidence") || "0.6");
 const RETRY_FAILED = process.argv.includes("--retry-failed");
 const VERBOSE = process.argv.includes("--verbose");
+// Minimum name similarity for a search result to be considered a candidate.
+const NAME_FLOOR = parseFloat(getArg("--name-floor") || "0.55");
+// Max candidates to scrape+GPS-verify per course before giving up.
+const MAX_CANDIDATES = parseInt(getArg("--max-candidates") || "4", 10);
 
 // ---------------------------------------------------------------------------
 // DB
@@ -86,6 +97,8 @@ type DBCourse = {
   postal_code: string | null;
   layout_data: string | null;
   city_name: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 type SearchResult = {
@@ -191,6 +204,45 @@ function nameSimilarity(a: string, b: string): number {
   const dist = levenshtein(na, nb);
   const maxLen = Math.max(na.length, nb.length);
   return 1 - dist / maxLen;
+}
+
+// Generic golf words that don't help distinguish one course from another.
+const NAME_STOPWORDS = new Set([
+  "golf", "club", "course", "country", "the", "at", "cc", "gc",
+  "and", "links", "resort", "center", "centre", "municipal", "public",
+]);
+
+function significantTokens(s: string): string[] {
+  return normalizeName(s)
+    .split(/\s+/)
+    .filter((t) => t && !NAME_STOPWORDS.has(t));
+}
+
+/**
+ * Candidate-name score against a DB course. Combines edit-distance similarity
+ * with token-containment, so multi-course properties (e.g. GolfTraxx
+ * "Countryside Golf Course -Prairie" vs our club="Countryside Golf Club",
+ * course="Prairie") still rank highly. GPS-confirmation is the precision gate,
+ * so this only needs good recall.
+ */
+function nameMatchScore(resultName: string, course: DBCourse): number {
+  let best = nameSimilarity(resultName, course.course_name);
+  if (course.club_name) {
+    best = Math.max(best, nameSimilarity(resultName, course.club_name));
+  }
+  const resultTokens = new Set(
+    normalizeName(resultName).split(/\s+/).filter(Boolean),
+  );
+  const courseTokens = new Set<string>([
+    ...significantTokens(course.course_name),
+    ...(course.club_name ? significantTokens(course.club_name) : []),
+  ]);
+  if (courseTokens.size > 0) {
+    let hit = 0;
+    for (const t of courseTokens) if (resultTokens.has(t)) hit++;
+    best = Math.max(best, hit / courseTokens.size);
+  }
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -786,33 +838,75 @@ async function processCourse(
     return { greenCenters: null, matchInfo: null };
   }
 
-  // Step 2: Find best match (course_name used for scoring/disambiguation)
-  const best = findBestMatch(results, course);
-  if (!best) {
+  // Step 2: Rank candidates by NAME similarity. GolfTraxx's name-search results
+  // no longer expose parseable addresses, so address-based scoreMatch can't
+  // disambiguate same-name courses. Instead, when we have the course's own
+  // lat/lng, use it as the disambiguator (Step 3).
+  const ranked = results
+    .map((result) => ({
+      result,
+      nameScore: nameMatchScore(result.courseName, course),
+    }))
+    .filter((c) => c.nameScore >= NAME_FLOOR)
+    .sort((a, b) => b.nameScore - a.nameScore);
+
+  if (ranked.length === 0) {
     if (VERBOSE) {
-      console.log("  No match above confidence threshold. Scores:");
-      for (const r of results.slice(0, 5)) {
-        const s = scoreMatch(r, course);
-        console.log(
-          `    "${r.courseName}" (${r.address.street || "?"}, ${r.address.city || "?"}, ${r.address.state || "?"}) → ${s.toFixed(2)}`,
-        );
-      }
+      console.log("  No name match above floor. Top results:");
+      for (const r of results.slice(0, 5)) console.log(`    "${r.courseName}"`);
     }
     return { greenCenters: null, matchInfo: null };
   }
 
+  // Step 3: GPS-confirmed matching. Scrape name-matched candidates in rank order
+  // and accept the FIRST whose greens actually sit within SANITY_KM of the
+  // course's own lat/lng. This is the disambiguator that addresses no longer can be.
+  if (course.lat != null && course.lng != null) {
+    const maxTry = Math.min(MAX_CANDIDATES, ranked.length);
+    let lastTried: { name: string; score: number } | null = null;
+
+    for (let ci = 0; ci < maxTry; ci++) {
+      const cand = ranked[ci];
+      lastTried = { name: cand.result.courseName, score: cand.nameScore };
+      console.log(
+        `  Candidate ${ci + 1}/${maxTry}: "${cand.result.courseName}" (name=${cand.nameScore.toFixed(2)}) — scraping layout...`,
+      );
+      const greens = await scrapeFullLayout(browser, cand.result, holeCount);
+      if (!greens || Object.keys(greens).length === 0) {
+        console.log("    no markers captured — trying next");
+        continue;
+      }
+      const pts = Object.values(greens);
+      const distKm = haversineKm(
+        course.lat,
+        course.lng,
+        median(pts.map((p) => p.lat)),
+        median(pts.map((p) => p.lng)),
+      );
+      if (distKm <= SANITY_KM) {
+        console.log(`    ✓ greens ${distKm.toFixed(1)}km from course center — accepted`);
+        return {
+          greenCenters: greens,
+          matchInfo: { name: cand.result.courseName, score: cand.nameScore },
+        };
+      }
+      console.log(
+        `    ✗ greens ${distKm.toFixed(0)}km away (>${SANITY_KM}km) — wrong course, trying next`,
+      );
+    }
+
+    // No candidate landed near the course.
+    return { greenCenters: null, matchInfo: lastTried };
+  }
+
+  // Fallback (course has no lat/lng): can't GPS-confirm, so fall back to the
+  // address/name scoreMatch and accept whatever it finds (no sanity check possible).
+  const best = findBestMatch(results, course);
+  if (!best) return { greenCenters: null, matchInfo: null };
   console.log(
-    `  Best match: "${best.result.courseName}" (score=${best.score.toFixed(2)}, ${best.result.address.street || "?"}, ${best.result.address.city || "?"}, ${best.result.address.state || "?"})`,
+    `  Best match (no-coords fallback): "${best.result.courseName}" (score=${best.score.toFixed(2)})`,
   );
-
-  // Step 3: Navigate to full-layout and extract green centers
-  console.log("  Navigating to full-layout...");
-  const greenCenters = await scrapeFullLayout(
-    browser,
-    best.result,
-    holeCount,
-  );
-
+  const greenCenters = await scrapeFullLayout(browser, best.result, holeCount);
   return {
     greenCenters,
     matchInfo: { name: best.result.courseName, score: best.score },
@@ -839,10 +933,23 @@ async function main() {
     if (COURSE_ID) {
       courses = await sql`
         SELECT c.id, c.course_name, c.club_name, c.street, c.state, c.postal_code,
-               c.layout_data::text as layout_data, ci.name as city_name
+               c.layout_data::text as layout_data, ci.name as city_name, c.lat, c.lng
         FROM courses c
         LEFT JOIN cities ci ON ci.id = c.city_id
         WHERE c.id = ${COURSE_ID}
+      `;
+    } else if (IDS_FILE) {
+      const ids: number[] = JSON.parse(fs.readFileSync(IDS_FILE, "utf8"));
+      console.log(`Loaded ${ids.length} course IDs from ${IDS_FILE}`);
+      courses = await sql`
+        SELECT c.id, c.course_name, c.club_name, c.street, c.state, c.postal_code,
+               c.layout_data::text as layout_data, ci.name as city_name, c.lat, c.lng
+        FROM courses c
+        LEFT JOIN cities ci ON ci.id = c.city_id
+        WHERE c.id = ANY(${ids})
+          AND c.layout_data NOT LIKE '%"greenCenters":%'
+        ORDER BY c.id
+        ${LIMIT ? sql`LIMIT ${LIMIT}` : sql``}
       `;
     } else {
       const attemptFilter = RETRY_FAILED
@@ -851,7 +958,7 @@ async function main() {
 
       courses = await sql`
         SELECT c.id, c.course_name, c.club_name, c.street, c.state, c.postal_code,
-               c.layout_data::text as layout_data, ci.name as city_name
+               c.layout_data::text as layout_data, ci.name as city_name, c.lat, c.lng
         FROM courses c
         LEFT JOIN cities ci ON ci.id = c.city_id
         WHERE c.layout_data IS NOT NULL

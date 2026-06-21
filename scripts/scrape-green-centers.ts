@@ -40,6 +40,20 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const DIAGNOSTIC = process.argv.includes("--diagnostic");
 const LEGACY_MODE = process.argv.includes("--legacy");
 
+// ⛔ DEPRECATED — this script matches by course name + zip only, with NO
+// state/address verification. It is the source of the wrong-course green-center
+// bug (greens from a similarly-named course in another state written to the
+// wrong course). Use scrape-green-centers-v2.ts (address-verified + lat/lng
+// sanity guard) instead. Refuse to run unless explicitly forced.
+if (!process.argv.includes("--force-unsafe")) {
+  console.error(
+    "\n⛔ DEPRECATED: scrape-green-centers.ts has no state/address verification and\n" +
+      "   caused wrong-course green-center data. Use scrape-green-centers-v2.ts instead.\n" +
+      "   To override (not recommended), pass --force-unsafe.\n",
+  );
+  process.exit(1);
+}
+
 const COMMON_SUFFIXES = [
   "Golf Club",
   "Golf Course",

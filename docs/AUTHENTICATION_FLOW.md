@@ -137,6 +137,49 @@ User                App                      Supabase
   |<-- dashboard -------|                         |
 ```
 
+## Supabase Dashboard Configuration
+
+OAuth depends on **server-side** config in the Supabase dashboard
+(**Authentication → URL Configuration**) that must stay in sync with the app's
+custom URL scheme. This config is shared across local **and** production.
+
+| Setting | Required value |
+|---|---|
+| **Site URL** | `swinglio://` |
+| **Redirect URLs** (allow-list) | `swinglio://` (and/or `swinglio://**`) |
+
+The app's scheme (`swinglio`) is defined in `app.json` (`scheme`) and registered
+natively in `ios/Swinglio/Info.plist` (`CFBundleURLSchemes`). The redirect string
+passed to `signInWithOAuth` / `openAuthSessionAsync` is set in
+`contexts/auth-context.tsx` as `redirectUrl = "swinglio://"`.
+
+> **Gotcha (debugged 2026-06-16):** If the app requests a `redirect_to` that is
+> **not** on the allow-list, Supabase silently falls back to the **Site URL**.
+> After the `testappcline` → `swinglio` rebrand the app code was updated but the
+> dashboard still pointed at `testappcline://`, so OAuth completed and then
+> redirected to the dead `testappcline://` scheme. The in-app browser showed
+> *"Safari cannot open the page because the address is invalid"* (simulator) or a
+> blank browser (device). It broke local and production at the same time because
+> the URL config is server-side. **Any scheme/branding change must be mirrored in
+> the Supabase dashboard.**
+
+## Apple Sign-In & Account Identity
+
+Sign in with Apple (`signInWithOAuth({ provider: "apple" })`) can create a
+**separate** Supabase user from Google/password logins for the same person:
+
+- Apple **"Hide My Email"** supplies a private relay address
+  (e.g. `hk4gywz5vr@privaterelay.appleid.com`), not the user's real email.
+- Supabase auto-links identities only when the **verified email matches**. Google
+  returns the real email (links to the password account); Apple's relay email
+  matches nothing, producing a new user.
+- The relay address is **stable** per Apple-ID + app, so the Apple account is
+  consistent — just separate.
+
+**Planned fix (not yet implemented):** add an in-app "Link Apple" action in
+Settings using `supabase.auth.linkIdentity({ provider: "apple" })` so both
+identities attach to one user.
+
 ## Route Protection
 
 ### Auth Layout (`app/(auth)/_layout.tsx`)
